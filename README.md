@@ -47,12 +47,19 @@ UIAPduino
 
 ## ドキュメント
 
+- [現在の仕様](docs/spec.md)
 - [実装方針と初期設計](docs/initial-design.md)
 - [Phase 0 実機調査記録](docs/phase-0-device-investigation.md)
 
 ## 現在の状態
 
-Phase 0を進行中です。WebHID対応ブラウザとUIAPduinoの情報を確認する診断ページを実装しています。
+Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続とHID descriptorの取得まで確認できました。現在はReport ID `0xAA`の読み取り専用Feature Report診断を実装しています。
+
+診断ページ: [UIAPduino接続診断](https://vestige.github.io/nasunozaki_uiap/)
+
+## ドキュメント運用
+
+実装を変更するたびに、README、`docs/spec.md`、Phaseごとの調査記録を同じ作業内で更新します。仕様と実装が食い違ったまま次へ進まないことを基本ルールとします。
 
 ## ローカルで診断ページを開く
 

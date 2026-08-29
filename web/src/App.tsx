@@ -17,15 +17,18 @@ type HidDevice = {
   opened: boolean;
   collections: HidCollection[];
   open(): Promise<void>;
+  receiveFeatureReport(reportId: number): Promise<DataView>;
 };
 
 type HidNavigator = Navigator & {
   hid?: {
-    requestDevice(options: { filters: Array<{ vendorId: number }> }): Promise<HidDevice[]>;
+    requestDevice(options: { filters: Array<{ vendorId: number; productId: number }> }): Promise<HidDevice[]>;
   };
 };
 
 const UIAP_VENDOR_ID = 0x1209;
+const UIAP_BOOTLOADER_PRODUCT_ID = 0xb803;
+const BOOTLOADER_REPORT_ID = 0xaa;
 const hex = (value: number) => `0x${value.toString(16).toUpperCase().padStart(4, '0')}`;
 
 const connectionSteps = [
@@ -39,6 +42,9 @@ export default function App() {
   const [device, setDevice] = useState<HidDevice | null>(null);
   const [message, setMessage] = useState('まだボードを調べていません。');
   const [busy, setBusy] = useState(false);
+  const [featureReport, setFeatureReport] = useState<{ bytes: number[]; readAt: string } | null>(null);
+  const [featureMessage, setFeatureMessage] = useState('接続後に読み取りできます。');
+  const [readingFeature, setReadingFeature] = useState(false);
   const supported = useMemo(() => typeof navigator !== 'undefined' && 'hid' in navigator, []);
 
   async function inspectDevice() {
@@ -51,7 +57,9 @@ export default function App() {
     setBusy(true);
     setMessage('一覧から「32V003」を選んでください。');
     try {
-      const devices = await hid.requestDevice({ filters: [{ vendorId: UIAP_VENDOR_ID }] });
+      const devices = await hid.requestDevice({
+        filters: [{ vendorId: UIAP_VENDOR_ID, productId: UIAP_BOOTLOADER_PRODUCT_ID }],
+      });
       const selected = devices[0];
       if (!selected) {
         setMessage('ボードは選ばれませんでした。接続手順を確認して、もう一度試してください。');
@@ -59,12 +67,32 @@ export default function App() {
       }
       if (!selected.opened) await selected.open();
       setDevice(selected);
+      setFeatureReport(null);
+      setFeatureMessage('Report ID 0xAAを読み取れます。この操作は書き込みを行いません。');
       setMessage('ボード情報を取得できました。Phase 0の接続確認は成功です。');
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
       setMessage(`接続できませんでした：${detail}`);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function readFeatureReport() {
+    if (!device) return;
+    setReadingFeature(true);
+    setFeatureMessage('Report ID 0xAAを読み取っています…');
+    try {
+      const view = await device.receiveFeatureReport(BOOTLOADER_REPORT_ID);
+      const bytes = Array.from(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
+      setFeatureReport({ bytes, readAt: new Date().toLocaleString('ja-JP') });
+      setFeatureMessage(`${bytes.length}バイトを読み取りました。フラッシュへの書き込みは行っていません。`);
+    } catch (error) {
+      const detail = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+      setFeatureReport(null);
+      setFeatureMessage(`読み取れませんでした：${detail}`);
+    } finally {
+      setReadingFeature(false);
     }
   }
 
@@ -139,17 +167,43 @@ export default function App() {
             </div>
           </div>
         ) : (
-          <div className="mt-6 grid gap-5 lg:grid-cols-[.8fr_1.2fr]">
-            <div className="stats stats-vertical border-2 border-neutral bg-base-100 shadow-lg">
-              <div className="stat"><div className="stat-title">製品名</div><div className="stat-value text-2xl">{device.productName || '名称なし'}</div></div>
-              <div className="stat"><div className="stat-title">Vendor ID</div><div className="stat-value text-2xl">{hex(device.vendorId)}</div></div>
-              <div className="stat"><div className="stat-title">Product ID</div><div className="stat-value text-2xl">{hex(device.productId)}</div></div>
-              <div className="stat"><div className="stat-title">接続状態</div><div className="stat-value text-2xl text-success">{device.opened ? '接続済み' : '未接続'}</div></div>
-              <div className="stat"><div className="stat-title">Collection数</div><div className="stat-value text-2xl">{device.collections.length}</div></div>
+          <div className="mt-6 space-y-5">
+            <div className="grid gap-5 lg:grid-cols-[.8fr_1.2fr]">
+              <div className="stats stats-vertical border-2 border-neutral bg-base-100 shadow-lg">
+                <div className="stat"><div className="stat-title">製品名</div><div className="stat-value text-2xl">{device.productName || '名称なし'}</div></div>
+                <div className="stat"><div className="stat-title">Vendor ID</div><div className="stat-value text-2xl">{hex(device.vendorId)}</div></div>
+                <div className="stat"><div className="stat-title">Product ID</div><div className="stat-value text-2xl">{hex(device.productId)}</div></div>
+                <div className="stat"><div className="stat-title">接続状態</div><div className="stat-value text-2xl text-success">{device.opened ? '接続済み' : '未接続'}</div></div>
+                <div className="stat"><div className="stat-title">Collection数</div><div className="stat-value text-2xl">{device.collections.length}</div></div>
+              </div>
+              <div className="mockup-code max-h-[520px] overflow-auto bg-neutral text-neutral-content shadow-lg">
+                <pre data-prefix=""><code>{JSON.stringify(device.collections, null, 2)}</code></pre>
+              </div>
             </div>
-            <div className="mockup-code max-h-[520px] overflow-auto bg-neutral text-neutral-content shadow-lg">
-              <pre data-prefix=""><code>{JSON.stringify(device.collections, null, 2)}</code></pre>
-            </div>
+
+            <article className="card border-2 border-neutral bg-base-100 shadow-lg">
+              <div className="card-body gap-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <div className="flex-1">
+                    <div className="badge badge-secondary font-bold">READ ONLY</div>
+                    <h3 className="mt-2 text-xl font-black">Feature Reportを読み取る</h3>
+                    <p className="mt-2 text-sm leading-6 text-base-content/65">Report ID `0xAA`へGET_REPORT相当の読み取りを行います。データ送信やフラッシュ書き込みは行いません。</p>
+                  </div>
+                  <button className="btn btn-secondary btn-lg font-black" onClick={readFeatureReport} disabled={readingFeature}>
+                    {readingFeature && <span className="loading loading-spinner" />}
+                    {readingFeature ? '読み取り中…' : '0xAAを読み取る'}
+                  </button>
+                </div>
+                <div role="status" className={`alert ${featureReport ? 'alert-success' : 'alert-info'}`}><span>{featureMessage}</span></div>
+                {featureReport && (
+                  <div className="mockup-code bg-neutral text-neutral-content">
+                    <pre data-prefix="bytes"><code>{featureReport.bytes.length}</code></pre>
+                    <pre data-prefix="time"><code>{featureReport.readAt}</code></pre>
+                    <pre data-prefix="hex"><code>{featureReport.bytes.map((byte) => byte.toString(16).padStart(2, '0')).join(' ') || '(empty)'}</code></pre>
+                  </div>
+                )}
+              </div>
+            </article>
           </div>
         )}
       </section>

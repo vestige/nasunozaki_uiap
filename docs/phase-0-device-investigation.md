@@ -1,6 +1,6 @@
 # Phase 0: 実機調査記録
 
-更新日: 2026-08-29
+更新日: 2026-08-30
 
 ## 目的
 
@@ -8,7 +8,7 @@ Blockly教材の実装前に、対象UIAPduinoとWebHIDの通信条件を実機�
 
 ## 現在わかっていること
 
-- UIAPduinoのUSB Vendor ID候補は `0x1209`
+- UIAPduinoブートローダーのUSB Vendor IDは `0x1209`
 - 通常のWebHIDファームウェアではProduct ID `0xD004`という公開例がある
 - 書き込み待機中の識別子として `0x1209:B803`を使う公開例がある
 - WebHIDはHTTPSまたはlocalhostで使用する
@@ -55,10 +55,11 @@ PIDやレポート構成はファームウェアによって変わる可能性�
 - [ ] Edgeで診断ページからデバイスを選択できる
 - [ ] Chromebookで接続できるか確認する
 - [ ] 通常動作時のVID/PIDを記録する
-- [ ] ブートローダー時のVID/PIDを記録する（診断画面の値を転記する）
+- [x] ブートローダー時のVID/PIDを記録する
 - [x] HID collectionとReport IDを記録する
 - [x] Feature Reportの最大送信サイズを確認する
-- [ ] Input Reportの最大受信サイズと送信間隔を確認する
+- [x] Input Reportが存在しないことを確認する
+- [ ] Report ID `0xAA`を読み取り専用で取得する
 - [ ] 接続を解除して再接続できる
 - [ ] USBを途中で抜いた場合にページが復旧できる
 - [ ] LEDを1回点灯する最小コマンドを送受信する
@@ -79,7 +80,7 @@ UIAPduinoを接続して診断ページを実行した後、この表を更新�
 | HID collection | Usage Page `0x0001`、Usage `0x00FF`、Collection Type `1` |
 | Feature Report | Report ID `0xAA`、Report Count `127`、Report Size `8 bit`（127 bytes） |
 | Input Report | 未確認 |
-| Chrome | 未確認 |
+| Chrome | 接続とdescriptor取得を確認済み |
 | Edge | 未確認 |
 | Chromebook | 未確認 |
 
@@ -106,6 +107,18 @@ Vendor ID:    0x1209
 Product ID:   0xB803
 Collections:  1
 ```
+
+## 次の調査
+
+診断ページからWebHIDの `receiveFeatureReport(0xAA)` を呼び、GET_REPORT相当の読み取りが可能か確認する。
+
+この段階では次を行わない。
+
+- `sendFeatureReport`によるデータ送信
+- フラッシュへの書き込み
+- 未確認コマンドの送信
+
+読み取りに成功した場合は受信バイト数と16進数列を記録する。失敗した場合は例外名とメッセージを記録し、ブートローダー実装のGET_REPORT対応を調査する。
 
 ## Phase 0完了条件
 
