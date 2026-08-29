@@ -7,7 +7,16 @@ UIAPduinoを使い、小学生がブラウザだけで電子工作とブロッ�
 ## ドキュメント
 
 - [実装方針と初期設計](docs/initial-design.md)
+- [Phase 0 実機調査記録](docs/phase-0-device-investigation.md)
 
 ## 現在の状態
 
-設計段階です。次の作業は、UIAPduino未接続でも試せる画面シミュレーターを含む最小プロトタイプの作成です。
+Phase 0を進行中です。WebHID対応ブラウザとUIAPduinoの情報を確認する診断ページを実装しています。
+
+## ローカルで診断ページを開く
+
+```bash
+cd web
+npm install
+npm run dev
+```
