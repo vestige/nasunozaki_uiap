@@ -53,15 +53,21 @@ export default function App() {
         <div className="brand"><span>U</span> UIAPduino Workshop</div>
         <div className="phase">PHASE 0 · 実機調査</div>
         <h1>ボードとブラウザの<br />相性をチェックしよう</h1>
-        <p className="lead">UIAPduinoをつないでボタンを押すと、WebHIDで使うために必要な情報を確認できます。この画面では、まだLEDの書き換えは行いません。</p>
+        <p className="lead">UIAPduinoをボタンを押しながら接続すると、WebHIDで使うために必要な情報を確認できます。この画面では、まだLEDの書き換えは行いません。</p>
       </header>
 
       <section className="workspace" aria-label="接続診断">
         <div className="steps">
-          <article><b>1</b><div><h2>USBでつなぐ</h2><p>データ通信できるUSBケーブルを使います。</p></div></article>
-          <article><b>2</b><div><h2>Chromeで開く</h2><p>SafariやFirefoxでは接続できません。</p></div></article>
-          <article><b>3</b><div><h2>ボードを選ぶ</h2><p>下のボタンからUIAPduinoを選びます。</p></div></article>
+          <article><b>1</b><div><h2>ボタンを押し続ける</h2><p>UIAPduinoのボタンを押したままにします。</p></div></article>
+          <article><b>2</b><div><h2>USBをつなぐ</h2><p>ボタンから指を離さず、PCへ接続します。</p></div></article>
+          <article><b>3</b><div><h2>1秒待って離す</h2><p>接続後に1秒数えてから、ボタンを離します。</p></div></article>
+          <article><b>4</b><div><h2>ボードを選ぶ</h2><p>下のボタンを押し、表示されたUIAPduinoを選びます。</p></div></article>
         </div>
+
+        <aside className="connection-tip">
+          <strong>大事なポイント</strong>
+          <span>先にUSBをつなぐのではなく、ボタンを押したままUSBをつなぎます。</span>
+        </aside>
 
         <div className="diagnostic-card">
           <div className={`status-dot ${supported ? 'ok' : 'bad'}`} aria-hidden="true" />
