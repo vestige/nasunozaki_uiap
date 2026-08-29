@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.13.0" },
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -14,9 +16,12 @@
     "react-dom": "19.2.6"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "6.0.2",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "daisyui": "^5.7.22",
+    "tailwindcss": "^4.3.3",
     "typescript": "5.9.3",
     "vite": "8.2.2"
   }

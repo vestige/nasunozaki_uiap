@@ -70,12 +70,12 @@ UIAPduinoを接続して診断ページを実行した後、この表を更新�
 
 | 項目 | 結果 |
 |---|---|
-| 型番／基板バージョン | 未確認 |
+| 型番／基板バージョン | 製品名 `32V003`（基板バージョンは未確認） |
 | 教育用ファームウェア | 未決定 |
 | 通常時VID | 未確認 |
 | 通常時PID | 未確認 |
-| ブートローダーVID | 未確認 |
-| ブートローダーPID | 未確認 |
+| ブートローダーVID | `0x1209` |
+| ブートローダーPID | `0xB803` |
 | HID collection | Usage Page `0x0001`、Usage `0x00FF`、Collection Type `1` |
 | Feature Report | Report ID `0xAA`、Report Count `127`、Report Size `8 bit`（127 bytes） |
 | Input Report | 未確認 |
@@ -97,6 +97,15 @@ Output Reports:    なし
 ```
 
 この状態ではFeature Reportだけが公開されている。ブラウザからの書き込みプロトコル調査では、Report ID `0xAA`を使うFeature Reportが入口になる可能性が高い。
+
+診断画面で確認したデバイス情報:
+
+```text
+Product Name: 32V003
+Vendor ID:    0x1209
+Product ID:   0xB803
+Collections:  1
+```
 
 ## Phase 0完了条件
 
