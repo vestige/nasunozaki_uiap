@@ -53,7 +53,7 @@ UIAPduino
 
 ## 現在の状態
 
-Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続、HID descriptor取得、Report ID `0xAA`の読み取り、127バイトのRAM往復、USB切断後の再接続まで実機で成功しました。読み取り専用RISC-V stubでも `0x1FFFF7C4`から識別値 `0x00310510`を取得できました。次は書き込みpacketをブラウザ内で生成・検証しますが、フラッシュの消去・書き込みはまだ実機へ送りません。
+Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続から、読み取り専用RISC-V stubによる識別値 `0x00310510`の取得まで実機で成功しました。CH32V003の16KB flash範囲と64バイト境界を検証する書き込みpacket builderも追加し、自動テストだけで確認しています。生成packetを実機へ送る処理や画面ボタンはまだ実装していません。
 
 診断ページ: [UIAPduino接続診断](https://vestige.github.io/nasunozaki_uiap/)
 

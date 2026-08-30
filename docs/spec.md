@@ -167,7 +167,7 @@ WebHID仕様では、`receiveFeatureReport()`の戻り値はOSが返した内容
 4. RAM往復テスト                       完了（127 bytes一致）
 5. USB切断検知・再接続                 完了
 6. 読み取り専用RAM stub実行            完了（識別値0x00310510）
-7. 書き込みパケットを生成              次の作業（オフライン検証）
+7. 書き込みパケットを生成              完了（オフライン検証のみ）
 8. 最小バイナリを書き込む              未実施
 9. 実行と復旧を確認                    未実施
 ```
@@ -226,6 +226,25 @@ packet生成は自動テストで次を固定する。
 - 末尾の実行マジック配置
 - 結果offset 59（入力アドレスoffset 51と区別）
 - 4バイト境界でないアドレスの拒否
+
+### 8.5 64バイト書き込みpacketのオフライン生成
+
+参照実装の `write64_flash`と同じ48バイトstubを使い、CH32V003向けのpacket builderを純粋関数として実装する。この関数はpacketを返すだけでWebHIDを呼ばず、画面からも参照しない。
+
+固定条件:
+
+- flash範囲: `0x08000000`以上、`0x08004000`未満（16KB）
+- block size: 64 bytes
+- 書き込み先: 64バイト境界
+- flash status register: `0x4002200C`
+- hidapi形式128 bytes／WebHID payload 127 bytes
+- stub: packet byte 4〜51
+- address: packet byte 52〜55
+- status register: packet byte 56〜59
+- data: packet byte 60〜123
+- execution magic: packet byte 124〜127
+
+このpacketは実行マジックを含むため、送信されれば書き込みstubを起動し得る。型に `executable: true`を持たせ、読み取り診断packetと区別する。ただし実際の書き込みにはflash unlock、対象blockの退避、erase、write、read-back verify、失敗時の復旧が必要であり、この段階では送信経路へ接続しない。
 
 ## 9. 安全境界
 
