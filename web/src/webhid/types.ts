@@ -53,3 +53,12 @@ export type ChipIdentityResult = {
   value: number;
   attempts: number;
 };
+
+export type FlashSafetyResult = {
+  controlValue: number;
+  protectionValue: number;
+  locked: boolean;
+  readProtected: boolean;
+  safeToUnlock: boolean;
+  attempts: number;
+};

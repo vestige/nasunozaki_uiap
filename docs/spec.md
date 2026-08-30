@@ -288,6 +288,21 @@ unlock sequenceは6 packet、erase packetはaddress・`FLASH_STATR (0x4002200C)`
 
 実機実行を有効化する前に、unlock後のCTLR検証、read protection検証、erase後の全`0xFF`確認、write後のread-back verify、切断時の再接続後verify再開を実装する。
 
+### 8.9 flash安全状態の読み取り
+
+書き込み前の非破壊preflightとして、既存の読み取り専用RAM stubで次の2レジスタを読む。
+
+- `FLASH_CTLR (0x40022010)`: `0x8080` maskが残っていればロック中
+- `FLASH_OBTKEYR (0x4002201C)`: bit 1が立っていればread protectionあり
+
+判定は純粋関数へ分離し、次の状態を返す。
+
+- `locked`
+- `readProtected`
+- `safeToUnlock`: ロック中かつread protectionなしの場合のみtrue
+
+すでにunlock済みの場合は意図しない状態として再接続を案内する。read protectionがある場合は書き込み処理へ進ませない。この診断ではレジスタ読み取りだけを行い、unlock keyやerase packetを送らない。
+
 ## 9. 安全境界
 
 - 対象VID/PIDを固定する

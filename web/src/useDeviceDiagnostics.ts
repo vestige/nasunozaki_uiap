@@ -7,6 +7,7 @@ import {
 } from "./webhid/flashWritePlan";
 import {
   readFeatureReport,
+  readFlashSafetyState,
   readChipIdentity,
   requestUiapDevice,
   runRamRoundTrip,
@@ -16,6 +17,7 @@ import {
 import type {
   ChipIdentityResult,
   FeatureReportResult,
+  FlashSafetyResult,
   HidDevice,
   RoundTripResult,
 } from "./webhid/types";
@@ -67,6 +69,12 @@ export function useDeviceDiagnostics() {
     initialData: null,
     enabled: false,
   });
+  const flashSafetyQuery = useQuery<FlashSafetyResult | null>({
+    queryKey: queryKeys.flashSafety,
+    queryFn: async () => null,
+    initialData: null,
+    enabled: false,
+  });
 
   const readFeature = useMutation({
     mutationFn: () => readFeatureReport(deviceQuery.data!),
@@ -81,6 +89,11 @@ export function useDeviceDiagnostics() {
   const identifyChip = useMutation({
     mutationFn: () => readChipIdentity(deviceQuery.data!),
     onSuccess: (result) => client.setQueryData(queryKeys.chipIdentity, result),
+  });
+
+  const inspectFlashSafety = useMutation({
+    mutationFn: () => readFlashSafetyState(deviceQuery.data!),
+    onSuccess: (result) => client.setQueryData(queryKeys.flashSafety, result),
   });
 
   const reviewFlashWrite = useMutation({
@@ -100,9 +113,11 @@ export function useDeviceDiagnostics() {
     client.setQueryData(queryKeys.featureReport, null);
     client.setQueryData(queryKeys.roundTrip, null);
     client.setQueryData(queryKeys.chipIdentity, null);
+    client.setQueryData(queryKeys.flashSafety, null);
     readFeature.reset();
     roundTrip.reset();
     identifyChip.reset();
+    inspectFlashSafety.reset();
   };
 
   const connect = useMutation({
@@ -143,11 +158,13 @@ export function useDeviceDiagnostics() {
     roundTripResult: roundTripQuery.data,
     chipIdentity: chipIdentityQuery.data,
     flashWriteReview: flashWriteReviewQuery.data,
+    flashSafety: flashSafetyQuery.data,
     connect,
     readFeature,
     roundTrip,
     identifyChip,
     reviewFlashWrite,
+    inspectFlashSafety,
     errorText,
   };
 }

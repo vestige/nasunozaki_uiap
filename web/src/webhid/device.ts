@@ -8,10 +8,16 @@ import {
 import type {
   ChipIdentityResult,
   FeatureReportResult,
+  FlashSafetyResult,
   HidDevice,
   HidNavigator,
   RoundTripResult,
 } from "./types";
+import {
+  FLASH_CONTROL_REGISTER,
+  FLASH_READ_PROTECTION_REGISTER,
+  interpretFlashSafety,
+} from "./flashSafety";
 
 export const UIAP_VENDOR_ID = 0x1209;
 export const UIAP_BOOTLOADER_PRODUCT_ID = 0xb803;
@@ -105,10 +111,8 @@ export async function runRamRoundTrip(
   };
 }
 
-export async function readChipIdentity(
-  device: HidDevice,
-): Promise<ChipIdentityResult> {
-  const request = buildReadWordRequest(CH32V003_PART_ID_ADDRESS);
+async function executeReadWord(device: HidDevice, address: number) {
+  const request = buildReadWordRequest(address);
   await device.sendFeatureReport(request.reportId, request.payload);
 
   for (let attempts = 1; attempts <= 21; attempts += 1) {
@@ -116,11 +120,31 @@ export async function readChipIdentity(
     const payload = normalizeFeaturePayload(response);
     if (payload[0] === 0xff) {
       return {
-        address: CH32V003_PART_ID_ADDRESS,
+        address,
         value: readUint32Result(payload, request.resultOffset),
         attempts,
       };
     }
   }
   throw new Error("RAM stubの完了応答を21回以内に確認できませんでした。");
+}
+
+export async function readChipIdentity(
+  device: HidDevice,
+): Promise<ChipIdentityResult> {
+  return executeReadWord(device, CH32V003_PART_ID_ADDRESS);
+}
+
+export async function readFlashSafetyState(
+  device: HidDevice,
+): Promise<FlashSafetyResult> {
+  const control = await executeReadWord(device, FLASH_CONTROL_REGISTER);
+  const protection = await executeReadWord(
+    device,
+    FLASH_READ_PROTECTION_REGISTER,
+  );
+  return {
+    ...interpretFlashSafety(control.value, protection.value),
+    attempts: control.attempts + protection.attempts,
+  };
 }

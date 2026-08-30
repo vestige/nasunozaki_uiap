@@ -69,6 +69,7 @@ PIDやレポート構成はファームウェアによって変わる可能性�
 - [x] 実機へ送る前の書き込み前確認画面を設計する
 - [x] flash unlock・64バイトerase packetをオフライン検証する
 - [ ] flash unlock後の状態とread protectionを実機で検証する
+- [ ] flash lockとread protectionを読み取り専用で確認する
 - [ ] LEDを1回点灯する最小コマンドを送受信する
 - [ ] 成功応答またはエラー応答をブラウザで受信する
 
@@ -190,6 +191,8 @@ dry-run画面は実機変更を伴わないため、赤ではなく情報色（�
 flash unlockの6 packetと、64バイトerase packetをオフライン生成して自動テストで検証した。unlockではKEYR、OBKEYR、MODEKEYRに2つの鍵を順に書き、eraseでは対象address、FLASH_STATR、64バイト設定を固定する。これらは実行マジックを含むため、実機への送信はまだ有効化していない。
 
 次はunlock後のCTLRとread protectionの確認、erase後の全`0xFF`確認、失敗・切断後のverify再開条件を設計する。
+
+実機操作前のpreflightとして、`FLASH_CTLR (0x40022010)`と `FLASH_OBTKEYR (0x4002201C)`を読み取り専用stubで取得する診断を追加した。ロック中かつread protectionなしの場合だけunlock候補と判定する。実機結果は未確認で、unlock・erase・writeは行わない。
 
 ## Phase 0完了条件
 
