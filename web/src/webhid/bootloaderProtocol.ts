@@ -32,7 +32,9 @@ export function buildReadWordRequest(address: number): ReadWordRequest {
   view.setUint32(56, 4, true);
   view.setUint32(124, EXECUTION_MAGIC, true);
 
-  return { reportId: packet[0], payload: packet.slice(1), resultOffset: 51 };
+  // stubはpacket[52..59]のaddress/lengthを読み、結果をpacket[60..]へ置く。
+  // WebHID payloadではReport ID 1バイト分を除くため結果位置は59になる。
+  return { reportId: packet[0], payload: packet.slice(1), resultOffset: 59 };
 }
 
 export function normalizeFeaturePayload(view: DataView) {

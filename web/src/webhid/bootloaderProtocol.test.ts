@@ -16,7 +16,8 @@ describe("buildReadWordRequest", () => {
     expect(view.getUint32(51, true)).toBe(CH32V003_PART_ID_ADDRESS);
     expect(view.getUint32(55, true)).toBe(4);
     expect(view.getUint32(123, true)).toBe(EXECUTION_MAGIC);
-    expect(request.resultOffset).toBe(51);
+    expect(request.resultOffset).toBe(59);
+    expect(request.resultOffset).not.toBe(51);
   });
 
   it("4バイト境界でないアドレスを拒否する", () => {

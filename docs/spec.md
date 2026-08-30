@@ -214,12 +214,15 @@ rv003usbのbootloaderとch32funの `pgm-b003fun.c` を照合し、次を確認�
 
 WebHIDではReport IDを別引数として渡すため、hidapiの128バイトbufferから先頭Report IDを除いた127バイトを送る。実行完了はpayload先頭が `0xFF`になることで判定し、最大21回で打ち切る。この操作はメモリ読み取りだけを行い、フラッシュ制御レジスタ、消去、書き込み処理を含まない。
 
+stubはpacket byte 52から読み取りアドレスと長さを取得し、packet byte 60から結果を書き込む。WebHIDではReport IDを除いたpayloadを扱うため、結果の先頭offsetは59となる。最初の実機試験ではoffset 51を読んだため、実データではなく入力アドレス `0x1FFFF7C4`を表示した。payload先頭の完了値 `0xFF`は確認できており、RAM stubの実行自体は成功している。
+
 packet生成は自動テストで次を固定する。
 
 - Report ID `0xAA`
 - payload 127 bytes
 - 読み取りアドレスと長さのリトルエンディアン配置
 - 末尾の実行マジック配置
+- 結果offset 59（入力アドレスoffset 51と区別）
 - 4バイト境界でないアドレスの拒否
 
 ## 9. 安全境界
