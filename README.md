@@ -53,7 +53,7 @@ UIAPduino
 
 ## 現在の状態
 
-Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続、HID descriptor取得、Report ID `0xAA`の読み取り、実行マジック値を含まない127バイトのRAM往復まで実機で成功しました。現在はUSB切断の検知と再接続を検証し、フラッシュ書き込み実験へ進む前の復旧性を確認しています。
+Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続、HID descriptor取得、Report ID `0xAA`の読み取り、127バイトのRAM往復、USB切断後の再接続まで実機で成功しました。画面はReactの責務別ComponentとTanStack QueryによるWebHID非同期状態管理へ整理しています。
 
 診断ページ: [UIAPduino接続診断](https://vestige.github.io/nasunozaki_uiap/)
 

@@ -256,11 +256,14 @@ https://<user>.github.io/nasunozaki_uiap/
 ├── web/
 │   ├── public/
 │   ├── src/
+│   │   ├── components/
 │   │   ├── blocks/
 │   │   ├── compiler/
 │   │   ├── execution/
 │   │   ├── lessons/
 │   │   ├── simulator/
+│   │   ├── query.ts
+│   │   ├── useDeviceDiagnostics.ts
 │   │   └── webhid/
 │   └── tests/
 └── .github/
@@ -269,6 +272,30 @@ https://<user>.github.io/nasunozaki_uiap/
 ```
 
 ファームウェアとWebアプリで通信プロトコルの定義がずれないよう、命令番号と仕様を1か所で管理し、生成または検証できる形を検討する。
+
+### 8.1 React Componentの設計ルール
+
+- `App.tsx`はページ全体の組み立てに限定し、通信処理や大きな表示ブロックを直接持たせない
+- ヘッダー、接続手順、接続操作、デバイス結果、各診断操作を責務ごとのComponentへ分ける
+- Component名とファイル名を一致させ、`components/`以下へ配置する
+- WebHID固有の型、定数、通信処理は `webhid/`へ分離し、表示ComponentからWebHID APIを直接呼ばない
+- 同じ画面だけで使う小さな表示は過度に分割せず、役割を名前で説明できる単位を目安にする
+
+### 8.2 TanStack Queryによる状態管理
+
+WebHIDデバイスはブラウザ外部で状態が変化し、接続、読み取り、送信はいずれも非同期処理である。この外部状態と処理状態をTanStack Queryで管理する。
+
+- アプリのルートを `QueryClientProvider`で囲む
+- 接続デバイス、Feature Report、診断結果は安定したquery keyでキャッシュする
+- 接続、読み取り、送信は `useMutation`へまとめ、`isPending`と`isError`をUIへ反映する
+- USBの `disconnect` イベントはWebHID層で受け、Query Clientの対象キャッシュを更新する
+- WebHIDの状態同期を目的とした `useEffect`と、非同期結果を複製するための `useState`は使わない
+- Component内だけで完結する開閉状態や入力途中の値など、外部状態ではない一時的UI状態までTanStack Queryへ入れない。必要時は用途に合うReactの局所状態を選ぶ
+- Query keyと既定設定は1か所に集約し、通信処理と表示処理を分離する
+
+TanStack Queryは本来、非同期に取得・更新される外部状態を取得、キャッシュ、同期するためのライブラリである。この役割に沿って採用し、あらゆるReact状態を機械的に置き換える用途にはしない。
+
+参考: [TanStack Query React Overview](https://tanstack.com/query/latest/docs/framework/react/overview)
 
 ## 9. 開発段階
 
