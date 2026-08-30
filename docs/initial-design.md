@@ -102,11 +102,11 @@ CH32V003上でJavaScriptを直接実行する設計にはしない。Blocklyが�
 
 ```ts
 interface BoardAdapter {
-  connect(): Promise<void>
-  disconnect(): Promise<void>
-  execute(command: Command): Promise<Result>
-  stop(): Promise<void>
-  getState(): BoardState
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+  execute(command: Command): Promise<Result>;
+  stop(): Promise<void>;
+  getState(): BoardState;
 }
 ```
 
@@ -129,23 +129,23 @@ UIAPduinoのHIDレポートサイズに合わせ、バイナリの小さなパ�
 
 要求パケット案:
 
-| 項目 | 内容 |
-|---|---|
-| protocolVersion | プロトコル互換性確認用 |
-| sequenceId | 要求と応答の対応付け |
-| opcode | LED、GPIO、入力取得などの命令 |
-| payloadLength | 引数の長さ |
-| payload | 命令の引数 |
+| 項目            | 内容                          |
+| --------------- | ----------------------------- |
+| protocolVersion | プロトコル互換性確認用        |
+| sequenceId      | 要求と応答の対応付け          |
+| opcode          | LED、GPIO、入力取得などの命令 |
+| payloadLength   | 引数の長さ                    |
+| payload         | 命令の引数                    |
 
 応答パケット案:
 
-| 項目 | 内容 |
-|---|---|
-| protocolVersion | プロトコルバージョン |
-| sequenceId | 対応する要求番号 |
-| status | 成功、未対応、不正値、内部エラーなど |
-| payloadLength | 戻り値の長さ |
-| payload | センサー値など |
+| 項目            | 内容                                 |
+| --------------- | ------------------------------------ |
+| protocolVersion | プロトコルバージョン                 |
+| sequenceId      | 対応する要求番号                     |
+| status          | 成功、未対応、不正値、内部エラーなど |
+| payloadLength   | 戻り値の長さ                         |
+| payload         | センサー値など                       |
 
 次の安全対策を含める。
 
@@ -292,6 +292,8 @@ WebHIDデバイスはブラウザ外部で状態が変化し、接続、読み�
 - WebHIDの状態同期を目的とした `useEffect`と、非同期結果を複製するための `useState`は使わない
 - Component内だけで完結する開閉状態や入力途中の値など、外部状態ではない一時的UI状態までTanStack Queryへ入れない。必要時は用途に合うReactの局所状態を選ぶ
 - Query keyと既定設定は1か所に集約し、通信処理と表示処理を分離する
+- バイナリpacketの組み立ては純粋関数にし、実機なしでバイト位置と安全条件を自動テストする
+- GitHub Pagesの公開前にTypeScript buildとprotocol testの両方を実行する
 
 TanStack Queryは本来、非同期に取得・更新される外部状態を取得、キャッシュ、同期するためのライブラリである。この役割に沿って採用し、あらゆるReact状態を機械的に置き換える用途にはしない。
 

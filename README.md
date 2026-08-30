@@ -53,7 +53,7 @@ UIAPduino
 
 ## 現在の状態
 
-Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続、HID descriptor取得、Report ID `0xAA`の読み取り、127バイトのRAM往復、USB切断後の再接続まで実機で成功しました。画面はReactの責務別ComponentとTanStack QueryによるWebHID非同期状態管理へ整理しています。
+Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続、HID descriptor取得、Report ID `0xAA`の読み取り、127バイトのRAM往復、USB切断後の再接続まで実機で成功しました。次の非破壊検証として、参照実装と同じ読み取り専用RISC-V stubをRAMで実行し、チップ識別領域を読む機能を実装しています。フラッシュの消去・書き込みはまだ行いません。
 
 診断ページ: [UIAPduino接続診断](https://vestige.github.io/nasunozaki_uiap/)
 

@@ -35,21 +35,21 @@ Phase 0の完了条件:
 
 ブートローダーモードで確認済みの識別情報:
 
-| 項目 | 値 |
-|---|---|
-| Product Name | `32V003` |
-| Vendor ID | `0x1209` |
-| Product ID | `0xB803` |
-| HID Collection | 1個 |
-| Usage Page | `0x0001` |
-| Usage | `0x00FF` |
-| Collection Type | `1` |
-| Feature Report ID | `0xAA` |
-| Feature Report Count | `127` |
-| Feature Report Size | `8 bit` |
+| 項目                   | 値          |
+| ---------------------- | ----------- |
+| Product Name           | `32V003`    |
+| Vendor ID              | `0x1209`    |
+| Product ID             | `0xB803`    |
+| HID Collection         | 1個         |
+| Usage Page             | `0x0001`    |
+| Usage                  | `0x00FF`    |
+| Collection Type        | `1`         |
+| Feature Report ID      | `0xAA`      |
+| Feature Report Count   | `127`       |
+| Feature Report Size    | `8 bit`     |
 | Feature Report Payload | `127 bytes` |
-| Input Report | なし |
-| Output Report | なし |
+| Input Report           | なし        |
+| Output Report          | なし        |
 
 WebHIDの選択ダイアログはVendor IDとProduct IDの両方で絞り込む。他のHIDデバイスへ命令を送らない。
 
@@ -67,15 +67,15 @@ WebHIDの選択ダイアログはVendor IDとProduct IDの両方で絞り込む�
 
 ### 5.1 技術構成
 
-| 項目 | 採用技術 |
-|---|---|
-| UI | React |
-| UIコンポーネント | daisyUI |
-| CSS | Tailwind CSS |
-| ビルド | Vite |
-| USB通信 | WebHID |
-| 公開 | GitHub Pages |
-| CI/CD | GitHub Actions |
+| 項目             | 採用技術       |
+| ---------------- | -------------- |
+| UI               | React          |
+| UIコンポーネント | daisyUI        |
+| CSS              | Tailwind CSS   |
+| ビルド           | Vite           |
+| USB通信          | WebHID         |
+| 公開             | GitHub Pages   |
+| CI/CD            | GitHub Actions |
 
 公開URL: `https://vestige.github.io/nasunozaki_uiap/`
 
@@ -145,12 +145,12 @@ WebHIDの `receiveFeatureReport(0xAA)` を使用し、GET_REPORT相当の読み�
 
 実機では次の結果を得た。
 
-| 項目 | 結果 |
-|---|---|
-| WebHID戻り値 | 128 bytes |
-| 先頭バイト | `0x00` |
-| payload候補 | 127 bytes |
-| 内容 | 全バイト `0x00` |
+| 項目         | 結果            |
+| ------------ | --------------- |
+| WebHID戻り値 | 128 bytes       |
+| 先頭バイト   | `0x00`          |
+| payload候補  | 127 bytes       |
+| 内容         | 全バイト `0x00` |
 
 WebHID仕様では、`receiveFeatureReport()`の戻り値はOSが返した内容をそのまま含み、Report IDを使う機器では先頭バイトが含まれる場合がある。そのため、descriptorの `127 bytes` と実測の `128 bytes` の差はOSが返した先頭1バイトによるものと解釈する。
 
@@ -166,9 +166,10 @@ WebHID仕様では、`receiveFeatureReport()`の戻り値はOSが返した内容
 3. 参照実装から転送方式を特定          完了
 4. RAM往復テスト                       完了（127 bytes一致）
 5. USB切断検知・再接続                 完了
-6. 書き込みパケットを生成              未実施
-7. 最小バイナリを書き込む              未実施
-8. 実行と復旧を確認                    未実施
+6. 読み取り専用RAM stub実行            実装済み・実機確認待ち
+7. 書き込みパケットを生成              未実施
+8. 最小バイナリを書き込む              未実施
+9. 実行と復旧を確認                    未実施
 ```
 
 読み取り診断は手順2の通信経路確認に必要であり、最終プロダクトの通常操作として残す必要はない。開発者向け診断機能として扱う。
@@ -206,6 +207,20 @@ rv003usbのbootloaderとch32funの `pgm-b003fun.c` を照合し、次を確認�
 接続中の対象デバイスにWebHIDの `disconnect` イベントが発生した場合、画面上のデバイス情報と診断結果を消去し、再接続手順を案内する。再接続は初回と同じボタンからデバイスを選び直す。自動的にデバイスを開き直さず、利用者が物理状態を確認してから明示的に操作する。
 
 実機ではUSB切断が画面へ反映され、ブートローダー接続手順を繰り返して再接続できることを確認した。
+
+### 8.4 読み取り専用RAM stub
+
+フラッシュ書き込みstubへ進む前に、minichlinkの `word_wise_read_blob`と同じ48バイトのRISC-Vコードをscratchpadで実行する。読み取り先はCH32V003判定に参照実装が使用する `0x1FFFF7C4`、長さは4バイトに固定する。
+
+WebHIDではReport IDを別引数として渡すため、hidapiの128バイトbufferから先頭Report IDを除いた127バイトを送る。実行完了はpayload先頭が `0xFF`になることで判定し、最大21回で打ち切る。この操作はメモリ読み取りだけを行い、フラッシュ制御レジスタ、消去、書き込み処理を含まない。
+
+packet生成は自動テストで次を固定する。
+
+- Report ID `0xAA`
+- payload 127 bytes
+- 読み取りアドレスと長さのリトルエンディアン配置
+- 末尾の実行マジック配置
+- 4バイト境界でないアドレスの拒否
 
 ## 9. 安全境界
 

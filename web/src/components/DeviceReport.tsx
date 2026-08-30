@@ -1,6 +1,7 @@
 import type { useDeviceDiagnostics } from "../useDeviceDiagnostics";
 import { FeatureReportCard } from "./FeatureReportCard";
 import { RamRoundTripCard } from "./RamRoundTripCard";
+import { ChipIdentityCard } from "./ChipIdentityCard";
 type Props = { diagnostics: ReturnType<typeof useDeviceDiagnostics> };
 const hex = (value: number) =>
   `0x${value.toString(16).toUpperCase().padStart(4, "0")}`;
@@ -74,6 +75,7 @@ export function DeviceReport({ diagnostics }: Props) {
           </div>
           <FeatureReportCard diagnostics={diagnostics} />
           <RamRoundTripCard diagnostics={diagnostics} />
+          <ChipIdentityCard diagnostics={diagnostics} />
         </div>
       )}
     </section>

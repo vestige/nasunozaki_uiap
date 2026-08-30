@@ -1,4 +1,12 @@
+import {
+  BOOTLOADER_REPORT_ID,
+  buildReadWordRequest,
+  CH32V003_PART_ID_ADDRESS,
+  normalizeFeaturePayload,
+  readUint32Result,
+} from "./bootloaderProtocol";
 import type {
+  ChipIdentityResult,
   FeatureReportResult,
   HidDevice,
   HidNavigator,
@@ -7,7 +15,7 @@ import type {
 
 export const UIAP_VENDOR_ID = 0x1209;
 export const UIAP_BOOTLOADER_PRODUCT_ID = 0xb803;
-export const BOOTLOADER_REPORT_ID = 0xaa;
+export { BOOTLOADER_REPORT_ID } from "./bootloaderProtocol";
 
 let watchedDevice: HidDevice | null = null;
 let disconnectListener:
@@ -95,4 +103,24 @@ export async function runRamRoundTrip(
       received.every((byte, index) => byte === sent[index]),
     receivedLength: received.length,
   };
+}
+
+export async function readChipIdentity(
+  device: HidDevice,
+): Promise<ChipIdentityResult> {
+  const request = buildReadWordRequest(CH32V003_PART_ID_ADDRESS);
+  await device.sendFeatureReport(request.reportId, request.payload);
+
+  for (let attempts = 1; attempts <= 21; attempts += 1) {
+    const response = await device.receiveFeatureReport(request.reportId);
+    const payload = normalizeFeaturePayload(response);
+    if (payload[0] === 0xff) {
+      return {
+        address: CH32V003_PART_ID_ADDRESS,
+        value: readUint32Result(payload, request.resultOffset),
+        attempts,
+      };
+    }
+  }
+  throw new Error("RAM stubの完了応答を21回以内に確認できませんでした。");
 }

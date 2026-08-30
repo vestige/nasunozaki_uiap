@@ -2,12 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "./query";
 import {
   readFeatureReport,
+  readChipIdentity,
   requestUiapDevice,
   runRamRoundTrip,
   supportsWebHid,
   watchDisconnect,
 } from "./webhid/device";
 import type {
+  ChipIdentityResult,
   FeatureReportResult,
   HidDevice,
   RoundTripResult,
@@ -43,6 +45,12 @@ export function useDeviceDiagnostics() {
     initialData: null,
     enabled: false,
   });
+  const chipIdentityQuery = useQuery<ChipIdentityResult | null>({
+    queryKey: queryKeys.chipIdentity,
+    queryFn: async () => null,
+    initialData: null,
+    enabled: false,
+  });
 
   const readFeature = useMutation({
     mutationFn: () => readFeatureReport(deviceQuery.data!),
@@ -54,11 +62,18 @@ export function useDeviceDiagnostics() {
     onSuccess: (result) => client.setQueryData(queryKeys.roundTrip, result),
   });
 
+  const identifyChip = useMutation({
+    mutationFn: () => readChipIdentity(deviceQuery.data!),
+    onSuccess: (result) => client.setQueryData(queryKeys.chipIdentity, result),
+  });
+
   const clearDiagnosticResults = () => {
     client.setQueryData(queryKeys.featureReport, null);
     client.setQueryData(queryKeys.roundTrip, null);
+    client.setQueryData(queryKeys.chipIdentity, null);
     readFeature.reset();
     roundTrip.reset();
+    identifyChip.reset();
   };
 
   const connect = useMutation({
@@ -97,9 +112,11 @@ export function useDeviceDiagnostics() {
     message: messageQuery.data,
     featureReport: featureQuery.data,
     roundTripResult: roundTripQuery.data,
+    chipIdentity: chipIdentityQuery.data,
     connect,
     readFeature,
     roundTrip,
+    identifyChip,
     errorText,
   };
 }

@@ -17,4 +17,5 @@ export const queryKeys = {
   connectionMessage: ["webhid", "connection-message"] as const,
   featureReport: ["webhid", "feature-report"] as const,
   roundTrip: ["webhid", "round-trip"] as const,
+  chipIdentity: ["webhid", "chip-identity"] as const,
 };

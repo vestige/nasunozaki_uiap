@@ -47,3 +47,9 @@ export type RoundTripResult = {
   succeeded: boolean;
   receivedLength: number;
 };
+
+export type ChipIdentityResult = {
+  address: number;
+  value: number;
+  attempts: number;
+};
