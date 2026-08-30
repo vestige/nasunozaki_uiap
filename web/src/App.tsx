@@ -3,6 +3,7 @@ import { ConnectionGuide } from "./components/ConnectionGuide";
 import { DeviceReport } from "./components/DeviceReport";
 import { PageHeader } from "./components/PageHeader";
 import { FlashWriteReviewCard } from "./components/FlashWriteReviewCard";
+import { DiagnosticLogPanel } from "./components/DiagnosticLogPanel";
 import { useDeviceDiagnostics } from "./useDeviceDiagnostics";
 
 export default function App() {
@@ -20,9 +21,10 @@ export default function App() {
         <FlashWriteReviewCard diagnostics={diagnostics} />
       </section>
       <DeviceReport diagnostics={diagnostics} />
+      <DiagnosticLogPanel diagnostics={diagnostics} />
       <footer className="footer bg-neutral px-5 py-8 text-sm text-neutral-content/70 sm:px-[max(2rem,calc((100%-72rem)/2))]">
         <p>
-          この診断は接続確認とRAM通信だけを行い、フラッシュは書き換えません。
+          この診断は接続、RAM通信、読み取り専用の安全確認を行い、フラッシュは書き換えません。
         </p>
         <a
           className="link link-warning font-bold"

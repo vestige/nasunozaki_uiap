@@ -99,8 +99,12 @@ Safari、Firefox、スマートフォンは現在の対象外とする。Chromeb
 - 読み取り結果を16進数とバイト数で表示する
 - OSから返った生データとdescriptor上のpayload候補を区別する
 - 通信失敗時に再試行可能なメッセージを表示する
+- 接続、読み取り、dry-run、flash安全確認の結果を画面下部の診断ログへ記録する
+- 診断ログを新しい順に表示し、全文コピーと消去を行える
 
 診断画面では、明示的に別の操作を選ぶまでFeature Reportの送信やフラッシュ書き込みを行わない。
+
+診断ログはTanStack Queryのメモリーキャッシュだけに保持する。各行は時刻、レベル、操作名、説明、診断値を持ち、ページ再読み込み後には残さない。ログをサーバーへ送信せず、ファイルや`localStorage`へ自動保存しない。
 
 ## 6. 接続状態
 
@@ -302,6 +306,17 @@ unlock sequenceは6 packet、erase packetはaddress・`FLASH_STATR (0x4002200C)`
 - `safeToUnlock`: ロック中かつread protectionなしの場合のみtrue
 
 すでにunlock済みの場合は意図しない状態として再接続を案内する。read protectionがある場合は書き込み処理へ進ませない。この診断ではレジスタ読み取りだけを行い、unlock keyやerase packetを送らない。
+
+2026-08-30の実機確認では次を取得した。
+
+| 項目            | 結果         |
+| --------------- | ------------ |
+| `FLASH_CTLR`    | `0x00008080` |
+| `FLASH_OBTKEYR` | `0x03FFFFDC` |
+| flash lock      | ロック中     |
+| read protection | 検出なし     |
+
+この結果は、実機操作前の通常の安全な待機状態として扱う。`safeToUnlock`の前提は満たすが、実機unlockを自動的に許可または実行するものではない。
 
 ## 9. 安全境界
 

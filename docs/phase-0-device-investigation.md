@@ -69,7 +69,7 @@ PIDやレポート構成はファームウェアによって変わる可能性�
 - [x] 実機へ送る前の書き込み前確認画面を設計する
 - [x] flash unlock・64バイトerase packetをオフライン検証する
 - [ ] flash unlock後の状態とread protectionを実機で検証する
-- [ ] flash lockとread protectionを読み取り専用で確認する
+- [x] flash lockとread protectionを読み取り専用で確認する
 - [ ] LEDを1回点灯する最小コマンドを送受信する
 - [ ] 成功応答またはエラー応答をブラウザで受信する
 
@@ -192,7 +192,20 @@ flash unlockの6 packetと、64バイトerase packetをオフライン生成し�
 
 次はunlock後のCTLRとread protectionの確認、erase後の全`0xFF`確認、失敗・切断後のverify再開条件を設計する。
 
-実機操作前のpreflightとして、`FLASH_CTLR (0x40022010)`と `FLASH_OBTKEYR (0x4002201C)`を読み取り専用stubで取得する診断を追加した。ロック中かつread protectionなしの場合だけunlock候補と判定する。実機結果は未確認で、unlock・erase・writeは行わない。
+実機操作前のpreflightとして、`FLASH_CTLR (0x40022010)`と `FLASH_OBTKEYR (0x4002201C)`を読み取り専用stubで取得する診断を追加した。ロック中かつread protectionなしの場合だけunlock候補と判定する。
+
+2026-08-30の実機確認結果:
+
+```text
+CTLR:            0x00008080
+OBTKEYR:         0x03FFFFDC
+flash lock:      ロック中
+read protection: 検出なし
+```
+
+通常の安全な待機状態であり、実機unlockを検討するための前提を確認できた。この確認ではunlock・erase・writeを行っていない。「unlock後のCTLR検証」は別の実機確認として未完了のまま残す。
+
+接続、Feature Report読み取り、RAM往復、チップ識別、dry-run、flash preflightの結果を画面下部へ時刻付きで蓄積する診断ログを追加した。ログはブラウザのメモリー内だけに保持し、新しい順の表示、全文コピー、消去に対応する。サーバー送信と永続保存は行わない。
 
 ## Phase 0完了条件
 
