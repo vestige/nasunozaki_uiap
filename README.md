@@ -53,7 +53,7 @@ UIAPduino
 
 ## 現在の状態
 
-Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続とHID descriptorの取得まで確認できました。現在はReport ID `0xAA`の読み取り専用Feature Report診断を実装しています。
+Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続、HID descriptor取得、Report ID `0xAA`の読み取りまで確認できました。読み取りでは生データ128バイト（先頭1バイト＋descriptor上のpayload 127バイト）が返り、内容はすべて `0x00` でした。次は参照実装からブートローダーの既知コマンドを特定します。
 
 診断ページ: [UIAPduino接続診断](https://vestige.github.io/nasunozaki_uiap/)
 

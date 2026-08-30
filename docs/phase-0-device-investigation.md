@@ -59,7 +59,7 @@ PIDやレポート構成はファームウェアによって変わる可能性�
 - [x] HID collectionとReport IDを記録する
 - [x] Feature Reportの最大送信サイズを確認する
 - [x] Input Reportが存在しないことを確認する
-- [ ] Report ID `0xAA`を読み取り専用で取得する
+- [x] Report ID `0xAA`を読み取り専用で取得する
 - [ ] 接続を解除して再接続できる
 - [ ] USBを途中で抜いた場合にページが復旧できる
 - [ ] LEDを1回点灯する最小コマンドを送受信する
@@ -110,7 +110,21 @@ Collections:  1
 
 ## 次の調査
 
-診断ページからWebHIDの `receiveFeatureReport(0xAA)` を呼び、GET_REPORT相当の読み取りが可能か確認する。
+診断ページからWebHIDの `receiveFeatureReport(0xAA)` を呼び、GET_REPORT相当の読み取りが可能であることを確認した。
+
+実測結果:
+
+```text
+Raw length:       128 bytes
+Leading byte:     0x00
+Payload candidate: 127 bytes
+Content:          all 0x00
+Observed at:      2026-08-30 09:44:18 JST
+```
+
+descriptorはReport Count 127、Report Size 8 bitを示すが、WebHIDの戻り値は128バイトだった。WebHID仕様上、Feature Reportの読み取り結果にはOSが返す先頭バイトが含まれる場合があるため、先頭1バイトと127バイトのpayload候補として記録する。
+
+全ゼロ応答はGET_REPORTの転送成功を示すが、ブートローダーの状態やバージョンを表す有効な応答とは判断しない。
 
 この段階では次を行わない。
 
@@ -118,7 +132,7 @@ Collections:  1
 - フラッシュへの書き込み
 - 未確認コマンドの送信
 
-読み取りに成功した場合は受信バイト数と16進数列を記録する。失敗した場合は例外名とメッセージを記録し、ブートローダー実装のGET_REPORT対応を調査する。
+次はrv003usb／minichlinkの参照実装からReport ID `0xAA`の既知コマンド形式を確認し、最初に非破壊の識別または状態取得コマンドが存在するかを調査する。
 
 ## Phase 0完了条件
 

@@ -42,7 +42,12 @@ export default function App() {
   const [device, setDevice] = useState<HidDevice | null>(null);
   const [message, setMessage] = useState('まだボードを調べていません。');
   const [busy, setBusy] = useState(false);
-  const [featureReport, setFeatureReport] = useState<{ bytes: number[]; readAt: string } | null>(null);
+  const [featureReport, setFeatureReport] = useState<{
+    rawBytes: number[];
+    payloadBytes: number[];
+    leadingByte?: number;
+    readAt: string;
+  } | null>(null);
   const [featureMessage, setFeatureMessage] = useState('接続後に読み取りできます。');
   const [readingFeature, setReadingFeature] = useState(false);
   const supported = useMemo(() => typeof navigator !== 'undefined' && 'hid' in navigator, []);
@@ -84,9 +89,19 @@ export default function App() {
     setFeatureMessage('Report ID 0xAAを読み取っています…');
     try {
       const view = await device.receiveFeatureReport(BOOTLOADER_REPORT_ID);
-      const bytes = Array.from(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
-      setFeatureReport({ bytes, readAt: new Date().toLocaleString('ja-JP') });
-      setFeatureMessage(`${bytes.length}バイトを読み取りました。フラッシュへの書き込みは行っていません。`);
+      const rawBytes = Array.from(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
+      const includesLeadingByte = rawBytes.length === 128;
+      const payloadBytes = includesLeadingByte ? rawBytes.slice(1) : rawBytes;
+      setFeatureReport({
+        rawBytes,
+        payloadBytes,
+        leadingByte: includesLeadingByte ? rawBytes[0] : undefined,
+        readAt: new Date().toLocaleString('ja-JP'),
+      });
+      const allZero = rawBytes.every((byte) => byte === 0);
+      setFeatureMessage(
+        `${rawBytes.length}バイトを読み取りました。${allZero ? '内容はすべて0で、状態情報は含まれていません。' : '0以外のデータが含まれています。'}フラッシュへの書き込みは行っていません。`,
+      );
     } catch (error) {
       const detail = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
       setFeatureReport(null);
@@ -197,9 +212,11 @@ export default function App() {
                 <div role="status" className={`alert ${featureReport ? 'alert-success' : 'alert-info'}`}><span>{featureMessage}</span></div>
                 {featureReport && (
                   <div className="mockup-code bg-neutral text-neutral-content">
-                    <pre data-prefix="bytes"><code>{featureReport.bytes.length}</code></pre>
+                    <pre data-prefix="raw"><code>{featureReport.rawBytes.length} bytes</code></pre>
+                    <pre data-prefix="payload"><code>{featureReport.payloadBytes.length} bytes</code></pre>
+                    {featureReport.leadingByte !== undefined && <pre data-prefix="leading"><code>{featureReport.leadingByte.toString(16).padStart(2, '0')}</code></pre>}
                     <pre data-prefix="time"><code>{featureReport.readAt}</code></pre>
-                    <pre data-prefix="hex"><code>{featureReport.bytes.map((byte) => byte.toString(16).padStart(2, '0')).join(' ') || '(empty)'}</code></pre>
+                    <pre data-prefix="hex"><code>{featureReport.rawBytes.map((byte) => byte.toString(16).padStart(2, '0')).join(' ') || '(empty)'}</code></pre>
                   </div>
                 )}
               </div>
