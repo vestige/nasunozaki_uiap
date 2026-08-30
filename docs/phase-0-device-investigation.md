@@ -60,7 +60,7 @@ PIDやレポート構成はファームウェアによって変わる可能性�
 - [x] Feature Reportの最大送信サイズを確認する
 - [x] Input Reportが存在しないことを確認する
 - [x] Report ID `0xAA`を読み取り専用で取得する
-- [ ] 実行マジック値を含まないRAM往復テストに成功する
+- [x] 実行マジック値を含まないRAM往復テストに成功する
 - [ ] 接続を解除して再接続できる
 - [ ] USBを途中で抜いた場合にページが復旧できる
 - [ ] LEDを1回点灯する最小コマンドを送受信する
@@ -82,6 +82,7 @@ UIAPduinoを接続して診断ページを実行した後、この表を更新�
 | Feature Report | Report ID `0xAA`、Report Count `127`、Report Size `8 bit`（127 bytes） |
 | Input Report | 未確認 |
 | Chrome | 接続とdescriptor取得を確認済み |
+| RAM往復 | 127 bytesの送信内容と読み戻し内容が完全一致 |
 | Edge | 未確認 |
 | Chromebook | 未確認 |
 
@@ -145,7 +146,16 @@ minichlinkは次の流れで動作する。
 4. 結果をscratchpadへ置く
 5. GET_REPORTでホストが結果を読む
 
-次の実機検証では、実行マジックを含めない127バイトの固定パターンをSET_REPORTでscratchpadへ送り、GET_REPORTで同じ内容を読み戻せるか確認する。これはRAMだけを変更し、フラッシュ書き込みやコード実行は行わない。
+実機検証では、実行マジックを含めない127バイトの固定パターンをSET_REPORTでscratchpadへ送り、GET_REPORTで同じ内容を読み戻すことに成功した。これはRAMだけを変更し、フラッシュ書き込みやコード実行は行わない。
+
+```text
+送信payload:  127 bytes
+受信payload:  127 bytes
+比較結果:     完全一致
+実機確認日:   2026-08-30
+```
+
+次は接続中にUSBを抜いた場合の切断表示と、接続手順を繰り返した場合の再接続を実機で確認する。
 
 ## Phase 0完了条件
 

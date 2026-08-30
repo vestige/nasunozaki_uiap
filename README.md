@@ -53,7 +53,7 @@ UIAPduino
 
 ## 現在の状態
 
-Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続、HID descriptor取得、Report ID `0xAA`の読み取りまで確認できました。参照実装の調査から、Feature ReportがRAM上のscratchpadへの転送に使われ、末尾の実行マジック値がある場合だけRAM上のコードを実行する構造だと確認しました。現在は実行マジック値を含まないRAM往復テストを検証しています。
+Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続、HID descriptor取得、Report ID `0xAA`の読み取り、実行マジック値を含まない127バイトのRAM往復まで実機で成功しました。現在はUSB切断の検知と再接続を検証し、フラッシュ書き込み実験へ進む前の復旧性を確認しています。
 
 診断ページ: [UIAPduino接続診断](https://vestige.github.io/nasunozaki_uiap/)
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type HidCollection = {
   usagePage?: number;
@@ -24,6 +24,8 @@ type HidDevice = {
 type HidNavigator = Navigator & {
   hid?: {
     requestDevice(options: { filters: Array<{ vendorId: number; productId: number }> }): Promise<HidDevice[]>;
+    addEventListener(type: 'disconnect', listener: (event: Event & { device: HidDevice }) => void): void;
+    removeEventListener(type: 'disconnect', listener: (event: Event & { device: HidDevice }) => void): void;
   };
 };
 
@@ -55,6 +57,24 @@ export default function App() {
   const [runningRoundTrip, setRunningRoundTrip] = useState(false);
   const [roundTripSucceeded, setRoundTripSucceeded] = useState<boolean | null>(null);
   const supported = useMemo(() => typeof navigator !== 'undefined' && 'hid' in navigator, []);
+
+  useEffect(() => {
+    const hid = (navigator as HidNavigator).hid;
+    if (!hid) return;
+
+    const handleDisconnect = (event: Event & { device: HidDevice }) => {
+      if (event.device !== device) return;
+      setDevice(null);
+      setFeatureReport(null);
+      setRoundTripSucceeded(null);
+      setFeatureMessage('接続後に読み取りできます。');
+      setRoundTripMessage('未実施です。');
+      setMessage('UIAPduinoが外されました。接続手順どおりにつなぎ直して、もう一度調べてください。');
+    };
+
+    hid.addEventListener('disconnect', handleDisconnect);
+    return () => hid.removeEventListener('disconnect', handleDisconnect);
+  }, [device]);
 
   async function inspectDevice() {
     const hid = (navigator as HidNavigator).hid;
@@ -283,7 +303,7 @@ export default function App() {
       </section>
 
       <footer className="footer bg-neutral px-5 py-8 text-sm text-neutral-content/70 sm:px-[max(2rem,calc((100%-72rem)/2))]">
-        <p>この診断ではデバイスの選択と情報取得だけを行います。</p>
+        <p>この診断は接続確認とRAM通信だけを行い、フラッシュは書き換えません。</p>
         <a className="link link-warning font-bold" href="https://github.com/vestige/nasunozaki_uiap">GitHubで設計を見る ↗</a>
       </footer>
     </main>
