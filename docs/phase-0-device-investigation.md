@@ -66,7 +66,7 @@ PIDやレポート構成はファームウェアによって変わる可能性�
 - [x] 読み取り専用RAM stubでチップ識別値を取得する
 - [x] 64バイト書き込みpacketをオフライン生成して検証する
 - [x] flash unlock／erase／write／verify手順を設計する
-- [ ] 実機へ送る前の書き込み前確認画面を設計する
+- [x] 実機へ送る前の書き込み前確認画面を設計する
 - [ ] LEDを1回点灯する最小コマンドを送受信する
 - [ ] 成功応答またはエラー応答をブラウザで受信する
 
@@ -176,6 +176,10 @@ minichlinkは次の流れで動作する。
 書き込み計画を実装し、各blockを `preflight → unlock → backup → merge → erase → write → verify` の順で扱うことを自動テストで固定した。部分書き込みがblockをまたぐ場合は、両方のblockを64バイト単位で退避・mergeする。計画は `executable: false`であり、WebHID送信処理へ渡されない。
 
 次は、実行予定のaddress、容量、対象block数、消去を伴うことを利用者へ明示する書き込み前確認画面を設計する。
+
+書き込み前確認画面を追加した。binファイルの内容はPC内で読むだけで、ファイル名、容量、開始address、対象block数、予定手順を表示する。WebHID送信・flash消去・flash書き込みの操作は存在しない。
+
+次は、実機書き込みを追加する前提として、ブートローダーのflash unlock・erase用stubをpacketとして生成・検証し、失敗時の再接続とverify再開を設計する。
 
 ## Phase 0完了条件
 

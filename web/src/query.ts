@@ -18,4 +18,5 @@ export const queryKeys = {
   featureReport: ["webhid", "feature-report"] as const,
   roundTrip: ["webhid", "round-trip"] as const,
   chipIdentity: ["webhid", "chip-identity"] as const,
+  flashWriteReview: ["flash", "write-review"] as const,
 };

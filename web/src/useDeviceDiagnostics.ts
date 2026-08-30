@@ -1,5 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "./query";
+import { CH32V003_FLASH_START } from "./webhid/flashPacket";
+import {
+  createFlashWritePlan,
+  type FlashWritePlan,
+} from "./webhid/flashWritePlan";
 import {
   readFeatureReport,
   readChipIdentity,
@@ -17,6 +22,11 @@ import type {
 
 const errorText = (error: unknown) =>
   error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+
+export type FlashWriteReview = {
+  fileName: string;
+  plan: FlashWritePlan;
+};
 
 export function useDeviceDiagnostics() {
   const client = useQueryClient();
@@ -51,6 +61,12 @@ export function useDeviceDiagnostics() {
     initialData: null,
     enabled: false,
   });
+  const flashWriteReviewQuery = useQuery<FlashWriteReview | null>({
+    queryKey: queryKeys.flashWriteReview,
+    queryFn: async () => null,
+    initialData: null,
+    enabled: false,
+  });
 
   const readFeature = useMutation({
     mutationFn: () => readFeatureReport(deviceQuery.data!),
@@ -65,6 +81,19 @@ export function useDeviceDiagnostics() {
   const identifyChip = useMutation({
     mutationFn: () => readChipIdentity(deviceQuery.data!),
     onSuccess: (result) => client.setQueryData(queryKeys.chipIdentity, result),
+  });
+
+  const reviewFlashWrite = useMutation({
+    mutationFn: async (file: File): Promise<FlashWriteReview> => {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      return {
+        fileName: file.name,
+        plan: createFlashWritePlan(CH32V003_FLASH_START, bytes.length),
+      };
+    },
+    onMutate: () => client.setQueryData(queryKeys.flashWriteReview, null),
+    onSuccess: (result) =>
+      client.setQueryData(queryKeys.flashWriteReview, result),
   });
 
   const clearDiagnosticResults = () => {
@@ -113,10 +142,12 @@ export function useDeviceDiagnostics() {
     featureReport: featureQuery.data,
     roundTripResult: roundTripQuery.data,
     chipIdentity: chipIdentityQuery.data,
+    flashWriteReview: flashWriteReviewQuery.data,
     connect,
     readFeature,
     roundTrip,
     identifyChip,
+    reviewFlashWrite,
     errorText,
   };
 }

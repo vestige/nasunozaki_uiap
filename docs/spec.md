@@ -260,6 +260,17 @@ preflight → unlock → backup(64B) → merge → erase(64B) → write(64B) →
 
 plan生成時に、空データ、flash外、終端がflash外へ出る範囲を拒否する。WebHIDとの接続や送信は行わない。
 
+### 8.7 書き込み前確認（dry-run）
+
+binファイルを選択すると、ブラウザ内でArrayBufferとして読むだけで、flash write planを生成する。表示するのはファイル名、容量、開始address、対象block数、予定手順である。
+
+- 対象addressは現時点で `0x08000000`固定
+- 容量が16KBを超える場合はplan生成で拒否する
+- ファイル内容はQuery cacheへ保存せず、ファイル名と計画メタデータだけを保持する
+- `sendFeatureReport`、flash erase、flash writeを呼ばない
+
+この画面には「書き込む」「実行する」操作を置かない。実機操作を追加する段階で、別途明示的な確認、接続状態確認、復旧案内を加える。
+
 ## 9. 安全境界
 
 - 対象VID/PIDを固定する

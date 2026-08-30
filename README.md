@@ -53,7 +53,7 @@ UIAPduino
 
 ## 現在の状態
 
-Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続から、読み取り専用RISC-V stubによる識別値 `0x00310510`の取得まで実機で成功しました。書き込みpacket builderに加え、`preflight → unlock → backup → merge → erase → write → verify` の書き込み計画を自動テストで固定しています。実機へのflash操作はまだ有効化していません。
+Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続から、読み取り専用RISC-V stubによる識別値 `0x00310510`の取得まで実機で成功しました。binファイルをローカルで確認し、容量・対象範囲・64バイトblock数・書き込み手順を表示するdry-run画面を追加しました。実機へのflash操作はまだ有効化していません。
 
 診断ページ: [UIAPduino接続診断](https://vestige.github.io/nasunozaki_uiap/)
 

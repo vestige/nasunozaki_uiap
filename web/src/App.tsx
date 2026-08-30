@@ -2,6 +2,7 @@ import { BrowserConnectionCard } from "./components/BrowserConnectionCard";
 import { ConnectionGuide } from "./components/ConnectionGuide";
 import { DeviceReport } from "./components/DeviceReport";
 import { PageHeader } from "./components/PageHeader";
+import { FlashWriteReviewCard } from "./components/FlashWriteReviewCard";
 import { useDeviceDiagnostics } from "./useDeviceDiagnostics";
 
 export default function App() {
@@ -15,6 +16,9 @@ export default function App() {
         message={diagnostics.message}
         connect={diagnostics.connect}
       />
+      <section className="mx-auto w-full max-w-6xl px-5 pt-8 sm:px-8">
+        <FlashWriteReviewCard diagnostics={diagnostics} />
+      </section>
       <DeviceReport diagnostics={diagnostics} />
       <footer className="footer bg-neutral px-5 py-8 text-sm text-neutral-content/70 sm:px-[max(2rem,calc((100%-72rem)/2))]">
         <p>
