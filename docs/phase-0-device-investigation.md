@@ -207,6 +207,10 @@ read protection: 検出なし
 
 接続、Feature Report読み取り、RAM往復、チップ識別、dry-run、flash preflightの結果を画面下部へ時刻付きで蓄積する診断ログを追加した。ログはブラウザのメモリー内だけに保持し、新しい順の表示、全文コピー、消去に対応する。サーバー送信と永続保存は行わない。
 
+次の実機確認用として、flash unlockだけを実行してCTLRを読み直す画面を追加した。読み取り済みのpreflight結果でボタンを有効化するが、実行時にもpreflightを再実行し、ロック中かつread protectionなしでなければ6 packetを送らない。各packetの完了応答を確認し、unlock後もlock bitが残れば失敗とする。確認ダイアログ、診断ログ、再接続案内を備え、erase・writeの送信経路は追加していない。
+
+実機結果は未確認である。確認後はunlock前後のCTLR、OBTKEYR、完了packet数、USB再接続後にロック状態へ戻るかを記録する。
+
 ## Phase 0完了条件
 
 ブラウザからLEDを1回点灯する最小命令を送り、UIAPduinoから応答を受信できること。ここまで確認できたら、通信仕様を固定しPhase 1のBlockly画面へ進む。

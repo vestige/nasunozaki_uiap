@@ -20,5 +20,6 @@ export const queryKeys = {
   chipIdentity: ["webhid", "chip-identity"] as const,
   flashWriteReview: ["flash", "write-review"] as const,
   flashSafety: ["flash", "safety"] as const,
+  flashUnlock: ["flash", "unlock"] as const,
   diagnosticLog: ["diagnostics", "log"] as const,
 };

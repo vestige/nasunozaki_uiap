@@ -62,3 +62,9 @@ export type FlashSafetyResult = {
   safeToUnlock: boolean;
   attempts: number;
 };
+
+export type FlashUnlockResult = {
+  before: FlashSafetyResult;
+  after: FlashSafetyResult;
+  completedPackets: number;
+};

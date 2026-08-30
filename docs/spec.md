@@ -318,6 +318,24 @@ unlock sequenceは6 packet、erase packetはaddress・`FLASH_STATR (0x4002200C)`
 
 この結果は、実機操作前の通常の安全な待機状態として扱う。`safeToUnlock`の前提は満たすが、実機unlockを自動的に許可または実行するものではない。
 
+### 8.10 flash unlockの限定実機確認
+
+flash内容を変更する操作へ進む前に、ロック解除と直後の状態読み取りだけを行う調査機能を提供する。
+
+実行条件と順序:
+
+1. 画面のpreflightでflash lock中かつread protectionなしを確認する
+2. 利用者の確認ダイアログへの同意を得る
+3. 通信層でpreflightを再実行し、同じ安全条件を確認する
+4. 検証済みのunlock sequence 6 packetを1つずつ送る
+5. 各packetで完了応答 `0xFF`を確認してから次へ進む
+6. `FLASH_CTLR`と`FLASH_OBTKEYR`を読み直す
+7. CTLRのlock bitが残る場合は失敗として停止する
+
+画面のボタンは、読み取り専用preflightで `safeToUnlock=true`を取得するまで無効にする。実行開始、成功、失敗、unlock前後のCTLR、完了packet数を診断ログへ記録する。この機能からerase packetまたはwrite packetへ到達する経路は作らない。
+
+unlockは一時的な実機状態変更なので警告色で示す。USBを外してブートローダーモードで再接続すると通常のロック状態へ戻る想定とし、実機で復旧性を確認するまでは一般利用へ出さない。
+
 ## 9. 安全境界
 
 - 対象VID/PIDを固定する
@@ -328,6 +346,7 @@ unlock sequenceは6 packet、erase packetはaddress・`FLASH_STATR (0x4002200C)`
 - 書き込みプロトコルは参照実装を確認してから実装する
 - 書き込み前にバイナリのサイズと対象アドレスを検証する
 - 書き込み中断時の復旧手順が確立するまで一般利用へ出さない
+- unlock実行時にも直前preflightを必須とし、画面表示済みの古い結果だけを信頼しない
 
 ## 10. 将来アーキテクチャ
 

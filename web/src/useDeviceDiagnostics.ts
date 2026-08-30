@@ -19,12 +19,14 @@ import {
   requestUiapDevice,
   runRamRoundTrip,
   supportsWebHid,
+  unlockFlashForInvestigation,
   watchDisconnect,
 } from "./webhid/device";
 import type {
   ChipIdentityResult,
   FeatureReportResult,
   FlashSafetyResult,
+  FlashUnlockResult,
   HidDevice,
   RoundTripResult,
 } from "./webhid/types";
@@ -88,6 +90,12 @@ export function useDeviceDiagnostics() {
     queryKey: queryKeys.diagnosticLog,
     queryFn: async () => [],
     initialData: [],
+    enabled: false,
+  });
+  const flashUnlockQuery = useQuery<FlashUnlockResult | null>({
+    queryKey: queryKeys.flashUnlock,
+    queryFn: async () => null,
+    initialData: null,
     enabled: false,
   });
 
@@ -209,15 +217,54 @@ export function useDeviceDiagnostics() {
       ),
   });
 
+  const unlockFlash = useMutation({
+    mutationFn: () => unlockFlashForInvestigation(deviceQuery.data!),
+    onMutate: () => {
+      client.setQueryData(queryKeys.flashUnlock, null);
+      appendLog(
+        "warning",
+        "FLASH_UNLOCK",
+        "flash unlockの実機確認を開始しました。erase・writeは行いません。",
+      );
+    },
+    onSuccess: (result) => {
+      client.setQueryData(queryKeys.flashUnlock, result);
+      client.setQueryData(queryKeys.flashSafety, result.after);
+      appendLog(
+        "success",
+        "FLASH_UNLOCK",
+        "flash unlock後の状態を確認しました。",
+        {
+          packets: result.completedPackets,
+          beforeCTLR: hex32(result.before.controlValue),
+          afterCTLR: hex32(result.after.controlValue),
+          lockedAfter: result.after.locked,
+          readProtectedAfter: result.after.readProtected,
+        },
+      );
+    },
+    onError: (error) =>
+      appendLog(
+        "error",
+        "FLASH_UNLOCK",
+        "flash unlockを完了できませんでした。",
+        {
+          error: errorText(error),
+        },
+      ),
+  });
+
   const clearDiagnosticResults = () => {
     client.setQueryData(queryKeys.featureReport, null);
     client.setQueryData(queryKeys.roundTrip, null);
     client.setQueryData(queryKeys.chipIdentity, null);
     client.setQueryData(queryKeys.flashSafety, null);
+    client.setQueryData(queryKeys.flashUnlock, null);
     readFeature.reset();
     roundTrip.reset();
     identifyChip.reset();
     inspectFlashSafety.reset();
+    unlockFlash.reset();
   };
 
   const connect = useMutation({
@@ -285,6 +332,7 @@ export function useDeviceDiagnostics() {
     chipIdentity: chipIdentityQuery.data,
     flashWriteReview: flashWriteReviewQuery.data,
     flashSafety: flashSafetyQuery.data,
+    flashUnlockResult: flashUnlockQuery.data,
     diagnosticLogs: diagnosticLogQuery.data,
     connect,
     readFeature,
@@ -292,6 +340,7 @@ export function useDeviceDiagnostics() {
     identifyChip,
     reviewFlashWrite,
     inspectFlashSafety,
+    unlockFlash,
     clearLogs,
     copyLogs,
     errorText,

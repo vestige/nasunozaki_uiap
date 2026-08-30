@@ -9,10 +9,12 @@ import type {
   ChipIdentityResult,
   FeatureReportResult,
   FlashSafetyResult,
+  FlashUnlockResult,
   HidDevice,
   HidNavigator,
   RoundTripResult,
 } from "./types";
+import { buildFlashUnlockSequenceOffline } from "./flashControlPacket";
 import {
   FLASH_CONTROL_REGISTER,
   FLASH_READ_PROTECTION_REGISTER,
@@ -25,8 +27,7 @@ export { BOOTLOADER_REPORT_ID } from "./bootloaderProtocol";
 
 let watchedDevice: HidDevice | null = null;
 let disconnectListener:
-  | ((event: Event & { device: HidDevice }) => void)
-  | null = null;
+  ((event: Event & { device: HidDevice }) => void) | null = null;
 
 function getHid() {
   return (navigator as HidNavigator).hid;
@@ -147,4 +148,43 @@ export async function readFlashSafetyState(
     ...interpretFlashSafety(control.value, protection.value),
     attempts: control.attempts + protection.attempts,
   };
+}
+
+async function executePreparedPacket(
+  device: HidDevice,
+  packet: { reportId: number; payload: Uint8Array<ArrayBuffer> },
+) {
+  await device.sendFeatureReport(packet.reportId, packet.payload);
+  for (let attempts = 1; attempts <= 21; attempts += 1) {
+    const response = await device.receiveFeatureReport(packet.reportId);
+    const payload = normalizeFeaturePayload(response);
+    if (payload[0] === 0xff) return attempts;
+  }
+  throw new Error("unlock packetの完了応答を21回以内に確認できませんでした。");
+}
+
+export async function unlockFlashForInvestigation(
+  device: HidDevice,
+): Promise<FlashUnlockResult> {
+  const before = await readFlashSafetyState(device);
+  if (!before.safeToUnlock) {
+    throw new Error(
+      before.readProtected
+        ? "read protectionが検出されたためunlockを中止しました。"
+        : "flashが通常のロック状態ではないためunlockを中止しました。",
+    );
+  }
+
+  const packets = buildFlashUnlockSequenceOffline();
+  let completedPackets = 0;
+  for (const packet of packets) {
+    await executePreparedPacket(device, packet);
+    completedPackets += 1;
+  }
+
+  const after = await readFlashSafetyState(device);
+  if (after.locked) {
+    throw new Error("6 packet送信後もflash lockが解除されていません。");
+  }
+  return { before, after, completedPackets };
 }
