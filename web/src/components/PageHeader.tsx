@@ -7,7 +7,7 @@ export function PageHeader() {
             <span className="grid size-10 place-items-center rounded-xl bg-primary text-xl text-primary-content">
               U
             </span>
-            UIAPduino Workshop
+            UIAPduino Easy Flow
           </div>
           <div className="badge badge-warning badge-outline font-bold">
             PHASE 0
