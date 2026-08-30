@@ -275,6 +275,19 @@ dry-runは安全な確認操作のため、カード・ファイル選択・結�
 
 実機環境では `onboard_led_blink.bin`（436 bytes）を選択し、開始address `0x08000000`、対象7 blockの計画が生成されることを確認した。この結果はdry-runの成功であり、flash書き込みの成功を意味しない。
 
+### 8.8 flash unlock・erase packetのオフライン検証
+
+参照実装の `InternalUnlockFlash` と `erase_block_bin` に基づき、次の実行可能packetを生成する純粋関数を追加した。ただし、これらはWebHID送信層から参照しない。
+
+1. `FLASH_KEYR (0x40022004)` へ `0x45670123`、`0xCDEF89AB`
+2. `FLASH_OBKEYR (0x40022008)` へ同じ2値
+3. `FLASH_MODEKEYR (0x40022024)` へ同じ2値
+4. 対象64バイトblockをeraseするpacket
+
+unlock sequenceは6 packet、erase packetはaddress・`FLASH_STATR (0x4002200C)`・`0x00400040`（64B sectorと64B length）を参照実装と同じoffsetへ置く。全packetは `executable: true`であり、誤送信を避けるため画面やDevice adapterから到達できない。
+
+実機実行を有効化する前に、unlock後のCTLR検証、read protection検証、erase後の全`0xFF`確認、write後のread-back verify、切断時の再接続後verify再開を実装する。
+
 ## 9. 安全境界
 
 - 対象VID/PIDを固定する

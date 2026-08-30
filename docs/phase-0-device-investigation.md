@@ -67,6 +67,8 @@ PIDやレポート構成はファームウェアによって変わる可能性�
 - [x] 64バイト書き込みpacketをオフライン生成して検証する
 - [x] flash unlock／erase／write／verify手順を設計する
 - [x] 実機へ送る前の書き込み前確認画面を設計する
+- [x] flash unlock・64バイトerase packetをオフライン検証する
+- [ ] flash unlock後の状態とread protectionを実機で検証する
 - [ ] LEDを1回点灯する最小コマンドを送受信する
 - [ ] 成功応答またはエラー応答をブラウザで受信する
 
@@ -184,6 +186,10 @@ dry-run画面は実機変更を伴わないため、赤ではなく情報色（�
 `onboard_led_blink.bin`を選択し、436 bytes、開始address `0x08000000`、対象7 blockとして計画を生成できた。これはdry-run画面の確認結果であり、実機flashへの書き込みは行われていない。
 
 次は、実機書き込みを追加する前提として、ブートローダーのflash unlock・erase用stubをpacketとして生成・検証し、失敗時の再接続とverify再開を設計する。
+
+flash unlockの6 packetと、64バイトerase packetをオフライン生成して自動テストで検証した。unlockではKEYR、OBKEYR、MODEKEYRに2つの鍵を順に書き、eraseでは対象address、FLASH_STATR、64バイト設定を固定する。これらは実行マジックを含むため、実機への送信はまだ有効化していない。
+
+次はunlock後のCTLRとread protectionの確認、erase後の全`0xFF`確認、失敗・切断後のverify再開条件を設計する。
 
 ## Phase 0完了条件
 
