@@ -179,6 +179,8 @@ minichlinkは次の流れで動作する。
 
 書き込み前確認画面を追加した。binファイルの内容はPC内で読むだけで、ファイル名、容量、開始address、対象block数、予定手順を表示する。WebHID送信・flash消去・flash書き込みの操作は存在しない。
 
+`onboard_led_blink.bin`を選択し、436 bytes、開始address `0x08000000`、対象7 blockとして計画を生成できた。これはdry-run画面の確認結果であり、実機flashへの書き込みは行われていない。
+
 次は、実機書き込みを追加する前提として、ブートローダーのflash unlock・erase用stubをpacketとして生成・検証し、失敗時の再接続とverify再開を設計する。
 
 ## Phase 0完了条件

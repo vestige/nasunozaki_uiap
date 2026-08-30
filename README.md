@@ -53,7 +53,7 @@ UIAPduino
 
 ## 現在の状態
 
-Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続から、読み取り専用RISC-V stubによる識別値 `0x00310510`の取得まで実機で成功しました。binファイルをローカルで確認し、容量・対象範囲・64バイトblock数・書き込み手順を表示するdry-run画面を追加しました。実機へのflash操作はまだ有効化していません。
+Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続から、読み取り専用RISC-V stubによる識別値 `0x00310510`の取得まで実機で成功しました。`onboard_led_blink.bin`（436 bytes、7 blocks）のdry-run計画生成も確認しました。現行画面は実機へのflash操作を呼ばず、ボード内容は変更しません。
 
 診断ページ: [UIAPduino接続診断](https://vestige.github.io/nasunozaki_uiap/)
 
