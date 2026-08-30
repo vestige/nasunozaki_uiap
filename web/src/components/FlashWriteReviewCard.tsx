@@ -16,20 +16,23 @@ export function FlashWriteReviewCard({ diagnostics }: Props) {
     : review
       ? "書き込み計画を作成しました。これは確認だけで、ボードへの送信・消去・書き込みは行いません。"
       : "binファイルを選ぶと、書き込み前に対象範囲と手順を確認できます。";
+  const statusClass = reviewFlashWrite.isError
+    ? "border-error/30 bg-error/10"
+    : "border-info/30 bg-info/10";
 
   return (
-    <article className="card border-2 border-error bg-base-100 shadow-lg">
+    <article className="card border-2 border-info bg-base-100 shadow-lg">
       <div className="card-body gap-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="flex-1">
-            <div className="badge badge-error font-bold">DRY RUN ONLY</div>
+            <div className="badge badge-info font-bold">CONFIRM ONLY</div>
             <h3 className="mt-2 text-xl font-black">書き込み前の確認</h3>
             <p className="mt-2 text-sm leading-6 text-base-content/65">
               ファイルをPC内だけで確認し、64バイトblock単位の安全な書き込み計画を表示します。
             </p>
           </div>
           <input
-            className="file-input file-input-error w-full max-w-xs font-bold"
+            className="file-input file-input-info w-full max-w-xs font-bold"
             type="file"
             accept=".bin,application/octet-stream"
             onChange={onSelectFile}
@@ -39,7 +42,7 @@ export function FlashWriteReviewCard({ diagnostics }: Props) {
         </div>
         <div
           role="status"
-          className={`alert ${reviewFlashWrite.isError ? "alert-error" : review ? "alert-success" : "alert-info"}`}
+          className={`alert border ${statusClass} text-base-content`}
         >
           <span>
             {reviewFlashWrite.isPending ? "書き込み計画を確認中…" : message}

@@ -55,6 +55,8 @@ UIAPduino
 
 Phase 0を進行中です。`32V003 / 0x1209:0xB803`へのWebHID接続から、読み取り専用RISC-V stubによる識別値 `0x00310510`の取得まで実機で成功しました。`onboard_led_blink.bin`（436 bytes、7 blocks）のdry-run計画生成も確認しました。現行画面は実機へのflash操作を呼ばず、ボード内容は変更しません。
 
+書き込み前確認は危険操作の警告ではなく確認専用の画面として、情報色（青系）で表示する。実際に消去・書き込みを有効化する段階だけ、明確な警告色と最終確認を使う。
+
 診断ページ: [UIAPduino接続診断](https://vestige.github.io/nasunozaki_uiap/)
 
 ## ドキュメント運用
