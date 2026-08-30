@@ -60,6 +60,7 @@ PIDやレポート構成はファームウェアによって変わる可能性�
 - [x] Feature Reportの最大送信サイズを確認する
 - [x] Input Reportが存在しないことを確認する
 - [x] Report ID `0xAA`を読み取り専用で取得する
+- [ ] 実行マジック値を含まないRAM往復テストに成功する
 - [ ] 接続を解除して再接続できる
 - [ ] USBを途中で抜いた場合にページが復旧できる
 - [ ] LEDを1回点灯する最小コマンドを送受信する
@@ -132,7 +133,19 @@ descriptorはReport Count 127、Report Size 8 bitを示すが、WebHIDの戻り�
 - フラッシュへの書き込み
 - 未確認コマンドの送信
 
-次はrv003usb／minichlinkの参照実装からReport ID `0xAA`の既知コマンド形式を確認し、最初に非破壊の識別または状態取得コマンドが存在するかを調査する。
+## 参照実装の調査結果
+
+rv003usb bootloaderとch32fun minichlinkを照合した結果、固定的な状態取得コマンドを送る方式ではないことが分かった。
+
+minichlinkは次の流れで動作する。
+
+1. scratchpadへRISC-Vの小さな処理コードをFeature Reportで送る
+2. 転送末尾へ実行マジック `0x1234ABCD`を置く
+3. ブートローダーがRAM上のコードを実行する
+4. 結果をscratchpadへ置く
+5. GET_REPORTでホストが結果を読む
+
+次の実機検証では、実行マジックを含めない127バイトの固定パターンをSET_REPORTでscratchpadへ送り、GET_REPORTで同じ内容を読み戻せるか確認する。これはRAMだけを変更し、フラッシュ書き込みやコード実行は行わない。
 
 ## Phase 0完了条件
 

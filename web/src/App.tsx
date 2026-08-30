@@ -18,6 +18,7 @@ type HidDevice = {
   collections: HidCollection[];
   open(): Promise<void>;
   receiveFeatureReport(reportId: number): Promise<DataView>;
+  sendFeatureReport(reportId: number, data: BufferSource): Promise<void>;
 };
 
 type HidNavigator = Navigator & {
@@ -50,6 +51,9 @@ export default function App() {
   } | null>(null);
   const [featureMessage, setFeatureMessage] = useState('接続後に読み取りできます。');
   const [readingFeature, setReadingFeature] = useState(false);
+  const [roundTripMessage, setRoundTripMessage] = useState('未実施です。');
+  const [runningRoundTrip, setRunningRoundTrip] = useState(false);
+  const [roundTripSucceeded, setRoundTripSucceeded] = useState<boolean | null>(null);
   const supported = useMemo(() => typeof navigator !== 'undefined' && 'hid' in navigator, []);
 
   async function inspectDevice() {
@@ -74,6 +78,8 @@ export default function App() {
       setDevice(selected);
       setFeatureReport(null);
       setFeatureMessage('Report ID 0xAAを読み取れます。この操作は書き込みを行いません。');
+      setRoundTripSucceeded(null);
+      setRoundTripMessage('未実施です。');
       setMessage('ボード情報を取得できました。Phase 0の接続確認は成功です。');
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
@@ -108,6 +114,38 @@ export default function App() {
       setFeatureMessage(`読み取れませんでした：${detail}`);
     } finally {
       setReadingFeature(false);
+    }
+  }
+
+  async function runRamRoundTrip() {
+    if (!device) return;
+    setRunningRoundTrip(true);
+    setRoundTripSucceeded(null);
+    setRoundTripMessage('RAMへ固定パターンを送り、読み戻しています…');
+    try {
+      const sent = new Uint8Array(127);
+      sent.fill(0x5a);
+      sent.set([0x55, 0x49, 0x41, 0x50], 0); // "UIAP"
+      sent.fill(0x00, sent.length - 4); // 実行マジック値を置かない
+
+      await device.sendFeatureReport(BOOTLOADER_REPORT_ID, sent);
+      const view = await device.receiveFeatureReport(BOOTLOADER_REPORT_ID);
+      const raw = Array.from(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
+      const received = raw.length === 128 ? raw.slice(1) : raw;
+      const matches = received.length === sent.length && received.every((byte, index) => byte === sent[index]);
+
+      setRoundTripSucceeded(matches);
+      setRoundTripMessage(
+        matches
+          ? '成功：127バイトがRAMへ届き、同じ内容を読み戻せました。フラッシュは変更していません。'
+          : `不一致：送信127バイトに対し、payload候補${received.length}バイトでした。実行マジック値は送っていません。`,
+      );
+    } catch (error) {
+      const detail = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+      setRoundTripSucceeded(false);
+      setRoundTripMessage(`往復テストに失敗しました：${detail}`);
+    } finally {
+      setRunningRoundTrip(false);
     }
   }
 
@@ -219,6 +257,25 @@ export default function App() {
                     <pre data-prefix="hex"><code>{featureReport.rawBytes.map((byte) => byte.toString(16).padStart(2, '0')).join(' ') || '(empty)'}</code></pre>
                   </div>
                 )}
+              </div>
+            </article>
+
+            <article className="card border-2 border-warning bg-base-100 shadow-lg">
+              <div className="card-body gap-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <div className="flex-1">
+                    <div className="badge badge-warning font-bold">RAM ONLY</div>
+                    <h3 className="mt-2 text-xl font-black">RAM往復テスト</h3>
+                    <p className="mt-2 text-sm leading-6 text-base-content/65">127バイトの固定パターンをscratchpadへ送り、読み戻して一致を確認します。実行用マジック値は送らず、フラッシュにも書き込みません。</p>
+                  </div>
+                  <button className="btn btn-warning btn-lg font-black" onClick={runRamRoundTrip} disabled={runningRoundTrip}>
+                    {runningRoundTrip && <span className="loading loading-spinner" />}
+                    {runningRoundTrip ? '確認中…' : 'RAM往復を試す'}
+                  </button>
+                </div>
+                <div role="status" className={`alert ${roundTripSucceeded === true ? 'alert-success' : roundTripSucceeded === false ? 'alert-error' : 'alert-warning'}`}>
+                  <span>{roundTripMessage}</span>
+                </div>
               </div>
             </article>
           </div>
