@@ -168,7 +168,7 @@ WebHID仕様では、`receiveFeatureReport()`の戻り値はOSが返した内容
 5. USB切断検知・再接続                 完了
 6. 読み取り専用RAM stub実行            完了（識別値0x00310510）
 7. 書き込みパケットを生成              完了（オフライン検証のみ）
-8. 最小バイナリを書き込む              未実施
+8. 安全な書き込み手順を生成            完了（オフライン検証のみ）
 9. 実行と復旧を確認                    未実施
 ```
 
@@ -245,6 +245,20 @@ packet生成は自動テストで次を固定する。
 - execution magic: packet byte 124〜127
 
 このpacketは実行マジックを含むため、送信されれば書き込みstubを起動し得る。型に `executable: true`を持たせ、読み取り診断packetと区別する。ただし実際の書き込みにはflash unlock、対象blockの退避、erase、write、read-back verify、失敗時の復旧が必要であり、この段階では送信経路へ接続しない。
+
+### 8.6 安全な書き込み計画
+
+任意長のバイナリをflashへ置く際、64バイトblockにまたがる場合も、未変更のバイトを失わない計画を生成する。計画は実行可能なpacketではなく、`executable: false`のデータである。
+
+各対象blockでの順序は次で固定する。
+
+```text
+preflight → unlock → backup(64B) → merge → erase(64B) → write(64B) → verify(64B)
+```
+
+`backup`は既存blockを読み取り、`merge`が新しいバイナリ範囲だけを上書きして64バイトの完全なblockを作る。`verify`は書き込み後に期待する64バイトと読み戻しを比較する。全blockを置き換える場合も同じ順序を維持し、実機実行時の分岐を減らす。
+
+plan生成時に、空データ、flash外、終端がflash外へ出る範囲を拒否する。WebHIDとの接続や送信は行わない。
 
 ## 9. 安全境界
 

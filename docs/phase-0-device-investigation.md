@@ -65,7 +65,8 @@ PIDやレポート構成はファームウェアによって変わる可能性�
 - [x] USBを途中で抜いた場合にページが復旧できる
 - [x] 読み取り専用RAM stubでチップ識別値を取得する
 - [x] 64バイト書き込みpacketをオフライン生成して検証する
-- [ ] flash unlock／erase／write／verify手順を設計する
+- [x] flash unlock／erase／write／verify手順を設計する
+- [ ] 実機へ送る前の書き込み前確認画面を設計する
 - [ ] LEDを1回点灯する最小コマンドを送受信する
 - [ ] 成功応答またはエラー応答をブラウザで受信する
 
@@ -171,6 +172,10 @@ minichlinkは次の流れで動作する。
 続いてCH32V003用 `write64_flash` stubを移植し、16KB flash範囲、64バイト境界、64バイト固定data、status register、実行マジック位置を自動テストで固定した。範囲外・未整列addressと不正data長はpacket生成時に拒否する。builderはWebHID送信処理から分離しており、実機では未実行である。
 
 次はflash unlock、64バイトblock erase、write、read-back verifyの順序と、途中失敗時の復旧方針を設計する。
+
+書き込み計画を実装し、各blockを `preflight → unlock → backup → merge → erase → write → verify` の順で扱うことを自動テストで固定した。部分書き込みがblockをまたぐ場合は、両方のblockを64バイト単位で退避・mergeする。計画は `executable: false`であり、WebHID送信処理へ渡されない。
+
+次は、実行予定のaddress、容量、対象block数、消去を伴うことを利用者へ明示する書き込み前確認画面を設計する。
 
 ## Phase 0完了条件
 
