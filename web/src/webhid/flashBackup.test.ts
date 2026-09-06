@@ -3,6 +3,7 @@ import {
   createFlashBackupFileName,
   crc32,
   formatHexDump,
+  parseFlashBackupFileName,
   validateFlashBackupAddress,
   verifyFlashBackupBytes,
 } from "./flashBackup";
@@ -28,6 +29,14 @@ describe("flash backup helpers", () => {
     expect(createFlashBackupFileName(0x08000000, 0xbed6a734)).toBe(
       "uiapduino_flash_08000000_crc32_BED6A734.bin",
     );
+  });
+
+  it("ブラウザが付けた連番を含む復旧用ファイル名を検証する", () => {
+    expect(
+      parseFlashBackupFileName(
+        "uiapduino_flash_08000000_crc32_BED6A734 (2).bin",
+      ),
+    ).toEqual({ address: 0x08000000, checksum: 0xbed6a734 });
   });
 
   it("保存ファイルを元の退避内容とbyte単位で照合する", () => {

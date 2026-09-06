@@ -24,5 +24,7 @@ export const queryKeys = {
   flashBackup: ["flash", "backup"] as const,
   flashBackupVerification: ["flash", "backup-verification"] as const,
   flashRecovery: ["flash", "erase-restore"] as const,
+  emergencyRecoveryFile: ["flash", "emergency-recovery-file"] as const,
+  emergencyRecoveryResult: ["flash", "emergency-recovery-result"] as const,
   diagnosticLog: ["diagnostics", "log"] as const,
 };

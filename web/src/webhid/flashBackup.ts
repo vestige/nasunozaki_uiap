@@ -45,6 +45,19 @@ export type FlashBackupVerification = {
   matches: boolean;
 };
 
+export function parseFlashBackupFileName(fileName: string) {
+  const match = fileName.match(
+    /^uiapduino_flash_([0-9a-f]{8})_crc32_([0-9a-f]{8})(?: \(\d+\))?\.bin$/i,
+  );
+  if (!match) {
+    throw new Error("UIAPduinoの復旧用ファイル名ではありません。");
+  }
+  return {
+    address: Number.parseInt(match[1], 16),
+    checksum: Number.parseInt(match[2], 16),
+  };
+}
+
 export function verifyFlashBackupBytes(
   fileName: string,
   candidate: Uint8Array,

@@ -10,7 +10,9 @@ import {
 import { CH32V003_FLASH_START } from "./webhid/flashPacket";
 import {
   createFlashBackupFileName,
+  crc32,
   formatHexDump,
+  parseFlashBackupFileName,
   verifyFlashBackupBytes,
   type FlashBackupVerification,
 } from "./webhid/flashBackup";
@@ -22,6 +24,7 @@ import {
   readFeatureReport,
   readFlashBlockBackup,
   readFlashSafetyState,
+  restoreFlashBlockOnDevice,
   readChipIdentity,
   requestUiapDevice,
   runFlashEraseRestoreOnDevice,
@@ -53,6 +56,13 @@ const hex32 = (value: number) =>
 export type FlashWriteReview = {
   fileName: string;
   plan: FlashWritePlan;
+};
+
+export type EmergencyRecoveryFile = {
+  fileName: string;
+  address: number;
+  checksum: number;
+  bytes: number[];
 };
 
 export function useDeviceDiagnostics() {
@@ -128,6 +138,18 @@ export function useDeviceDiagnostics() {
   );
   const flashRecoveryQuery = useQuery<FlashRecoveryResult | null>({
     queryKey: queryKeys.flashRecovery,
+    queryFn: async () => null,
+    initialData: null,
+    enabled: false,
+  });
+  const emergencyRecoveryFileQuery = useQuery<EmergencyRecoveryFile | null>({
+    queryKey: queryKeys.emergencyRecoveryFile,
+    queryFn: async () => null,
+    initialData: null,
+    enabled: false,
+  });
+  const emergencyRecoveryResultQuery = useQuery<FlashBlockBackupResult | null>({
+    queryKey: queryKeys.emergencyRecoveryResult,
     queryFn: async () => null,
     initialData: null,
     enabled: false,
@@ -451,6 +473,89 @@ export function useDeviceDiagnostics() {
       ),
   });
 
+  const loadEmergencyRecoveryFile = useMutation({
+    mutationFn: async (file: File): Promise<EmergencyRecoveryFile> => {
+      const metadata = parseFlashBackupFileName(file.name);
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      if (bytes.length !== 64)
+        throw new Error("復旧用ファイルは64バイト必要です。");
+      const actualChecksum = crc32(bytes);
+      if (actualChecksum !== metadata.checksum) {
+        throw new Error("ファイル名のCRC32と内容が一致しません。");
+      }
+      return {
+        fileName: file.name,
+        address: metadata.address,
+        checksum: actualChecksum,
+        bytes: Array.from(bytes),
+      };
+    },
+    onMutate: () => client.setQueryData(queryKeys.emergencyRecoveryFile, null),
+    onSuccess: (result) => {
+      client.setQueryData(queryKeys.emergencyRecoveryFile, result);
+      appendLog(
+        "success",
+        "FLASH_EMERGENCY_FILE",
+        "復旧用ファイルを検証しました。",
+        {
+          file: result.fileName,
+          address: hex32(result.address),
+          checksum: hex32(result.checksum),
+        },
+      );
+    },
+    onError: (error) =>
+      appendLog(
+        "error",
+        "FLASH_EMERGENCY_FILE",
+        "復旧用ファイルを検証できませんでした。",
+        {
+          error: errorText(error),
+        },
+      ),
+  });
+
+  const restoreFromEmergencyFile = useMutation({
+    mutationFn: async () => {
+      const recoveryFile = emergencyRecoveryFileQuery.data;
+      if (!recoveryFile) throw new Error("復旧用ファイルを選んでください。");
+      return restoreFlashBlockOnDevice(
+        deviceQuery.data!,
+        recoveryFile.address,
+        Uint8Array.from(recoveryFile.bytes),
+      );
+    },
+    onMutate: () => {
+      client.setQueryData(queryKeys.emergencyRecoveryResult, null);
+      appendLog(
+        "warning",
+        "FLASH_EMERGENCY_RESTORE",
+        "復旧用ファイルの書き戻しを開始しました。USBを抜かないでください。",
+      );
+    },
+    onSuccess: (result) => {
+      client.setQueryData(queryKeys.emergencyRecoveryResult, result);
+      appendLog(
+        "success",
+        "FLASH_EMERGENCY_RESTORE",
+        "元の64バイトへの復旧と完全一致を確認しました。",
+        {
+          address: hex32(result.address),
+          checksum: hex32(result.checksum),
+        },
+      );
+    },
+    onError: (error) =>
+      appendLog(
+        "error",
+        "FLASH_EMERGENCY_RESTORE",
+        "復旧を完了できませんでした。USBを抜かないでください。",
+        {
+          error: errorText(error),
+        },
+      ),
+  });
+
   const clearDiagnosticResults = () => {
     client.setQueryData(queryKeys.featureReport, null);
     client.setQueryData(queryKeys.roundTrip, null);
@@ -540,6 +645,8 @@ export function useDeviceDiagnostics() {
     flashBackupResult: flashBackupQuery.data,
     flashBackupVerification: flashBackupVerificationQuery.data,
     flashRecoveryResult: flashRecoveryQuery.data,
+    emergencyRecoveryFile: emergencyRecoveryFileQuery.data,
+    emergencyRecoveryResult: emergencyRecoveryResultQuery.data,
     diagnosticLogs: diagnosticLogQuery.data,
     connect,
     readFeature,
@@ -552,6 +659,8 @@ export function useDeviceDiagnostics() {
     downloadFlashBackup,
     verifyFlashBackup,
     eraseAndRestoreFlash,
+    loadEmergencyRecoveryFile,
+    restoreFromEmergencyFile,
     clearLogs,
     copyLogs,
     errorText,

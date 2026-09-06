@@ -6,6 +6,7 @@ import { FlashSafetyCard } from "./FlashSafetyCard";
 import { FlashUnlockCard } from "./FlashUnlockCard";
 import { FlashBackupCard } from "./FlashBackupCard";
 import { FlashEraseRestoreCard } from "./FlashEraseRestoreCard";
+import { EmergencyFlashRecoveryCard } from "./EmergencyFlashRecoveryCard";
 type Props = { diagnostics: ReturnType<typeof useDeviceDiagnostics> };
 const hex = (value: number) =>
   `0x${value.toString(16).toUpperCase().padStart(4, "0")}`;
@@ -82,6 +83,7 @@ export function DeviceReport({ diagnostics }: Props) {
           <ChipIdentityCard diagnostics={diagnostics} />
           <FlashSafetyCard diagnostics={diagnostics} />
           <FlashUnlockCard diagnostics={diagnostics} />
+          <EmergencyFlashRecoveryCard diagnostics={diagnostics} />
           <FlashBackupCard diagnostics={diagnostics} />
           <FlashEraseRestoreCard diagnostics={diagnostics} />
         </div>

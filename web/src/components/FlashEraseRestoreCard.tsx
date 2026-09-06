@@ -6,17 +6,8 @@ const hex32 = (value: number) =>
   `0x${value.toString(16).toUpperCase().padStart(8, "0")}`;
 
 export function FlashEraseRestoreCard({ diagnostics }: Props) {
-  const {
-    flashUnlockResult,
-    flashBackupVerification,
-    flashRecoveryResult,
-    eraseAndRestoreFlash,
-    errorText,
-  } = diagnostics;
-  const canRun =
-    flashUnlockResult?.after.locked === false &&
-    flashBackupVerification?.matches === true &&
-    !flashRecoveryResult;
+  const { flashRecoveryResult, eraseAndRestoreFlash, errorText } = diagnostics;
+  const canRun = false;
 
   const run = () => {
     const accepted = window.confirm(
@@ -32,16 +23,14 @@ export function FlashEraseRestoreCard({ diagnostics }: Props) {
       : `復旧を確認できませんでした。USBを抜かず、ログをコピーしてください：${errorText(error)}`
     : flashRecoveryResult
       ? "消去から元データの完全一致確認まで、すべて成功しました。"
-      : canRun
-        ? "準備ができました。1回の操作で消去と復元を連続実行します。"
-        : "先にunlock、64バイトの読み取り、復旧用ファイルの保存・一致確認を完了してください。";
+      : "実機試験で異常が確認されたため、この操作は停止中です。上の復旧操作だけを使用してください。";
 
   return (
     <article className="card border-2 border-error bg-base-100 shadow-lg">
       <div className="card-body gap-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="flex-1">
-            <div className="badge badge-error font-bold">FLASH CHANGES</div>
+            <div className="badge badge-neutral font-bold">SUSPENDED</div>
             <h3 className="mt-2 text-xl font-black">
               先頭64バイトを消去して元に戻す
             </h3>

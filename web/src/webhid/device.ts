@@ -17,6 +17,7 @@ import type {
 } from "./types";
 import {
   buildErase64PacketOffline,
+  buildFlashProgramPreparationSequenceOffline,
   buildFlashUnlockSequenceOffline,
 } from "./flashControlPacket";
 import { crc32, validateFlashBackupAddress } from "./flashBackup";
@@ -166,14 +167,20 @@ export async function readFlashSafetyState(
 async function executePreparedPacket(
   device: HidDevice,
   packet: { reportId: number; payload: Uint8Array<ArrayBuffer> },
+  options: { attempts?: number; delayMs?: number } = {},
 ) {
   await device.sendFeatureReport(packet.reportId, packet.payload);
-  for (let attempts = 1; attempts <= 21; attempts += 1) {
+  const maxAttempts = options.attempts ?? 21;
+  const delayMs = options.delayMs ?? 0;
+  for (let attempts = 1; attempts <= maxAttempts; attempts += 1) {
+    if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
     const response = await device.receiveFeatureReport(packet.reportId);
     const payload = normalizeFeaturePayload(response);
     if (payload[0] === 0xff) return attempts;
   }
-  throw new Error("unlock packetの完了応答を21回以内に確認できませんでした。");
+  throw new Error(
+    `実行packetの完了応答を${maxAttempts}回以内に確認できませんでした。`,
+  );
 }
 
 export async function unlockFlashForInvestigation(
@@ -242,12 +249,17 @@ export async function runFlashEraseRestoreOnDevice(
         await executePreparedPacket(
           device,
           buildErase64PacketOffline(targetAddress),
+          { attempts: 201, delayMs: 5 },
         );
       },
       writeBlock: async (targetAddress, data) => {
+        for (const packet of buildFlashProgramPreparationSequenceOffline()) {
+          await executePreparedPacket(device, packet);
+        }
         await executePreparedPacket(
           device,
           buildWrite64PacketOffline(targetAddress, data),
+          { attempts: 201, delayMs: 5 },
         );
       },
     },
@@ -255,4 +267,35 @@ export async function runFlashEraseRestoreOnDevice(
     backup,
     onStage,
   );
+}
+
+export async function restoreFlashBlockOnDevice(
+  device: HidDevice,
+  address: number,
+  data: Uint8Array,
+) {
+  validateFlashBackupAddress(address);
+  if (data.length !== CH32V003_FLASH_BLOCK_SIZE) {
+    throw new RangeError("復旧データは64バイト固定です。");
+  }
+  const safety = await readFlashSafetyState(device);
+  if (safety.locked || safety.readProtected) {
+    throw new Error("flashをunlockし、read protectionなしを確認してください。");
+  }
+  for (const packet of buildFlashProgramPreparationSequenceOffline()) {
+    await executePreparedPacket(device, packet);
+  }
+  await executePreparedPacket(
+    device,
+    buildWrite64PacketOffline(address, data),
+    {
+      attempts: 201,
+      delayMs: 5,
+    },
+  );
+  const restored = await readFlashBlockBackup(device, address);
+  if (!restored.bytes.every((byte, index) => byte === data[index])) {
+    throw new Error("書き戻し後の64バイトが復旧ファイルと一致しません。");
+  }
+  return restored;
 }

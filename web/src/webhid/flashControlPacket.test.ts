@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EXECUTION_MAGIC } from "./bootloaderProtocol";
 import {
   buildErase64PacketOffline,
+  buildFlashProgramPreparationSequenceOffline,
   buildFlashUnlockSequenceOffline,
   flashControlConstants,
 } from "./flashControlPacket";
@@ -50,6 +51,19 @@ describe("flash control packets", () => {
     expect(view.getUint32(59, true)).toBe(FLASH_STATUS_REGISTER);
     expect(view.getUint32(63, true)).toBe(0x00400040);
     expect(view.getUint32(123, true)).toBe(EXECUTION_MAGIC);
+  });
+
+  it("CH32V003のpage write前にCTLRとbufferを初期化する", () => {
+    const packets = buildFlashProgramPreparationSequenceOffline();
+    expect(
+      packets.map((packet) => {
+        const view = new DataView(packet.payload.buffer);
+        return [view.getUint32(51, true), view.getUint32(59, true)];
+      }),
+    ).toEqual([
+      [0x40022010, 0x00010000],
+      [0x40022010, 0x00090000],
+    ]);
   });
 
   it("未整列・範囲外のeraseを拒否する", () => {

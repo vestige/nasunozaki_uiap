@@ -31,7 +31,7 @@ const ERASE_64_STUB = new Uint8Array([
 ]);
 
 export type PreparedFlashControlPacket = {
-  kind: "flash-unlock-register" | "flash-erase-64";
+  kind: "flash-unlock-register" | "flash-program-prepare" | "flash-erase-64";
   reportId: number;
   payload: Uint8Array<ArrayBuffer>;
   executable: true;
@@ -45,6 +45,7 @@ function finalizePacket(packet: Uint8Array): Uint8Array<ArrayBuffer> {
 function buildRegisterWritePacket(
   register: number,
   value: number,
+  kind: PreparedFlashControlPacket["kind"] = "flash-unlock-register",
 ): PreparedFlashControlPacket {
   const packet = new Uint8Array(128);
   packet[0] = BOOTLOADER_REPORT_ID;
@@ -54,11 +55,24 @@ function buildRegisterWritePacket(
   view.setUint32(56, 4, true);
   view.setUint32(60, value, true);
   return {
-    kind: "flash-unlock-register",
+    kind,
     reportId: packet[0],
     payload: finalizePacket(packet),
     executable: true,
   };
+}
+
+export function buildFlashProgramPreparationSequenceOffline() {
+  const CR_PAGE_PG = 0x00010000;
+  const CR_BUF_RST = 0x00080000;
+  return [
+    buildRegisterWritePacket(0x40022010, CR_PAGE_PG, "flash-program-prepare"),
+    buildRegisterWritePacket(
+      0x40022010,
+      CR_PAGE_PG | CR_BUF_RST,
+      "flash-program-prepare",
+    ),
+  ];
 }
 
 export function buildFlashUnlockSequenceOffline(): PreparedFlashControlPacket[] {

@@ -87,6 +87,8 @@ describe("runFlashEraseRestoreOnDevice", () => {
       resultView(0),
       ...Array.from({ length: 16 }, () => resultView(0xffffffff)),
       resultView(0),
+      resultView(0),
+      resultView(0),
       ...backupWords.map(resultView),
     ];
     const device = createDevice(responses);
@@ -99,6 +101,6 @@ describe("runFlashEraseRestoreOnDevice", () => {
     );
 
     expect(result).toMatchObject({ erased: true, restored: true });
-    expect(device.sendFeatureReport).toHaveBeenCalledTimes(52);
+    expect(device.sendFeatureReport).toHaveBeenCalledTimes(54);
   });
 });
