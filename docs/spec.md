@@ -305,7 +305,7 @@ unlock sequenceは6 packet、erase packetはaddress・`FLASH_STATR (0x4002200C)`
 - `readProtected`
 - `safeToUnlock`: ロック中かつread protectionなしの場合のみtrue
 
-すでにunlock済みの場合は意図しない状態として再接続を案内する。read protectionがある場合は書き込み処理へ進ませない。この診断ではレジスタ読み取りだけを行い、unlock keyやerase packetを送らない。
+すでにunlock済みの場合、通常の調査ではUSBの物理的な再接続を案内する。保存済みデータからの復旧作業中は、read protectionがなければ直接復元画面へ進める案内を併記する。read protectionがある場合は書き込み処理へ進ませない。この診断ではレジスタ読み取りだけを行い、unlock keyやerase packetを送らない。
 
 2026-08-30の実機確認では次を取得した。
 
@@ -334,7 +334,7 @@ flash内容を変更する操作へ進む前に、ロック解除と直後の状
 
 画面のボタンは、読み取り専用preflightで `safeToUnlock=true`を取得するまで無効にする。実行開始、成功、失敗、unlock前後のCTLR、完了packet数を診断ログへ記録する。この機能からerase packetまたはwrite packetへ到達する経路は作らない。
 
-unlockは一時的な実機状態変更なので警告色で示す。USBを外してブートローダーモードで再接続すると通常のロック状態へ戻る想定とし、実機で復旧性を確認するまでは一般利用へ出さない。
+unlockは一時的な実機状態変更なので警告色で示す。USBを外してブートローダーモードで再接続した後もunlock状態が続く場合があるため、再接続後は必ずCTLRを読み直し、ロック状態へ戻ったと仮定しない。実機で復旧性を確認するまでは一般利用へ出さない。
 
 2026-09-06の実機確認では6 packetが完了し、`FLASH_CTLR`は `0x00008080`から `0x00000200`へ変化した。unlock後もread protectionは検出されなかった。これにより、unlock sequenceと直後の再読み取りが成功したと判断する。
 
@@ -392,6 +392,8 @@ erase開始後に失敗した場合は、現在値を読み、元データと異
 ### 8.13 復旧用binからの直接復元
 
 保存済みbinのファイル名に含まれるaddressとCRC32を読み、実ファイルのCRC32と64バイト容量を検証する。flashがunlock済みかつread protectionなしの場合だけ、CH32V003参照実装どおり `CTLR=0x00010000`、`CTLR=0x00090000`でpage programming bufferを初期化し、64バイトwrite packetを送る。直後に全64バイトを読み直し、ファイルとの完全一致を必須とする。新しいeraseは行わない。
+
+2026-09-06の実機確認では、`uiapduino_flash_08000000_crc32_BED6A734 (2).bin`の容量、address `0x08000000`、CRC32 `0xBED6A734`を検証して直接復元を実行した。書き戻し後の全64バイトがファイルと完全一致し、CRC32も `0xBED6A734`へ戻った。これにより直接復元経路は確認済みとするが、失敗したerase経路は引き続き停止する。
 
 ## 9. 安全境界
 

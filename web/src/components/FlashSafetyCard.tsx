@@ -13,7 +13,7 @@ export function FlashSafetyCard({ diagnostics }: Props) {
       : result?.locked
         ? "flashはロック中で、read protectionは検出されませんでした。これは通常の安全な待機状態です。"
         : result
-          ? "flashはすでにunlock状態です。意図しない状態のため、再接続してから再確認してください。"
+          ? "flashはunlock済みです。通常の調査ではUSBを物理的に再接続してください。復旧作業中は、そのまま「保存したbinから復旧する」へ進めます。"
           : "CTLRとread protection状態を読み取り専用stubで確認します。";
   const statusClass = inspectFlashSafety.isError
     ? "alert-error"
