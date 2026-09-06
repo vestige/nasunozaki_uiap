@@ -15,9 +15,19 @@ import type {
   HidNavigator,
   RoundTripResult,
 } from "./types";
-import { buildFlashUnlockSequenceOffline } from "./flashControlPacket";
+import {
+  buildErase64PacketOffline,
+  buildFlashUnlockSequenceOffline,
+} from "./flashControlPacket";
 import { crc32, validateFlashBackupAddress } from "./flashBackup";
-import { CH32V003_FLASH_BLOCK_SIZE } from "./flashPacket";
+import {
+  buildWrite64PacketOffline,
+  CH32V003_FLASH_BLOCK_SIZE,
+} from "./flashPacket";
+import {
+  runFlashEraseRestoreTransaction,
+  type FlashRecoveryStage,
+} from "./flashRecoveryTransaction";
 import {
   FLASH_CONTROL_REGISTER,
   FLASH_READ_PROTECTION_REGISTER,
@@ -213,4 +223,36 @@ export async function readFlashBlockBackup(
     checksum: crc32(bytes),
     allErased: bytes.every((byte) => byte === 0xff),
   };
+}
+
+export async function runFlashEraseRestoreOnDevice(
+  device: HidDevice,
+  address: number,
+  backup: Uint8Array,
+  onStage: (stage: FlashRecoveryStage) => void,
+) {
+  return runFlashEraseRestoreTransaction(
+    {
+      readSafety: () => readFlashSafetyState(device),
+      readBlock: async (targetAddress) =>
+        Uint8Array.from(
+          (await readFlashBlockBackup(device, targetAddress)).bytes,
+        ),
+      eraseBlock: async (targetAddress) => {
+        await executePreparedPacket(
+          device,
+          buildErase64PacketOffline(targetAddress),
+        );
+      },
+      writeBlock: async (targetAddress, data) => {
+        await executePreparedPacket(
+          device,
+          buildWrite64PacketOffline(targetAddress, data),
+        );
+      },
+    },
+    address,
+    backup,
+    onStage,
+  );
 }

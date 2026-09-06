@@ -16,6 +16,14 @@ export type FlashRecoveryResult = {
   restored: true;
 };
 
+export type FlashRecoveryStage =
+  | "preflight-verified"
+  | "erase-complete"
+  | "erase-verified"
+  | "restore-complete"
+  | "restore-verified"
+  | "recovery-started";
+
 export class FlashRecoveryError extends Error {
   readonly restored: boolean;
   readonly cause: unknown;
@@ -47,6 +55,7 @@ export async function runFlashEraseRestoreTransaction(
   adapter: FlashRecoveryAdapter,
   address: number,
   backup: Uint8Array,
+  onStage: (stage: FlashRecoveryStage) => void = () => undefined,
 ): Promise<FlashRecoveryResult> {
   validateFlashBackupAddress(address);
   if (backup.length !== CH32V003_FLASH_BLOCK_SIZE) {
@@ -62,19 +71,24 @@ export async function runFlashEraseRestoreTransaction(
       "実機内容が照合済みの退避データと一致しないため中止しました。",
     );
   }
+  onStage("preflight-verified");
 
   let destructiveStarted = false;
   try {
     destructiveStarted = true;
     await adapter.eraseBlock(address);
+    onStage("erase-complete");
     const erased = await adapter.readBlock(address);
     if (!erased.every((byte) => byte === 0xff)) {
       throw new Error("erase後の64バイトが全0xFFではありません。");
     }
+    onStage("erase-verified");
     await adapter.writeBlock(address, backup);
+    onStage("restore-complete");
     if (!bytesEqual(await adapter.readBlock(address), backup)) {
       throw new Error("write後の64バイトが退避データと一致しません。");
     }
+    onStage("restore-verified");
     return {
       address,
       backupChecksum: crc32(backup),
@@ -84,6 +98,7 @@ export async function runFlashEraseRestoreTransaction(
   } catch (cause) {
     if (!destructiveStarted) throw cause;
     try {
+      onStage("recovery-started");
       const restored = await recoverBlock(adapter, address, backup);
       throw new FlashRecoveryError(
         restored

@@ -47,10 +47,12 @@ describe("runFlashEraseRestoreTransaction", () => {
 
   it("preflightから復旧verifyまで順番を固定する", async () => {
     const { adapter, order } = createAdapter(backup);
+    const stages: string[] = [];
     const result = await runFlashEraseRestoreTransaction(
       adapter,
       CH32V003_FLASH_START,
       backup,
+      (stage) => stages.push(stage),
     );
     expect(order).toEqual([
       "preflight",
@@ -61,6 +63,13 @@ describe("runFlashEraseRestoreTransaction", () => {
       "read",
     ]);
     expect(result).toMatchObject({ erased: true, restored: true });
+    expect(stages).toEqual([
+      "preflight-verified",
+      "erase-complete",
+      "erase-verified",
+      "restore-complete",
+      "restore-verified",
+    ]);
   });
 
   it("erase後verify失敗時にも元データへ復旧する", async () => {

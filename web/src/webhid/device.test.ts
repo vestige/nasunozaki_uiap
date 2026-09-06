@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { readFlashBlockBackup, unlockFlashForInvestigation } from "./device";
+import {
+  readFlashBlockBackup,
+  runFlashEraseRestoreOnDevice,
+  unlockFlashForInvestigation,
+} from "./device";
 import { CH32V003_FLASH_START } from "./flashPacket";
 import type { HidDevice } from "./types";
 
@@ -67,5 +71,34 @@ describe("readFlashBlockBackup", () => {
     expect(result.attempts).toBe(16);
     expect(result.allErased).toBe(false);
     expect(device.sendFeatureReport).toHaveBeenCalledTimes(16);
+  });
+});
+
+describe("runFlashEraseRestoreOnDevice", () => {
+  it("eraseとwrite packetを送り、前後の64バイトを読み取る", async () => {
+    const backup = Uint8Array.from({ length: 64 }, (_, index) => index);
+    const backupWords = Array.from({ length: 16 }, (_, index) =>
+      new DataView(backup.buffer).getUint32(index * 4, true),
+    );
+    const responses = [
+      resultView(0x00000200),
+      resultView(0x03ffffdc),
+      ...backupWords.map(resultView),
+      resultView(0),
+      ...Array.from({ length: 16 }, () => resultView(0xffffffff)),
+      resultView(0),
+      ...backupWords.map(resultView),
+    ];
+    const device = createDevice(responses);
+
+    const result = await runFlashEraseRestoreOnDevice(
+      device,
+      CH32V003_FLASH_START,
+      backup,
+      () => undefined,
+    );
+
+    expect(result).toMatchObject({ erased: true, restored: true });
+    expect(device.sendFeatureReport).toHaveBeenCalledTimes(52);
   });
 });

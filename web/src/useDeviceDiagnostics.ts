@@ -24,6 +24,7 @@ import {
   readFlashSafetyState,
   readChipIdentity,
   requestUiapDevice,
+  runFlashEraseRestoreOnDevice,
   runRamRoundTrip,
   supportsWebHid,
   unlockFlashForInvestigation,
@@ -38,6 +39,11 @@ import type {
   HidDevice,
   RoundTripResult,
 } from "./webhid/types";
+import {
+  FlashRecoveryError,
+  type FlashRecoveryResult,
+  type FlashRecoveryStage,
+} from "./webhid/flashRecoveryTransaction";
 
 const errorText = (error: unknown) =>
   error instanceof Error ? `${error.name}: ${error.message}` : String(error);
@@ -120,6 +126,12 @@ export function useDeviceDiagnostics() {
       enabled: false,
     },
   );
+  const flashRecoveryQuery = useQuery<FlashRecoveryResult | null>({
+    queryKey: queryKeys.flashRecovery,
+    queryFn: async () => null,
+    initialData: null,
+    enabled: false,
+  });
 
   const appendLog = (
     level: DiagnosticLogLevel,
@@ -374,6 +386,71 @@ export function useDeviceDiagnostics() {
       ),
   });
 
+  const recoveryStageMessages: Record<FlashRecoveryStage, string> = {
+    "preflight-verified": "実機の現在値と退避データの一致を確認しました。",
+    "erase-complete": "先頭64バイトのerase packetが完了しました。",
+    "erase-verified": "erase後の64バイトがすべて0xFFであることを確認しました。",
+    "restore-complete": "元の64バイトのwrite packetが完了しました。",
+    "restore-verified": "書き戻した64バイトの完全一致を確認しました。",
+    "recovery-started": "異常を検出したため元データの復旧を開始しました。",
+  };
+
+  const eraseAndRestoreFlash = useMutation({
+    mutationFn: async () => {
+      const backup = flashBackupQuery.data;
+      const verification = flashBackupVerificationQuery.data;
+      if (!backup || !verification?.matches) {
+        throw new Error("保存した復旧用ファイルの一致確認が必要です。");
+      }
+      return runFlashEraseRestoreOnDevice(
+        deviceQuery.data!,
+        backup.address,
+        Uint8Array.from(backup.bytes),
+        (stage) =>
+          appendLog(
+            "info",
+            "FLASH_ERASE_RESTORE_STEP",
+            recoveryStageMessages[stage],
+            {
+              stage,
+            },
+          ),
+      );
+    },
+    onMutate: () => {
+      client.setQueryData(queryKeys.flashRecovery, null);
+      appendLog(
+        "warning",
+        "FLASH_ERASE_RESTORE",
+        "先頭64バイトの消去と自動復元を開始しました。USBを抜かないでください。",
+      );
+    },
+    onSuccess: (result) => {
+      client.setQueryData(queryKeys.flashRecovery, result);
+      appendLog(
+        "success",
+        "FLASH_ERASE_RESTORE",
+        "消去、全0xFF確認、元データ復元、完全一致確認に成功しました。",
+        {
+          address: hex32(result.address),
+          checksum: hex32(result.backupChecksum),
+          erased: result.erased,
+          restored: result.restored,
+        },
+      );
+    },
+    onError: (error) =>
+      appendLog(
+        "error",
+        "FLASH_ERASE_RESTORE",
+        "消去と復元の確認を完了できませんでした。",
+        {
+          error: errorText(error),
+          restored: error instanceof FlashRecoveryError && error.restored,
+        },
+      ),
+  });
+
   const clearDiagnosticResults = () => {
     client.setQueryData(queryKeys.featureReport, null);
     client.setQueryData(queryKeys.roundTrip, null);
@@ -382,6 +459,7 @@ export function useDeviceDiagnostics() {
     client.setQueryData(queryKeys.flashUnlock, null);
     client.setQueryData(queryKeys.flashBackup, null);
     client.setQueryData(queryKeys.flashBackupVerification, null);
+    client.setQueryData(queryKeys.flashRecovery, null);
     readFeature.reset();
     roundTrip.reset();
     identifyChip.reset();
@@ -390,6 +468,7 @@ export function useDeviceDiagnostics() {
     backupFlashBlock.reset();
     downloadFlashBackup.reset();
     verifyFlashBackup.reset();
+    eraseAndRestoreFlash.reset();
   };
 
   const connect = useMutation({
@@ -460,6 +539,7 @@ export function useDeviceDiagnostics() {
     flashUnlockResult: flashUnlockQuery.data,
     flashBackupResult: flashBackupQuery.data,
     flashBackupVerification: flashBackupVerificationQuery.data,
+    flashRecoveryResult: flashRecoveryQuery.data,
     diagnosticLogs: diagnosticLogQuery.data,
     connect,
     readFeature,
@@ -471,6 +551,7 @@ export function useDeviceDiagnostics() {
     backupFlashBlock,
     downloadFlashBackup,
     verifyFlashBackup,
+    eraseAndRestoreFlash,
     clearLogs,
     copyLogs,
     errorText,
