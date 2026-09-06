@@ -8,7 +8,12 @@ import {
   type DiagnosticLogLevel,
 } from "./diagnosticLog";
 import { CH32V003_FLASH_START } from "./webhid/flashPacket";
-import { formatHexDump } from "./webhid/flashBackup";
+import {
+  createFlashBackupFileName,
+  formatHexDump,
+  verifyFlashBackupBytes,
+  type FlashBackupVerification,
+} from "./webhid/flashBackup";
 import {
   createFlashWritePlan,
   type FlashWritePlan,
@@ -107,6 +112,14 @@ export function useDeviceDiagnostics() {
     initialData: null,
     enabled: false,
   });
+  const flashBackupVerificationQuery = useQuery<FlashBackupVerification | null>(
+    {
+      queryKey: queryKeys.flashBackupVerification,
+      queryFn: async () => null,
+      initialData: null,
+      enabled: false,
+    },
+  );
 
   const appendLog = (
     level: DiagnosticLogLevel,
@@ -292,6 +305,75 @@ export function useDeviceDiagnostics() {
       }),
   });
 
+  const downloadFlashBackup = useMutation({
+    mutationFn: async () => {
+      const backup = flashBackupQuery.data;
+      if (!backup) throw new Error("先に64バイトを読み取ってください。");
+      const fileName = createFlashBackupFileName(
+        backup.address,
+        backup.checksum,
+      );
+      const blob = new Blob([Uint8Array.from(backup.bytes)], {
+        type: "application/octet-stream",
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      return fileName;
+    },
+    onSuccess: (fileName) =>
+      appendLog(
+        "success",
+        "FLASH_BACKUP_EXPORT",
+        "退避ファイルをPCへ保存しました。",
+        { file: fileName, bytes: 64 },
+      ),
+    onError: (error) =>
+      appendLog(
+        "error",
+        "FLASH_BACKUP_EXPORT",
+        "退避ファイルを保存できませんでした。",
+        { error: errorText(error) },
+      ),
+  });
+
+  const verifyFlashBackup = useMutation({
+    mutationFn: async (file: File) => {
+      const backup = flashBackupQuery.data;
+      if (!backup) throw new Error("先に64バイトを読み取ってください。");
+      const candidate = new Uint8Array(await file.arrayBuffer());
+      return verifyFlashBackupBytes(file.name, candidate, backup.bytes);
+    },
+    onMutate: () =>
+      client.setQueryData(queryKeys.flashBackupVerification, null),
+    onSuccess: (result) => {
+      client.setQueryData(queryKeys.flashBackupVerification, result);
+      appendLog(
+        result.matches ? "success" : "error",
+        "FLASH_BACKUP_VERIFY",
+        result.matches
+          ? "保存した退避ファイルが読み取り結果と一致しました。"
+          : "退避ファイルが読み取り結果と一致しません。",
+        {
+          file: result.fileName,
+          bytes: result.length,
+          checksum: hex32(result.checksum),
+          matches: result.matches,
+        },
+      );
+    },
+    onError: (error) =>
+      appendLog(
+        "error",
+        "FLASH_BACKUP_VERIFY",
+        "退避ファイルを照合できませんでした。",
+        { error: errorText(error) },
+      ),
+  });
+
   const clearDiagnosticResults = () => {
     client.setQueryData(queryKeys.featureReport, null);
     client.setQueryData(queryKeys.roundTrip, null);
@@ -299,12 +381,15 @@ export function useDeviceDiagnostics() {
     client.setQueryData(queryKeys.flashSafety, null);
     client.setQueryData(queryKeys.flashUnlock, null);
     client.setQueryData(queryKeys.flashBackup, null);
+    client.setQueryData(queryKeys.flashBackupVerification, null);
     readFeature.reset();
     roundTrip.reset();
     identifyChip.reset();
     inspectFlashSafety.reset();
     unlockFlash.reset();
     backupFlashBlock.reset();
+    downloadFlashBackup.reset();
+    verifyFlashBackup.reset();
   };
 
   const connect = useMutation({
@@ -374,6 +459,7 @@ export function useDeviceDiagnostics() {
     flashSafety: flashSafetyQuery.data,
     flashUnlockResult: flashUnlockQuery.data,
     flashBackupResult: flashBackupQuery.data,
+    flashBackupVerification: flashBackupVerificationQuery.data,
     diagnosticLogs: diagnosticLogQuery.data,
     connect,
     readFeature,
@@ -383,6 +469,8 @@ export function useDeviceDiagnostics() {
     inspectFlashSafety,
     unlockFlash,
     backupFlashBlock,
+    downloadFlashBackup,
+    verifyFlashBackup,
     clearLogs,
     copyLogs,
     errorText,

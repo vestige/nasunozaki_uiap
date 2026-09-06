@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  createFlashBackupFileName,
   crc32,
   formatHexDump,
   validateFlashBackupAddress,
+  verifyFlashBackupBytes,
 } from "./flashBackup";
 import { CH32V003_FLASH_START } from "./flashPacket";
 
@@ -20,5 +22,20 @@ describe("flash backup helpers", () => {
     const bytes = new TextEncoder().encode("123456789");
     expect(crc32(bytes)).toBe(0xcbf43926);
     expect(formatHexDump([0, 15, 255])).toBe("00 0F FF");
+  });
+
+  it("保存ファイル名へaddressとCRC32を含める", () => {
+    expect(createFlashBackupFileName(0x08000000, 0xbed6a734)).toBe(
+      "uiapduino_flash_08000000_crc32_BED6A734.bin",
+    );
+  });
+
+  it("保存ファイルを元の退避内容とbyte単位で照合する", () => {
+    expect(
+      verifyFlashBackupBytes("backup.bin", new Uint8Array([1, 2]), [1, 2]),
+    ).toMatchObject({ length: 2, matches: true });
+    expect(
+      verifyFlashBackupBytes("wrong.bin", new Uint8Array([1, 3]), [1, 2]),
+    ).toMatchObject({ length: 2, matches: false });
   });
 });

@@ -1,3 +1,4 @@
+import type { ChangeEvent } from "react";
 import type { useDeviceDiagnostics } from "../useDeviceDiagnostics";
 import { formatHexDump } from "../webhid/flashBackup";
 
@@ -6,8 +7,15 @@ const hex32 = (value: number) =>
   `0x${value.toString(16).toUpperCase().padStart(8, "0")}`;
 
 export function FlashBackupCard({ diagnostics }: Props) {
-  const { flashUnlockResult, flashBackupResult, backupFlashBlock, errorText } =
-    diagnostics;
+  const {
+    flashUnlockResult,
+    flashBackupResult,
+    flashBackupVerification,
+    backupFlashBlock,
+    downloadFlashBackup,
+    verifyFlashBackup,
+    errorText,
+  } = diagnostics;
   const canRead = flashUnlockResult?.after.locked === false;
 
   const message = backupFlashBlock.isError
@@ -17,6 +25,11 @@ export function FlashBackupCard({ diagnostics }: Props) {
       : canRead
         ? "erase前の復元元として、flash先頭blockを読み取ります。"
         : "先にflash unlock後の状態確認を完了してください。";
+
+  const onSelectBackup = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) verifyFlashBackup.mutate(file);
+  };
 
   return (
     <article className="card border-2 border-info bg-base-100 shadow-lg">
@@ -76,6 +89,43 @@ export function FlashBackupCard({ diagnostics }: Props) {
               <pre data-prefix="">
                 <code>{formatHexDump(flashBackupResult.bytes)}</code>
               </pre>
+            </div>
+            <div className="rounded-box border border-base-content/20 bg-base-200 p-4">
+              <h4 className="font-black">復旧用ファイルをPCへ残す</h4>
+              <p className="mt-1 text-sm leading-6 text-base-content/65">
+                64バイトをbinファイルとして保存し、同じファイルを選び直して内容が一致することを確認します。
+              </p>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <button
+                  className="btn btn-outline btn-info"
+                  onClick={() => downloadFlashBackup.mutate()}
+                  disabled={downloadFlashBackup.isPending}
+                >
+                  {downloadFlashBackup.isPending
+                    ? "保存中…"
+                    : "退避ファイルを保存"}
+                </button>
+                <input
+                  className="file-input file-input-bordered w-full max-w-sm"
+                  type="file"
+                  accept=".bin,application/octet-stream"
+                  onChange={onSelectBackup}
+                  disabled={verifyFlashBackup.isPending}
+                  aria-label="保存した退避ファイルを選ぶ"
+                />
+              </div>
+              {flashBackupVerification && (
+                <div
+                  className={`alert mt-4 ${flashBackupVerification.matches ? "border border-info/30 bg-info/10 text-base-content" : "alert-error"}`}
+                  role="status"
+                >
+                  <span>
+                    {flashBackupVerification.matches
+                      ? `一致しました（CRC32 ${hex32(flashBackupVerification.checksum)}）。`
+                      : "一致しません。別のファイルを選ばず、ここで作業を止めてください。"}
+                  </span>
+                </div>
+              )}
             </div>
           </>
         )}

@@ -33,3 +33,30 @@ export function formatHexDump(bytes: number[]) {
     .map((byte) => byte.toString(16).toUpperCase().padStart(2, "0"))
     .join(" ");
 }
+
+export function createFlashBackupFileName(address: number, checksum: number) {
+  return `uiapduino_flash_${address.toString(16).toUpperCase().padStart(8, "0")}_crc32_${checksum.toString(16).toUpperCase().padStart(8, "0")}.bin`;
+}
+
+export type FlashBackupVerification = {
+  fileName: string;
+  length: number;
+  checksum: number;
+  matches: boolean;
+};
+
+export function verifyFlashBackupBytes(
+  fileName: string,
+  candidate: Uint8Array,
+  expected: number[],
+): FlashBackupVerification {
+  const expectedBytes = Uint8Array.from(expected);
+  return {
+    fileName,
+    length: candidate.length,
+    checksum: crc32(candidate),
+    matches:
+      candidate.length === expectedBytes.length &&
+      candidate.every((byte, index) => byte === expectedBytes[index]),
+  };
+}
