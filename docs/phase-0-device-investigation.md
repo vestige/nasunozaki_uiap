@@ -68,7 +68,8 @@ PIDやレポート構成はファームウェアによって変わる可能性�
 - [x] flash unlock／erase／write／verify手順を設計する
 - [x] 実機へ送る前の書き込み前確認画面を設計する
 - [x] flash unlock・64バイトerase packetをオフライン検証する
-- [ ] flash unlock後の状態とread protectionを実機で検証する
+- [x] flash unlock後の状態とread protectionを実機で検証する
+- [ ] flash先頭64バイトを読み取り専用で退避する
 - [x] flash lockとread protectionを読み取り専用で確認する
 - [ ] LEDを1回点灯する最小コマンドを送受信する
 - [ ] 成功応答またはエラー応答をブラウザで受信する
@@ -209,7 +210,19 @@ read protection: 検出なし
 
 次の実機確認用として、flash unlockだけを実行してCTLRを読み直す画面を追加した。読み取り済みのpreflight結果でボタンを有効化するが、実行時にもpreflightを再実行し、ロック中かつread protectionなしでなければ6 packetを送らない。各packetの完了応答を確認し、unlock後もlock bitが残れば失敗とする。確認ダイアログ、診断ログ、再接続案内を備え、erase・writeの送信経路は追加していない。
 
-実機結果は未確認である。確認後はunlock前後のCTLR、OBTKEYR、完了packet数、USB再接続後にロック状態へ戻るかを記録する。
+2026-09-06の実機結果:
+
+```text
+完了packet:          6
+unlock前 CTLR:       0x00008080
+unlock後 CTLR:       0x00000200
+unlock後 flash lock: false
+unlock後 protection: false
+```
+
+unlock sequenceと直後の状態読み取りは成功した。USB再接続後にロック状態へ戻ることは、次回接続時のpreflightログでも継続確認する。
+
+次の実機確認用として、`0x08000000`から64バイトを16 wordで読み取り、ブラウザのメモリーへ退避する機能を追加した。画面にはhex dump、CRC32、全`0xFF`判定を表示し、診断ログにも同じ基準値を記録する。これは将来のerase前バックアップであり、まだerase・writeは行わない。実機結果は未確認である。
 
 ## Phase 0完了条件
 

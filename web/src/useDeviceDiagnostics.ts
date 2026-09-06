@@ -8,12 +8,14 @@ import {
   type DiagnosticLogLevel,
 } from "./diagnosticLog";
 import { CH32V003_FLASH_START } from "./webhid/flashPacket";
+import { formatHexDump } from "./webhid/flashBackup";
 import {
   createFlashWritePlan,
   type FlashWritePlan,
 } from "./webhid/flashWritePlan";
 import {
   readFeatureReport,
+  readFlashBlockBackup,
   readFlashSafetyState,
   readChipIdentity,
   requestUiapDevice,
@@ -26,6 +28,7 @@ import type {
   ChipIdentityResult,
   FeatureReportResult,
   FlashSafetyResult,
+  FlashBlockBackupResult,
   FlashUnlockResult,
   HidDevice,
   RoundTripResult,
@@ -94,6 +97,12 @@ export function useDeviceDiagnostics() {
   });
   const flashUnlockQuery = useQuery<FlashUnlockResult | null>({
     queryKey: queryKeys.flashUnlock,
+    queryFn: async () => null,
+    initialData: null,
+    enabled: false,
+  });
+  const flashBackupQuery = useQuery<FlashBlockBackupResult | null>({
+    queryKey: queryKeys.flashBackup,
     queryFn: async () => null,
     initialData: null,
     enabled: false,
@@ -254,17 +263,48 @@ export function useDeviceDiagnostics() {
       ),
   });
 
+  const backupFlashBlock = useMutation({
+    mutationFn: () =>
+      readFlashBlockBackup(deviceQuery.data!, CH32V003_FLASH_START),
+    onMutate: () => {
+      client.setQueryData(queryKeys.flashBackup, null);
+      appendLog(
+        "info",
+        "FLASH_BACKUP",
+        "先頭64バイトの読み取り専用退避を開始しました。",
+        { address: hex32(CH32V003_FLASH_START) },
+      );
+    },
+    onSuccess: (result) => {
+      client.setQueryData(queryKeys.flashBackup, result);
+      appendLog("success", "FLASH_BACKUP", "64バイトの退避に成功しました。", {
+        address: hex32(result.address),
+        bytes: result.bytes.length,
+        checksum: hex32(result.checksum),
+        allErased: result.allErased,
+        attempts: result.attempts,
+        data: formatHexDump(result.bytes),
+      });
+    },
+    onError: (error) =>
+      appendLog("error", "FLASH_BACKUP", "64バイトを退避できませんでした。", {
+        error: errorText(error),
+      }),
+  });
+
   const clearDiagnosticResults = () => {
     client.setQueryData(queryKeys.featureReport, null);
     client.setQueryData(queryKeys.roundTrip, null);
     client.setQueryData(queryKeys.chipIdentity, null);
     client.setQueryData(queryKeys.flashSafety, null);
     client.setQueryData(queryKeys.flashUnlock, null);
+    client.setQueryData(queryKeys.flashBackup, null);
     readFeature.reset();
     roundTrip.reset();
     identifyChip.reset();
     inspectFlashSafety.reset();
     unlockFlash.reset();
+    backupFlashBlock.reset();
   };
 
   const connect = useMutation({
@@ -333,6 +373,7 @@ export function useDeviceDiagnostics() {
     flashWriteReview: flashWriteReviewQuery.data,
     flashSafety: flashSafetyQuery.data,
     flashUnlockResult: flashUnlockQuery.data,
+    flashBackupResult: flashBackupQuery.data,
     diagnosticLogs: diagnosticLogQuery.data,
     connect,
     readFeature,
@@ -341,6 +382,7 @@ export function useDeviceDiagnostics() {
     reviewFlashWrite,
     inspectFlashSafety,
     unlockFlash,
+    backupFlashBlock,
     clearLogs,
     copyLogs,
     errorText,

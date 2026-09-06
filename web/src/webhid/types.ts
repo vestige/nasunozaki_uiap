@@ -68,3 +68,11 @@ export type FlashUnlockResult = {
   after: FlashSafetyResult;
   completedPackets: number;
 };
+
+export type FlashBlockBackupResult = {
+  address: number;
+  bytes: number[];
+  attempts: number;
+  checksum: number;
+  allErased: boolean;
+};

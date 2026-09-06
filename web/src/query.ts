@@ -21,5 +21,6 @@ export const queryKeys = {
   flashWriteReview: ["flash", "write-review"] as const,
   flashSafety: ["flash", "safety"] as const,
   flashUnlock: ["flash", "unlock"] as const,
+  flashBackup: ["flash", "backup"] as const,
   diagnosticLog: ["diagnostics", "log"] as const,
 };

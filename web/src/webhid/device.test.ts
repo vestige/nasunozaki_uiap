@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { unlockFlashForInvestigation } from "./device";
+import { readFlashBlockBackup, unlockFlashForInvestigation } from "./device";
+import { CH32V003_FLASH_START } from "./flashPacket";
 import type { HidDevice } from "./types";
 
 const resultView = (value: number) => {
@@ -50,5 +51,21 @@ describe("unlockFlashForInvestigation", () => {
       "read protectionが検出されたためunlockを中止しました。",
     );
     expect(device.sendFeatureReport).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("readFlashBlockBackup", () => {
+  it("16 wordをlittle endianの64バイトへ退避する", async () => {
+    const device = createDevice(
+      Array.from({ length: 16 }, (_, index) => resultView(index + 1)),
+    );
+
+    const result = await readFlashBlockBackup(device, CH32V003_FLASH_START);
+
+    expect(result.bytes).toHaveLength(64);
+    expect(result.bytes.slice(0, 8)).toEqual([1, 0, 0, 0, 2, 0, 0, 0]);
+    expect(result.attempts).toBe(16);
+    expect(result.allErased).toBe(false);
+    expect(device.sendFeatureReport).toHaveBeenCalledTimes(16);
   });
 });

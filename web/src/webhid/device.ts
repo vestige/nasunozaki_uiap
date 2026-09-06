@@ -7,6 +7,7 @@ import {
 } from "./bootloaderProtocol";
 import type {
   ChipIdentityResult,
+  FlashBlockBackupResult,
   FeatureReportResult,
   FlashSafetyResult,
   FlashUnlockResult,
@@ -15,6 +16,8 @@ import type {
   RoundTripResult,
 } from "./types";
 import { buildFlashUnlockSequenceOffline } from "./flashControlPacket";
+import { crc32, validateFlashBackupAddress } from "./flashBackup";
+import { CH32V003_FLASH_BLOCK_SIZE } from "./flashPacket";
 import {
   FLASH_CONTROL_REGISTER,
   FLASH_READ_PROTECTION_REGISTER,
@@ -187,4 +190,27 @@ export async function unlockFlashForInvestigation(
     throw new Error("6 packet送信後もflash lockが解除されていません。");
   }
   return { before, after, completedPackets };
+}
+
+export async function readFlashBlockBackup(
+  device: HidDevice,
+  address: number,
+): Promise<FlashBlockBackupResult> {
+  validateFlashBackupAddress(address);
+  const bytes = new Uint8Array(CH32V003_FLASH_BLOCK_SIZE);
+  let attempts = 0;
+
+  for (let offset = 0; offset < bytes.length; offset += 4) {
+    const result = await executeReadWord(device, address + offset);
+    new DataView(bytes.buffer).setUint32(offset, result.value, true);
+    attempts += result.attempts;
+  }
+
+  return {
+    address,
+    bytes: Array.from(bytes),
+    attempts,
+    checksum: crc32(bytes),
+    allErased: bytes.every((byte) => byte === 0xff),
+  };
 }
