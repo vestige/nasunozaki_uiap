@@ -7,6 +7,7 @@ import {
   uiapToolbox,
 } from "../blockly/blocks";
 import { compileWorkspace, type ProgramInstruction } from "../blockly/program";
+import { runSimulatorProgram } from "../blockly/runtime";
 import {
   clearBlocklyWorkspace,
   loadBlocklyWorkspace,
@@ -99,19 +100,35 @@ export function BlocklyStudio() {
 
   const run = useMutation({
     mutationFn: async () => {
+      const workspace = workspaceRef.current;
+      if (!workspace) throw new Error("Blocklyを準備中です。");
       const controller = new AbortController();
       abortRef.current = controller;
-      await executeProgram(program.data, controller.signal, client);
+      await runSimulatorProgram(
+        program.data,
+        {
+          setLed: (on) => client.setQueryData(queryKeys.simulatorLed, on),
+          highlightBlock: (blockId) => {
+            client.setQueryData(queryKeys.simulatorBlock, blockId);
+            workspace.highlightBlock(blockId);
+          },
+          wait: delay,
+        },
+        controller.signal,
+      );
     },
     onSettled: () => {
       abortRef.current = null;
       client.setQueryData(queryKeys.simulatorBlock, null);
+      workspaceRef.current?.highlightBlock(null);
     },
   });
 
   const stop = () => {
     abortRef.current?.abort();
     client.setQueryData(queryKeys.simulatorLed, false);
+    client.setQueryData(queryKeys.simulatorBlock, null);
+    workspaceRef.current?.highlightBlock(null);
     run.reset();
   };
 
@@ -171,25 +188,6 @@ export function BlocklyStudio() {
       </div>
     </section>
   );
-}
-
-async function executeProgram(
-  instructions: ProgramInstruction[],
-  signal: AbortSignal,
-  client: ReturnType<typeof useQueryClient>,
-) {
-  for (const instruction of instructions) {
-    if (signal.aborted) throw new DOMException("停止しました", "AbortError");
-    client.setQueryData(queryKeys.simulatorBlock, instruction.blockId);
-    if (instruction.type === "led")
-      client.setQueryData(queryKeys.simulatorLed, instruction.on);
-    if (instruction.type === "wait")
-      await delay(instruction.milliseconds, signal);
-    if (instruction.type === "repeat") {
-      for (let index = 0; index < instruction.times; index += 1)
-        await executeProgram(instruction.body, signal, client);
-    }
-  }
 }
 
 function delay(milliseconds: number, signal: AbortSignal) {
