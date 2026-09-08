@@ -284,3 +284,5 @@ BUSYとWRPRTERRは残っておらず、STATR側のLOCKだけが有効である�
 ブラウザからLEDを1回点灯する最小命令を送り、UIAPduinoから応答を受信できること。ここまで確認できたら、通信仕様を固定しPhase 1のBlockly画面へ進む。
 
 ただし、Blockly編集画面と画面内シミュレーターは実機flash操作に依存しないため、erase調査でUI開発全体を止めない。2026-09-08からPhase 0の未完了項目を維持したままPhase 1の非実機部分を並行して開始した。実機への送信機能はPhase 0完了条件を満たすまで接続しない。
+
+Phase 1側では続いてBlockly workspaceのブラウザ内自動保存、自動復元、初期点滅例へのリセットを追加した。これらは `localStorage`だけを使用し、WebHID Device adapterやflash操作には接続しない。Phase 0の実機チェック状況への変更はない。

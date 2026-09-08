@@ -7,11 +7,24 @@ import {
   uiapToolbox,
 } from "../blockly/blocks";
 import { compileWorkspace, type ProgramInstruction } from "../blockly/program";
+import {
+  clearBlocklyWorkspace,
+  loadBlocklyWorkspace,
+  saveBlocklyWorkspace,
+} from "../blockly/persistence";
 import { queryKeys } from "../query";
+import { BlocklyToolbar } from "./BlocklyToolbar";
+import { LedSimulator } from "./LedSimulator";
+
+type SaveStatus = {
+  kind: "restored" | "saved" | "unavailable";
+  savedAt?: string;
+};
 
 export function BlocklyStudio() {
   const client = useQueryClient();
   const abortRef = useRef<AbortController | null>(null);
+  const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
   const program = useQuery<ProgramInstruction[]>({
     queryKey: queryKeys.blocklyProgram,
     queryFn: async () => [],
@@ -22,6 +35,12 @@ export function BlocklyStudio() {
     queryKey: queryKeys.simulatorLed,
     queryFn: async () => false,
     initialData: false,
+    enabled: false,
+  });
+  const saveStatus = useQuery<SaveStatus>({
+    queryKey: queryKeys.blocklySaveStatus,
+    queryFn: async () => ({ kind: "saved", savedAt: "" }),
+    initialData: { kind: "saved", savedAt: "" },
     enabled: false,
   });
 
@@ -36,17 +55,44 @@ export function BlocklyStudio() {
         zoom: { controls: true, wheel: true, startScale: 0.9 },
         move: { scrollbars: true, drag: true, wheel: true },
       });
-      Blockly.serialization.workspaces.load(starterProgram, workspace);
-      const updateProgram = () =>
+      workspaceRef.current = workspace;
+      const saved = loadBlocklyWorkspace(window.localStorage);
+      Blockly.serialization.workspaces.load(saved ?? starterProgram, workspace);
+      client.setQueryData(
+        queryKeys.blocklyProgram,
+        compileWorkspace(workspace),
+      );
+      client.setQueryData<SaveStatus>(
+        queryKeys.blocklySaveStatus,
+        saved ? { kind: "restored" } : { kind: "saved", savedAt: "" },
+      );
+      const updateProgram = () => {
         client.setQueryData(
           queryKeys.blocklyProgram,
           compileWorkspace(workspace),
         );
-      updateProgram();
+        try {
+          saveBlocklyWorkspace(
+            window.localStorage,
+            Blockly.serialization.workspaces.save(workspace),
+          );
+          client.setQueryData<SaveStatus>(queryKeys.blocklySaveStatus, {
+            kind: "saved",
+            savedAt: new Date().toLocaleTimeString("ja-JP"),
+          });
+        } catch {
+          client.setQueryData<SaveStatus>(queryKeys.blocklySaveStatus, {
+            kind: "unavailable",
+          });
+        }
+      };
       workspace.addChangeListener((event) => {
         if (!event.isUiEvent) updateProgram();
       });
-      return () => workspace.dispose();
+      return () => {
+        workspaceRef.current = null;
+        workspace.dispose();
+      };
     },
     [client],
   );
@@ -69,6 +115,26 @@ export function BlocklyStudio() {
     run.reset();
   };
 
+  const resetWorkspace = () => {
+    const workspace = workspaceRef.current;
+    if (!workspace) return;
+    if (!window.confirm("今のブロックを消して、最初の点滅例に戻しますか？"))
+      return;
+    stop();
+    clearBlocklyWorkspace(window.localStorage);
+    workspace.clear();
+    Blockly.serialization.workspaces.load(starterProgram, workspace);
+  };
+
+  const saveMessage =
+    saveStatus.data.kind === "unavailable"
+      ? "このブラウザには保存できません"
+      : saveStatus.data.kind === "restored"
+        ? "前回のブロックを復元しました"
+        : saveStatus.data.savedAt
+          ? `${saveStatus.data.savedAt} に自動保存しました`
+          : "このブラウザへ自動保存します";
+
   return (
     <section
       className="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8"
@@ -86,23 +152,14 @@ export function BlocklyStudio() {
             左からブロックを運び、「画面で実行」を押してください。まだ実機には送信しません。
           </p>
         </div>
-        <div className="flex gap-3">
-          <button
-            className="btn btn-primary btn-lg font-black"
-            onClick={() => run.mutate()}
-            disabled={run.isPending || program.data.length === 0}
-          >
-            {run.isPending && <span className="loading loading-spinner" />}
-            {run.isPending ? "実行中…" : "▶ 画面で実行"}
-          </button>
-          <button
-            className="btn btn-outline btn-lg font-black"
-            onClick={stop}
-            disabled={!run.isPending}
-          >
-            ■ とめる
-          </button>
-        </div>
+        <BlocklyToolbar
+          isRunning={run.isPending}
+          canRun={program.data.length > 0}
+          saveMessage={saveMessage}
+          onRun={() => run.mutate()}
+          onStop={stop}
+          onReset={resetWorkspace}
+        />
       </div>
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div
@@ -110,28 +167,7 @@ export function BlocklyStudio() {
           className="h-[34rem] overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl"
           aria-label="ブロックプログラミング編集エリア"
         />
-        <aside className="card border-2 border-neutral bg-neutral text-neutral-content shadow-xl">
-          <div className="card-body items-center text-center">
-            <p className="text-sm font-black tracking-widest text-neutral-content/60">
-              LED SIMULATOR
-            </p>
-            <div
-              className={`my-8 h-36 w-36 rounded-full border-8 transition-all duration-150 ${led.data ? "border-warning/40 bg-warning shadow-[0_0_60px_20px_oklch(var(--wa)/.45)]" : "border-neutral-content/20 bg-black/50"}`}
-              role="img"
-              aria-label={led.data ? "LED点灯中" : "LED消灯中"}
-            />
-            <p className="text-2xl font-black">
-              {led.data ? "LED ついてる！" : "LED きえてる"}
-            </p>
-            <div className="divider divider-neutral" />
-            <p className="text-sm leading-6 text-neutral-content/65">
-              ブロックは安全な命令へ変換してから順番に実行します。
-            </p>
-            <div className="badge badge-outline mt-2">
-              命令 {countInstructions(program.data)}個
-            </div>
-          </div>
-        </aside>
+        <LedSimulator ledOn={led.data} instructions={program.data} />
       </div>
     </section>
   );
@@ -168,15 +204,4 @@ function delay(milliseconds: number, signal: AbortSignal) {
       { once: true },
     );
   });
-}
-
-function countInstructions(instructions: ProgramInstruction[]): number {
-  return instructions.reduce(
-    (total, instruction) =>
-      total +
-      (instruction.type === "repeat"
-        ? instruction.times * countInstructions(instruction.body)
-        : 1),
-    0,
-  );
 }

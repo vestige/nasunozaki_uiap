@@ -31,4 +31,5 @@ export const queryKeys = {
   blocklyProgram: ["blockly", "program"] as const,
   simulatorLed: ["blockly", "simulator-led"] as const,
   simulatorBlock: ["blockly", "simulator-block"] as const,
+  blocklySaveStatus: ["blockly", "save-status"] as const,
 };

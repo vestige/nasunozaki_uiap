@@ -450,6 +450,10 @@ workspaceは直接JavaScriptとして評価せず、`led`、`wait`、`repeat`か
 
 画面内実行は中間命令列だけを解釈し、LEDシミュレーターを更新する。実行状態、LED状態、編集中の命令列はTanStack Queryで管理し、停止時は実行を中断してLEDを消灯する。このプロトタイプからWebHID、unlock、erase、writeへ到達する経路は作らない。
 
+Blockly workspaceは公式serialization APIでJSONへ変換し、version付きのデータとして `localStorage`の `uiapduino:blockly-workspace:v1`へ変更のたびに保存する。ページ表示時は保存済みデータを優先し、存在しない場合、JSONが壊れている場合、未対応versionの場合は初期点滅例を使う。保存内容はサーバーへ送信しない。
+
+「最初のブロックに戻す」は確認後に実行中のシミュレーターを停止し、保存済みworkspaceを削除して初期点滅例を再配置する。画面には自動保存時刻、前回データの復元、保存不可の状態を表示する。編集中の状態表示はTanStack Query、永続化処理は独立したpersistence moduleへ分離する。
+
 ## 11. ドキュメント更新ルール
 
 実装変更は、同じコミットまたは同じ作業単位で次を更新する。
