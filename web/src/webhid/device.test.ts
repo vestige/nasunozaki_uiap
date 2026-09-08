@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   readFlashBlockBackup,
+  readFlashStatus,
   runFlashEraseRestoreOnDevice,
   unlockFlashForInvestigation,
 } from "./device";
@@ -71,6 +72,29 @@ describe("readFlashBlockBackup", () => {
     expect(result.attempts).toBe(16);
     expect(result.allErased).toBe(false);
     expect(device.sendFeatureReport).toHaveBeenCalledTimes(16);
+  });
+});
+
+describe("readFlashStatus", () => {
+  it("CTLR、STATR、OBTKEYRを読み取り専用で取得する", async () => {
+    const device = createDevice([
+      resultView(0x00000200),
+      resultView(0x00000020),
+      resultView(0x03ffffdc),
+    ]);
+
+    const result = await readFlashStatus(device);
+
+    expect(result).toMatchObject({
+      controlValue: 0x00000200,
+      statusValue: 0x00000020,
+      protectionValue: 0x03ffffdc,
+      busy: false,
+      writeProtectionError: false,
+      endOfOperation: true,
+      attempts: 3,
+    });
+    expect(device.sendFeatureReport).toHaveBeenCalledTimes(3);
   });
 });
 

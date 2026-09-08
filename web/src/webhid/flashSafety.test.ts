@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { interpretFlashSafety } from "./flashSafety";
+import { interpretFlashSafety, interpretFlashStatus } from "./flashSafety";
 
 describe("interpretFlashSafety", () => {
   it("lock中かつread protectionなしをunlock候補とする", () => {
@@ -20,5 +20,27 @@ describe("interpretFlashSafety", () => {
     const state = interpretFlashSafety(0, 0);
     expect(state.locked).toBe(false);
     expect(state.safeToUnlock).toBe(false);
+  });
+});
+
+describe("interpretFlashStatus", () => {
+  it("STATRの主要フラグを個別に解釈する", () => {
+    expect(interpretFlashStatus(0x200, 0xc031, 0x03ffffdc)).toEqual({
+      controlValue: 0x200,
+      statusValue: 0xc031,
+      protectionValue: 0x03ffffdc,
+      busy: true,
+      writeProtectionError: true,
+      endOfOperation: true,
+      statusMode: true,
+      statusLocked: true,
+    });
+  });
+
+  it("STATRが0なら処理中でもエラーでもない", () => {
+    const result = interpretFlashStatus(0x200, 0, 0x03ffffdc);
+    expect(result.busy).toBe(false);
+    expect(result.writeProtectionError).toBe(false);
+    expect(result.endOfOperation).toBe(false);
   });
 });

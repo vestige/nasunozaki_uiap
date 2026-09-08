@@ -24,6 +24,7 @@ import {
   readFeatureReport,
   readFlashBlockBackup,
   readFlashSafetyState,
+  readFlashStatus,
   restoreFlashBlockOnDevice,
   readChipIdentity,
   requestUiapDevice,
@@ -37,6 +38,7 @@ import type {
   ChipIdentityResult,
   FeatureReportResult,
   FlashSafetyResult,
+  FlashStatusResult,
   FlashBlockBackupResult,
   FlashUnlockResult,
   HidDevice,
@@ -106,6 +108,12 @@ export function useDeviceDiagnostics() {
   });
   const flashSafetyQuery = useQuery<FlashSafetyResult | null>({
     queryKey: queryKeys.flashSafety,
+    queryFn: async () => null,
+    initialData: null,
+    enabled: false,
+  });
+  const flashStatusQuery = useQuery<FlashStatusResult | null>({
+    queryKey: queryKeys.flashStatus,
     queryFn: async () => null,
     initialData: null,
     enabled: false,
@@ -242,6 +250,46 @@ export function useDeviceDiagnostics() {
       appendLog("error", "FLASH_PREFLIGHT", "安全状態の確認に失敗しました。", {
         error: errorText(error),
       }),
+  });
+
+  const inspectFlashStatus = useMutation({
+    mutationFn: () => readFlashStatus(deviceQuery.data!),
+    onMutate: () => {
+      client.setQueryData(queryKeys.flashStatus, null);
+      appendLog(
+        "info",
+        "FLASH_STATUS_DIAGNOSTIC",
+        "flash statusの読み取り専用診断を開始しました。",
+      );
+    },
+    onSuccess: (result) => {
+      client.setQueryData(queryKeys.flashStatus, result);
+      appendLog(
+        result.busy || result.writeProtectionError ? "warning" : "success",
+        "FLASH_STATUS_DIAGNOSTIC",
+        result.busy || result.writeProtectionError
+          ? "flash statusに注意が必要なフラグがあります。"
+          : "BUSYと書き込み保護エラーは検出されませんでした。",
+        {
+          CTLR: hex32(result.controlValue),
+          STATR: hex32(result.statusValue),
+          OBTKEYR: hex32(result.protectionValue),
+          busy: result.busy,
+          writeProtectionError: result.writeProtectionError,
+          endOfOperation: result.endOfOperation,
+          statusMode: result.statusMode,
+          statusLocked: result.statusLocked,
+          attempts: result.attempts,
+        },
+      );
+    },
+    onError: (error) =>
+      appendLog(
+        "error",
+        "FLASH_STATUS_DIAGNOSTIC",
+        "flash statusを確認できませんでした。",
+        { error: errorText(error) },
+      ),
   });
 
   const reviewFlashWrite = useMutation({
@@ -561,6 +609,7 @@ export function useDeviceDiagnostics() {
     client.setQueryData(queryKeys.roundTrip, null);
     client.setQueryData(queryKeys.chipIdentity, null);
     client.setQueryData(queryKeys.flashSafety, null);
+    client.setQueryData(queryKeys.flashStatus, null);
     client.setQueryData(queryKeys.flashUnlock, null);
     client.setQueryData(queryKeys.flashBackup, null);
     client.setQueryData(queryKeys.flashBackupVerification, null);
@@ -569,6 +618,7 @@ export function useDeviceDiagnostics() {
     roundTrip.reset();
     identifyChip.reset();
     inspectFlashSafety.reset();
+    inspectFlashStatus.reset();
     unlockFlash.reset();
     backupFlashBlock.reset();
     downloadFlashBackup.reset();
@@ -641,6 +691,7 @@ export function useDeviceDiagnostics() {
     chipIdentity: chipIdentityQuery.data,
     flashWriteReview: flashWriteReviewQuery.data,
     flashSafety: flashSafetyQuery.data,
+    flashStatus: flashStatusQuery.data,
     flashUnlockResult: flashUnlockQuery.data,
     flashBackupResult: flashBackupQuery.data,
     flashBackupVerification: flashBackupVerificationQuery.data,
@@ -654,6 +705,7 @@ export function useDeviceDiagnostics() {
     identifyChip,
     reviewFlashWrite,
     inspectFlashSafety,
+    inspectFlashStatus,
     unlockFlash,
     backupFlashBlock,
     downloadFlashBackup,

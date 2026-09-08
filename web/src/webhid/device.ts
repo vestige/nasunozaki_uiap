@@ -10,6 +10,7 @@ import type {
   FlashBlockBackupResult,
   FeatureReportResult,
   FlashSafetyResult,
+  FlashStatusResult,
   FlashUnlockResult,
   HidDevice,
   HidNavigator,
@@ -32,7 +33,9 @@ import {
 import {
   FLASH_CONTROL_REGISTER,
   FLASH_READ_PROTECTION_REGISTER,
+  FLASH_STATUS_REGISTER,
   interpretFlashSafety,
+  interpretFlashStatus,
 } from "./flashSafety";
 
 export const UIAP_VENDOR_ID = 0x1209;
@@ -161,6 +164,21 @@ export async function readFlashSafetyState(
   return {
     ...interpretFlashSafety(control.value, protection.value),
     attempts: control.attempts + protection.attempts,
+  };
+}
+
+export async function readFlashStatus(
+  device: HidDevice,
+): Promise<FlashStatusResult> {
+  const control = await executeReadWord(device, FLASH_CONTROL_REGISTER);
+  const status = await executeReadWord(device, FLASH_STATUS_REGISTER);
+  const protection = await executeReadWord(
+    device,
+    FLASH_READ_PROTECTION_REGISTER,
+  );
+  return {
+    ...interpretFlashStatus(control.value, status.value, protection.value),
+    attempts: control.attempts + status.attempts + protection.attempts,
   };
 }
 

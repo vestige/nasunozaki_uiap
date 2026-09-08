@@ -3,6 +3,7 @@ import { FeatureReportCard } from "./FeatureReportCard";
 import { RamRoundTripCard } from "./RamRoundTripCard";
 import { ChipIdentityCard } from "./ChipIdentityCard";
 import { FlashSafetyCard } from "./FlashSafetyCard";
+import { FlashStatusCard } from "./FlashStatusCard";
 import { FlashUnlockCard } from "./FlashUnlockCard";
 import { FlashBackupCard } from "./FlashBackupCard";
 import { FlashEraseRestoreCard } from "./FlashEraseRestoreCard";
@@ -82,6 +83,7 @@ export function DeviceReport({ diagnostics }: Props) {
           <RamRoundTripCard diagnostics={diagnostics} />
           <ChipIdentityCard diagnostics={diagnostics} />
           <FlashSafetyCard diagnostics={diagnostics} />
+          <FlashStatusCard diagnostics={diagnostics} />
           <FlashUnlockCard diagnostics={diagnostics} />
           <EmergencyFlashRecoveryCard diagnostics={diagnostics} />
           <FlashBackupCard diagnostics={diagnostics} />

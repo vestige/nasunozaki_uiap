@@ -75,7 +75,8 @@ PIDやレポート構成はファームウェアによって変わる可能性�
 - [ ] 先頭64バイトのerase・全0xFF確認・元データ復元を実機で確認する
 - [x] 破損した先頭4バイトを保存済みbinから復旧する
 - [x] erase packetと完了応答の位置を参照実装と再照合する
-- [ ] eraseを送らずに実行前後のflash statusを診断できるようにする
+- [x] eraseを送らずに現在のflash statusを診断できるようにする
+- [x] flash status診断の実機結果を記録する
 - [x] flash lockとread protectionを読み取り専用で確認する
 - [ ] LEDを1回点灯する最小コマンドを送受信する
 - [ ] 成功応答またはエラー応答をブラウザで受信する
@@ -259,6 +260,24 @@ data:       6F 00 00 0A 00 00 00 00 0E 01 00 00 0C 01 00 00
 同日、保存済み `uiapduino_flash_08000000_crc32_BED6A734 (2).bin`を専用画面で検証し、unlock済み・read protectionなしの状態から新しいeraseを行わずに書き戻した。直後の読み取りで全64バイトの完全一致と `CRC32=0xBED6A734`を確認し、先頭4バイトを破損前の状態へ復旧できた。USBの抜き差し後も今回は `CTLR=0x00000200`のunlock状態が続いたため、物理的な再接続だけで必ずロック状態へ戻るとは仮定しない。
 
 復旧後、ch32fun `618bba58c615ed29dc99e6ea92d869c914b6a8c0`の `pgm-b003fun.c`と再照合した。erase packetの52バイトstub、address `0x08000000`、status register `0x4002200C`、page sizeとlengthを表す `0x00400040`、末尾の実行マジックは一致していた。WebHIDが返す127バイト形式とReport IDを含む128バイト形式の両方で、完了値 `0xFF`を正しく判定できることも自動テストへ追加した。packetの静的配置または応答の1バイトずれが原因である可能性は低くなったが、erase再実行はまだ行わない。
+
+次の実機確認用に、読み取り専用stubだけで `FLASH_CTLR (0x40022010)`、`FLASH_STATR (0x4002200C)`、`FLASH_OBTKEYR (0x4002201C)`を取得するflash status診断を追加した。STATRの `BSY (bit 0)`、`WRPRTERR (bit 4)`、`EOP (bit 5)`、`MODE (bit 14)`、`LOCK (bit 15)`を個別に解釈し、生の3値とともに診断ログへ残す。この操作からunlock・erase・write packetへ到達する経路はない。
+
+2026-09-08の実機確認では、ロック中の状態で次を取得した。
+
+```text
+CTLR:                  0x00008080
+STATR:                 0x00008000
+OBTKEYR:               0x03FFFFDC
+busy:                  false
+writeProtectionError: false
+endOfOperation:        false
+statusMode:            false
+statusLocked:          true
+attempts:              3
+```
+
+BUSYとWRPRTERRは残っておらず、STATR側のLOCKだけが有効である。preflightのロック中・read protectionなしという結果と整合し、診断開始前からflash controllerが処理中または書き込み保護エラー状態だった可能性は低い。これは静止状態の確認であり、失敗したerase実行中のSTATR遷移までは説明しないため、eraseは停止したままとする。
 
 ## Phase 0完了条件
 

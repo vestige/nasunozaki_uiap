@@ -63,6 +63,18 @@ export type FlashSafetyResult = {
   attempts: number;
 };
 
+export type FlashStatusResult = {
+  controlValue: number;
+  statusValue: number;
+  protectionValue: number;
+  busy: boolean;
+  writeProtectionError: boolean;
+  endOfOperation: boolean;
+  statusMode: boolean;
+  statusLocked: boolean;
+  attempts: number;
+};
+
 export type FlashUnlockResult = {
   before: FlashSafetyResult;
   after: FlashSafetyResult;

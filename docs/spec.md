@@ -397,6 +397,18 @@ erase開始後に失敗した場合は、現在値を読み、元データと異
 
 2026-09-06の実機確認では、`uiapduino_flash_08000000_crc32_BED6A734 (2).bin`の容量、address `0x08000000`、CRC32 `0xBED6A734`を検証して直接復元を実行した。書き戻し後の全64バイトがファイルと完全一致し、CRC32も `0xBED6A734`へ戻った。これにより直接復元経路は確認済みとするが、失敗したerase経路は引き続き停止する。
 
+### 8.14 flash status読み取り専用診断
+
+erase失敗の原因を実機の内容を変更せずに絞るため、次の3レジスタを読み取り専用RAM stubで取得する。
+
+- `FLASH_CTLR (0x40022010)`
+- `FLASH_STATR (0x4002200C)`
+- `FLASH_OBTKEYR (0x4002201C)`
+
+STATRは `BSY (bit 0)`、`WRPRTERR (bit 4)`、`EOP (bit 5)`、`MODE (bit 14)`、`LOCK (bit 15)`を解釈する。画面には生の3値とBUSY、書き込み保護エラー、処理完了フラグを表示する。全結果は `FLASH_STATUS_DIAGNOSTIC`として診断ログへ残し、読み取りに要した完了確認回数も記録する。この診断はTanStack Queryの独立したquery keyとmutationで管理し、接続解除時に結果を破棄する。unlock・erase・writeは行わない。
+
+2026-09-08の実機確認では `CTLR=0x00008080`、`STATR=0x00008000`、`OBTKEYR=0x03FFFFDC`だった。`BSY=false`、`WRPRTERR=false`、`EOP=false`、`MODE=false`、`LOCK=true`であり、通常のロック待機状態として表示した。この結果だけでerase失敗原因は確定せず、erase送信は再開しない。
+
 ## 9. 安全境界
 
 - 対象VID/PIDを固定する
