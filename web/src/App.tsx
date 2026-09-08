@@ -5,12 +5,14 @@ import { PageHeader } from "./components/PageHeader";
 import { FlashWriteReviewCard } from "./components/FlashWriteReviewCard";
 import { DiagnosticLogPanel } from "./components/DiagnosticLogPanel";
 import { useDeviceDiagnostics } from "./useDeviceDiagnostics";
+import { BlocklyStudio } from "./components/BlocklyStudio";
 
 export default function App() {
   const diagnostics = useDeviceDiagnostics();
   return (
     <main className="min-h-screen bg-base-200 text-base-content">
       <PageHeader />
+      <BlocklyStudio />
       <ConnectionGuide />
       <BrowserConnectionCard
         supported={diagnostics.supported}

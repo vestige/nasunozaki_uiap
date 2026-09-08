@@ -28,4 +28,7 @@ export const queryKeys = {
   emergencyRecoveryFile: ["flash", "emergency-recovery-file"] as const,
   emergencyRecoveryResult: ["flash", "emergency-recovery-result"] as const,
   diagnosticLog: ["diagnostics", "log"] as const,
+  blocklyProgram: ["blockly", "program"] as const,
+  simulatorLed: ["blockly", "simulator-led"] as const,
+  simulatorBlock: ["blockly", "simulator-block"] as const,
 };
