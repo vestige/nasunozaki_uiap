@@ -129,6 +129,8 @@ Collections:  1
 
 ## 次の調査
 
+2026-09-09に、調査コードの読みやすさを保つため、デバイス診断を `features/device/` の `components`、`hooks`、`utils`、`types`へ再配置し、自動テストを `src/__tests__/device/`へ集約した。通信packet、アドレス、安全条件、実機操作の仕様変更はない。GitHub Pagesでは使われていなかった `web/.openai/hosting.json`も削除した。
+
 診断ページからWebHIDの `receiveFeatureReport(0xAA)` を呼び、GET_REPORT相当の読み取りが可能であることを確認した。
 
 実測結果:

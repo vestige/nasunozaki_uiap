@@ -79,6 +79,10 @@ WebHIDの選択ダイアログはVendor IDとProduct IDの両方で絞り込む�
 
 公開URL: `https://vestige.github.io/nasunozaki_uiap/`
 
+ソースは機能単位で `src/features/blockly/` と `src/features/device/` に分ける。各機能では必要に応じて `components`、`hooks`、`utils`、`types`を使い、表示、状態調整、純粋処理、型定義の責務を分離する。機能横断の表示と状態定義だけを `src/components/`、`src/query.ts`、`src/diagnosticLog.ts`へ置く。
+
+自動テストは `src/__tests__/blockly/`、`src/__tests__/device/`、`src/__tests__/shared/`へ集約する。現在の公開方式はGitHub ActionsからGitHub Pagesへの静的配信だけであり、Sites用の `.openai/hosting.json`は使用しない。
+
 ### 5.2 対応環境
 
 - デスクトップ版Chrome
@@ -457,6 +461,8 @@ Blockly workspaceは公式serialization APIでJSONへ変換し、version付き�
 シミュレーターの命令解釈はUIコンポーネントから独立したruntime moduleで行う。adapterはLED状態の更新、Blockly block IDのハイライト、待機処理だけを受け持つ。`repeat`は内側の命令を順に実行し、各 `led`、`wait`および繰り返し開始時に該当ブロックをハイライトする。LED操作と繰り返し開始のハイライトは180ms以上表示し、子どもが現在位置を追えるようにする。
 
 停止操作は `AbortSignal`で待機を中断し、LEDを消灯してハイライトを解除する。正常終了時もハイライトを解除する。実行順と停止済みsignalで命令を開始しないことを自動テストで固定する。
+
+2026-09-09にBlocklyとデバイス診断を機能別フォルダへ再配置した。動作仕様は変更せず、Component、状態調整、純粋処理、型、テストの所在を分離した。
 
 ## 11. ドキュメント更新ルール
 

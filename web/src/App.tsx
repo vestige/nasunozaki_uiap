@@ -1,11 +1,11 @@
-import { BrowserConnectionCard } from "./components/BrowserConnectionCard";
-import { ConnectionGuide } from "./components/ConnectionGuide";
-import { DeviceReport } from "./components/DeviceReport";
+import { BrowserConnectionCard } from "./features/device/components/BrowserConnectionCard";
+import { ConnectionGuide } from "./features/device/components/ConnectionGuide";
+import { DeviceReport } from "./features/device/components/DeviceReport";
 import { PageHeader } from "./components/PageHeader";
-import { FlashWriteReviewCard } from "./components/FlashWriteReviewCard";
-import { DiagnosticLogPanel } from "./components/DiagnosticLogPanel";
-import { useDeviceDiagnostics } from "./useDeviceDiagnostics";
-import { BlocklyStudio } from "./components/BlocklyStudio";
+import { FlashWriteReviewCard } from "./features/device/components/FlashWriteReviewCard";
+import { DiagnosticLogPanel } from "./features/device/components/DiagnosticLogPanel";
+import { useDeviceDiagnostics } from "./features/device/hooks/useDeviceDiagnostics";
+import { BlocklyStudio } from "./features/blockly/components/BlocklyStudio";
 
 export default function App() {
   const diagnostics = useDeviceDiagnostics();

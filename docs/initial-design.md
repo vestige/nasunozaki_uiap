@@ -256,16 +256,23 @@ https://<user>.github.io/nasunozaki_uiap/
 ├── web/
 │   ├── public/
 │   ├── src/
-│   │   ├── components/
-│   │   ├── blocks/
-│   │   ├── compiler/
-│   │   ├── execution/
-│   │   ├── lessons/
-│   │   ├── simulator/
+│   │   ├── __tests__/
+│   │   │   ├── blockly/
+│   │   │   ├── device/
+│   │   │   └── shared/
+│   │   ├── components/        # 複数機能で共有する表示
+│   │   ├── features/
+│   │   │   ├── blockly/
+│   │   │   │   ├── components/
+│   │   │   │   └── utils/
+│   │   │   └── device/
+│   │   │       ├── components/
+│   │   │       ├── hooks/
+│   │   │       ├── types/
+│   │   │       └── utils/
 │   │   ├── query.ts
-│   │   ├── useDeviceDiagnostics.ts
-│   │   └── webhid/
-│   └── tests/
+│   │   └── diagnosticLog.ts
+│   └── package.json
 └── .github/
     └── workflows/
         └── pages.yml
@@ -277,9 +284,13 @@ https://<user>.github.io/nasunozaki_uiap/
 
 - `App.tsx`はページ全体の組み立てに限定し、通信処理や大きな表示ブロックを直接持たせない
 - ヘッダー、接続手順、接続操作、デバイス結果、各診断操作を責務ごとのComponentへ分ける
-- Component名とファイル名を一致させ、`components/`以下へ配置する
-- WebHID固有の型、定数、通信処理は `webhid/`へ分離し、表示ComponentからWebHID APIを直接呼ばない
+- Component名とファイル名を一致させ、原則として `features/<feature>/components/` 以下へ配置する。複数機能で共有するものだけルートの `components/`へ置く
+- 機能ごとに `components`（表示）、`hooks`（状態と処理の調整）、`utils`（Reactに依存しない処理）、`types`（共有契約）へ分ける。空の分類フォルダは先回りして作らない
+- WebHID固有の型は `features/device/types/`、定数・packet生成・通信処理は `features/device/utils/`へ分離し、表示ComponentからWebHID APIを直接呼ばない
+- 1ファイルに表示、状態調整、データ変換など複数の変更理由が集まったら分割する。行数だけを基準にせず、名前で責務を説明できる境界を優先する
 - 同じ画面だけで使う小さな表示は過度に分割せず、役割を名前で説明できる単位を目安にする
+- 自動テストは実装ファイルの隣へ混在させず、`src/__tests__/<feature>/`に配置する。純粋なutilsを中心に、実機なしで安全条件を確認する
+- 配信はGitHub Pagesを正とし、`.openai/hosting.json`は使用しない。将来別のホスティングへ移行すると決めた場合にだけ、そのサービス固有設定を追加する
 
 ### 8.2 TanStack Queryによる状態管理
 
