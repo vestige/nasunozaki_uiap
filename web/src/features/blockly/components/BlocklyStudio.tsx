@@ -7,7 +7,7 @@ import {
   uiapToolbox,
 } from "../utils/blocks";
 import { compileWorkspace, type ProgramInstruction } from "../utils/program";
-import { runSimulatorProgram } from "../utils/runtime";
+import { runProgram } from "../utils/execution";
 import {
   clearBlocklyWorkspace,
   loadBlocklyWorkspace,
@@ -111,17 +111,21 @@ export function BlocklyStudio() {
       if (!workspace) throw new Error("Blocklyを準備中です。");
       const controller = new AbortController();
       abortRef.current = controller;
-      await runSimulatorProgram(
+      await runProgram(
         program.data,
         {
-          setLed: (on) => client.setQueryData(queryKeys.simulatorLed, on),
-          highlightBlock: (blockId) => {
-            client.setQueryData(queryKeys.simulatorBlock, blockId);
-            workspace.highlightBlock(blockId);
+          setLed: (on) => {
+            client.setQueryData(queryKeys.simulatorLed, on);
           },
           wait: delay,
         },
         controller.signal,
+        {
+          onInstruction: (blockId) => {
+            client.setQueryData(queryKeys.simulatorBlock, blockId);
+            workspace.highlightBlock(blockId);
+          },
+        },
       );
     },
     onSettled: () => {

@@ -468,6 +468,29 @@ Blockly workspaceは公式serialization APIでJSONへ変換し、version付き�
 
 同日に、作品をversion付き `.uiap.json`としてPCへ保存し、再読込できる機能を追加した。ファイル形式の生成と検証はUIから独立した純粋関数とし、正常な往復、不正format、未対応version、ファイル名を自動テストする。
 
+### 10.2 Phase 2 BoardAdapterと教育用ランタイム境界
+
+中間命令列の実行関数は、次の2つを別々に受け取る。
+
+- `BoardAdapter`: LED状態の変更と中断可能な待機
+- `ExecutionObserver`: 実行中block IDの通知
+
+シミュレーターはTanStack QueryのLED状態を更新する `BoardAdapter`を使う。実機Adapterも同じ型を実装するが、ファームウェア側との通信仕様が確定するまで作成・接続しない。
+
+教育用ランタイムの暫定メッセージは9バイト固定長とする。
+
+| byte | 内容                           |
+| ---: | ------------------------------ |
+| 0〜3 | ASCII `UIAP`                   |
+|    4 | protocol version `0x01`        |
+|    5 | command。応答時はbit 7を立てる |
+| 6〜7 | 16bit little-endian sequence   |
+|    8 | 命令payloadまたは応答status    |
+
+初期command `0x01`はLED出力で、payload `0`を消灯、`1`を点灯とする。応答statusは `0=ok`、`1=unsupported-command`、`2=invalid-payload`、`3=device-error`とする。sequenceは要求と応答の対応確認に使う。
+
+この段階ではメッセージ生成・応答解析の自動テストだけを行う。Report ID、HID report内の配置、timeout、再送、ファームウェア実装は未確定であり、bootloader用WebHID経路へ渡さない。
+
 ## 11. ドキュメント更新ルール
 
 実装変更は、同じコミットまたは同じ作業単位で次を更新する。

@@ -133,6 +133,8 @@ Collections:  1
 
 同日に追加したBlockly作品ファイルの保存・読み込みはブラウザ内のworkspaceだけを対象とし、WebHID、bootloader、flashの診断・書き込み経路には接続しない。
 
+Phase 2準備として追加した `BoardAdapter`と教育用ランタイムの暫定9バイトメッセージも、純粋関数と自動テストだけを対象とする。Report IDと実機payloadは未確定で、Phase 0のbootloader送信処理やflash操作には接続しない。
+
 診断ページからWebHIDの `receiveFeatureReport(0xAA)` を呼び、GET_REPORT相当の読み取りが可能であることを確認した。
 
 実測結果:

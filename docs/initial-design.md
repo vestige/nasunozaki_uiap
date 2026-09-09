@@ -389,12 +389,19 @@ Blocklyの永続化はworkspace全体を公式serialization APIで保存し、�
 ### Phase 2: 実機MVP
 
 - WebHID接続画面を実装する
-- 教育用ランタイムと初期プロトコルを実装する
+- [x] 中間命令列を実行する共通 `BoardAdapter`境界を実装する
+- [x] 教育用ランタイムの初期プロトコルをオフラインで定義・検証する
+- [ ] ファームウェア側とReport ID、payload長、応答形式を照合する
+- [ ] 教育用ランタイムの実機Adapterを実装する
 - LED出力とボタン入力を実装する
 - 切断、再接続、タイムアウトを扱う
 - GitHub Pagesへ自動公開する
 
 完了条件: 初めて操作する子どもが、補助を受けながら10分以内にLEDを点滅できる。
+
+`BoardAdapter`はLED操作と待機だけを受け持ち、Blockly block IDのハイライトなど画面固有の処理は `ExecutionObserver`へ分離する。これによりシミュレーターと実機で命令解釈を共有し、実機通信層がBlockly APIへ依存しない構造にする。
+
+初期プロトコル案は `UIAP`識別子、version、command、16bit sequence、1byte payload/statusからなる9バイト固定長とする。ただし、これはブラウザ内の純粋関数と自動テストだけで固定する暫定案であり、実機へ送信するReport IDやHID payloadへの格納方法はファームウェア側の実装と照合してから確定する。
 
 ### Phase 3: ワークショップ検証
 
