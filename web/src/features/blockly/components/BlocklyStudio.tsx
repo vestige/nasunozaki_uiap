@@ -13,9 +13,16 @@ import {
   loadBlocklyWorkspace,
   saveBlocklyWorkspace,
 } from "../utils/persistence";
+import {
+  createBlocklyProjectFile,
+  createBlocklyProjectFileName,
+  parseBlocklyProjectFile,
+  stringifyBlocklyProjectFile,
+} from "../utils/projectFile";
 import { queryKeys } from "../../../query";
 import { BlocklyToolbar } from "./BlocklyToolbar";
 import { LedSimulator } from "./LedSimulator";
+import { ProjectFileActions } from "./ProjectFileActions";
 
 type SaveStatus = {
   kind: "restored" | "saved" | "unavailable";
@@ -132,6 +139,44 @@ export function BlocklyStudio() {
     run.reset();
   };
 
+  const exportProject = useMutation({
+    mutationFn: async () => {
+      const workspace = workspaceRef.current;
+      if (!workspace) throw new Error("Blocklyを準備中です。");
+      const project = createBlocklyProjectFile(
+        Blockly.serialization.workspaces.save(workspace),
+      );
+      downloadTextFile(
+        createBlocklyProjectFileName(new Date(project.savedAt)),
+        stringifyBlocklyProjectFile(project),
+      );
+      return "作品ファイルを保存しました。";
+    },
+  });
+
+  const importProject = useMutation({
+    mutationFn: async (file: File) => {
+      const workspace = workspaceRef.current;
+      if (!workspace) throw new Error("Blocklyを準備中です。");
+      if (file.size > 1024 * 1024) {
+        throw new Error("作品ファイルが大きすぎます（上限1MB）。");
+      }
+      const project = parseBlocklyProjectFile(await file.text());
+      if (!window.confirm("今のブロックを置き換えて、作品を開きますか？")) {
+        return null;
+      }
+      stop();
+      workspace.clear();
+      Blockly.serialization.workspaces.load(project.workspace, workspace);
+      saveBlocklyWorkspace(window.localStorage, project.workspace);
+      client.setQueryData(
+        queryKeys.blocklyProgram,
+        compileWorkspace(workspace),
+      );
+      return `${file.name} を開きました。`;
+    },
+  });
+
   const resetWorkspace = () => {
     const workspace = workspaceRef.current;
     if (!workspace) return;
@@ -169,14 +214,32 @@ export function BlocklyStudio() {
             左からブロックを運び、「画面で実行」を押してください。まだ実機には送信しません。
           </p>
         </div>
-        <BlocklyToolbar
-          isRunning={run.isPending}
-          canRun={program.data.length > 0}
-          saveMessage={saveMessage}
-          onRun={() => run.mutate()}
-          onStop={stop}
-          onReset={resetWorkspace}
-        />
+        <div className="flex flex-col gap-3 sm:items-end">
+          <BlocklyToolbar
+            isRunning={run.isPending}
+            canRun={program.data.length > 0}
+            saveMessage={saveMessage}
+            onRun={() => run.mutate()}
+            onStop={stop}
+            onReset={resetWorkspace}
+          />
+          <ProjectFileActions
+            disabled={
+              run.isPending ||
+              importProject.isPending ||
+              exportProject.isPending
+            }
+            message={projectFileMessage(exportProject, importProject)}
+            onExport={() => {
+              importProject.reset();
+              exportProject.mutate();
+            }}
+            onImport={(file) => {
+              exportProject.reset();
+              importProject.mutate(file);
+            }}
+          />
+        </div>
       </div>
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div
@@ -188,6 +251,30 @@ export function BlocklyStudio() {
       </div>
     </section>
   );
+}
+
+function projectFileMessage(
+  exportProject: { data?: string; error: Error | null },
+  importProject: { data?: string | null; error: Error | null },
+) {
+  return (
+    importProject.error?.message ??
+    exportProject.error?.message ??
+    importProject.data ??
+    exportProject.data ??
+    null
+  );
+}
+
+function downloadTextFile(fileName: string, contents: string) {
+  const url = URL.createObjectURL(
+    new Blob([contents], { type: "application/json" }),
+  );
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 function delay(milliseconds: number, signal: AbortSignal) {

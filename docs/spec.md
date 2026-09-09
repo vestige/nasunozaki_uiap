@@ -456,6 +456,8 @@ workspaceは直接JavaScriptとして評価せず、`led`、`wait`、`repeat`か
 
 Blockly workspaceは公式serialization APIでJSONへ変換し、version付きのデータとして `localStorage`の `uiapduino:blockly-workspace:v1`へ変更のたびに保存する。ページ表示時は保存済みデータを優先し、存在しない場合、JSONが壊れている場合、未対応versionの場合は初期点滅例を使う。保存内容はサーバーへ送信しない。
 
+作品のファイル保存では、`format: "uiapduino-blockly-project"`、`version: 1`、ISO形式の保存日時、Blockly workspaceをJSONに格納し、`.uiap.json`の拡張子でダウンロードする。読み込みは1MB以下に限定し、JSON、format、version、workspace、保存日時を検証する。検証後も現在のworkspaceを置き換える前に確認し、読み込んだ作品をブラウザ内の自動保存にも反映する。ファイルはサーバーへ送信しない。
+
 「最初のブロックに戻す」は確認後に実行中のシミュレーターを停止し、保存済みworkspaceを削除して初期点滅例を再配置する。画面には自動保存時刻、前回データの復元、保存不可の状態を表示する。編集中の状態表示はTanStack Query、永続化処理は独立したpersistence moduleへ分離する。
 
 シミュレーターの命令解釈はUIコンポーネントから独立したruntime moduleで行う。adapterはLED状態の更新、Blockly block IDのハイライト、待機処理だけを受け持つ。`repeat`は内側の命令を順に実行し、各 `led`、`wait`および繰り返し開始時に該当ブロックをハイライトする。LED操作と繰り返し開始のハイライトは180ms以上表示し、子どもが現在位置を追えるようにする。
@@ -463,6 +465,8 @@ Blockly workspaceは公式serialization APIでJSONへ変換し、version付き�
 停止操作は `AbortSignal`で待機を中断し、LEDを消灯してハイライトを解除する。正常終了時もハイライトを解除する。実行順と停止済みsignalで命令を開始しないことを自動テストで固定する。
 
 2026-09-09にBlocklyとデバイス診断を機能別フォルダへ再配置した。動作仕様は変更せず、Component、状態調整、純粋処理、型、テストの所在を分離した。
+
+同日に、作品をversion付き `.uiap.json`としてPCへ保存し、再読込できる機能を追加した。ファイル形式の生成と検証はUIから独立した純粋関数とし、正常な往復、不正format、未対応version、ファイル名を自動テストする。
 
 ## 11. ドキュメント更新ルール
 

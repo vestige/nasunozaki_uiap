@@ -374,10 +374,13 @@ TanStack Queryは本来、非同期に取得・更新される外部状態を取
 - [x] 画面内シミュレーターを動かす
 - [x] 実行中ブロックのハイライトと停止を実装する
 - [x] プログラムを端末内へ自動保存する
+- [x] 作品をファイルへ保存し、別の端末で読み込めるようにする
 
 2026-09-08に最初のプロトタイプを実装した。workspaceの変更は型付き中間命令列へ変換し、TanStack Queryへ保持する。シミュレーターの実行と停止もmutationで管理し、任意JavaScriptの `eval`や実機送信は行わない。BlocklyのDOM lifecycleに必要な処理はReact 19のcallback refで閉じ、コンポーネントの汎用的な状態管理へ `useState`や `useEffect`を持ち込まない。
 
 Blocklyの永続化はworkspace全体を公式serialization APIで保存し、保存形式にversionを付ける。壊れたJSONや未対応versionは復元せず初期例を使用する。TanStack Queryは編集中の状態と保存結果表示を管理し、`localStorage`への読み書きは独立したpersistence moduleへ分離する。操作ボタン、Blockly編集領域、LEDシミュレーターも役割ごとのコンポーネントに分ける。
+
+作品の持ち帰りと端末間移動には、Blockly workspaceを含むversion付き `.uiap.json`ファイルを使う。読み込み時は専用format、version、workspace、保存日時、1MBの容量上限を検証し、現在のworkspaceを置き換える前に利用者へ確認する。ファイル内容はブラウザ内だけで扱い、サーバーへ送信しない。
 
 シミュレーターの実行順序はUIから独立したruntime moduleへ置き、LED更新、ハイライト、待機をadapterとして注入する。中間命令が保持するblock IDを使って実行位置を示し、繰り返し内も同じ経路で処理する。停止は `AbortSignal`で伝播し、待機中でもLEDとハイライトを安全な表示へ戻す。
 
