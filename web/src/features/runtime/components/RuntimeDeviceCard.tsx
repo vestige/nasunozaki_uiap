@@ -18,9 +18,9 @@ export function RuntimeDeviceCard() {
   return (
     <section className="mx-auto w-full max-w-6xl px-5 pt-8 sm:px-8">
       <article className="card border-2 border-primary/40 bg-base-100 shadow-lg">
-        <div className="card-body gap-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <div className="flex-1">
+        <div className="card-body min-w-0 gap-5">
+          <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start">
+            <div className="min-w-0 flex-1">
               <div className="badge badge-info font-bold">READ ONLY</div>
               <h2 className="mt-2 text-2xl font-black">
                 通常動作モードを調べる
@@ -32,7 +32,7 @@ export function RuntimeDeviceCard() {
               </p>
             </div>
             <button
-              className="btn btn-primary font-black"
+              className="btn btn-primary w-full font-black sm:w-auto lg:shrink-0"
               disabled={diagnostics.connect.isPending}
               onClick={() => diagnostics.connect.mutate()}
             >
@@ -48,7 +48,7 @@ export function RuntimeDeviceCard() {
           </div>
 
           {device && (
-            <div className="grid gap-4 lg:grid-cols-[.7fr_1.3fr]">
+            <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,.7fr)_minmax(0,1.3fr)]">
               <dl className="grid gap-3 rounded-box bg-base-200 p-4 text-sm sm:grid-cols-2 lg:grid-cols-1">
                 <Result label="製品名" value={device.productName || "名称なし"} />
                 <Result label="Vendor ID" value={hex(device.vendorId)} />
@@ -62,7 +62,7 @@ export function RuntimeDeviceCard() {
                   }
                 />
               </dl>
-              <div className="mockup-code max-h-80 overflow-auto bg-neutral text-neutral-content">
+              <div className="mockup-code min-w-0 max-w-full max-h-80 overflow-auto bg-neutral text-neutral-content">
                 <pre data-prefix="">
                   <code>{JSON.stringify(device.collections, null, 2)}</code>
                 </pre>

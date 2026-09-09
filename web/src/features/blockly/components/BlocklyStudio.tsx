@@ -206,8 +206,8 @@ export function BlocklyStudio() {
       className="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8"
       aria-labelledby="blockly-title"
     >
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+      <div className="mb-5 flex min-w-0 flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0">
           <p className="text-xs font-black tracking-[.18em] text-primary">
             PHASE 1 · BLOCK PROGRAMMING
           </p>
@@ -218,7 +218,7 @@ export function BlocklyStudio() {
             左からブロックを運び、「画面で実行」を押してください。まだ実機には送信しません。
           </p>
         </div>
-        <div className="flex flex-col gap-3 sm:items-end">
+        <div className="min-w-0 flex flex-col gap-3 lg:items-end">
           <BlocklyToolbar
             isRunning={run.isPending}
             canRun={program.data.length > 0}
@@ -245,10 +245,10 @@ export function BlocklyStudio() {
           />
         </div>
       </div>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div
           ref={mountWorkspace}
-          className="h-[34rem] overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl"
+          className="h-[34rem] min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl"
           aria-label="ブロックプログラミング編集エリア"
         />
         <LedSimulator ledOn={led.data} instructions={program.data} />

@@ -16,8 +16,8 @@ export function ProjectFileActions({
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   return (
-    <div className="flex flex-col gap-2 sm:items-end">
-      <div className="flex flex-wrap gap-2">
+    <div className="min-w-0 flex flex-col gap-2 lg:items-end">
+      <div className="flex min-w-0 flex-wrap gap-2">
         <button
           className="btn btn-outline btn-sm"
           onClick={onExport}

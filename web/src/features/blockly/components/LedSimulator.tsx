@@ -4,7 +4,7 @@ type Props = { ledOn: boolean; instructions: ProgramInstruction[] };
 
 export function LedSimulator({ ledOn, instructions }: Props) {
   return (
-    <aside className="card border-2 border-neutral bg-neutral text-neutral-content shadow-xl">
+    <aside className="card min-w-0 border-2 border-neutral bg-neutral text-neutral-content shadow-xl">
       <div className="card-body items-center text-center">
         <p className="text-sm font-black tracking-widest text-neutral-content/60">
           LED SIMULATOR

@@ -16,11 +16,11 @@ export function BlocklyToolbar({
   onReset,
 }: Props) {
   return (
-    <div className="flex flex-col gap-3 sm:items-end">
+    <div className="min-w-0 flex flex-col gap-3 lg:items-end">
       <p className="text-sm font-bold text-base-content/60" role="status">
         {saveMessage}
       </p>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex min-w-0 flex-wrap gap-3">
         <button
           className="btn btn-primary btn-lg font-black"
           onClick={onRun}
