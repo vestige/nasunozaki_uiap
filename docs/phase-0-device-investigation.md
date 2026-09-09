@@ -135,6 +135,8 @@ Collections:  1
 
 Phase 2準備として追加した `BoardAdapter`と教育用ランタイムの暫定9バイトメッセージも、純粋関数と自動テストだけを対象とする。Report IDと実機payloadは未確定で、Phase 0のbootloader送信処理やflash操作には接続しない。
 
+HID descriptorの読み取り専用分類では、実測済みのCollectionがInput/Output Reportを持たず、Feature Report `0xAA`だけを持つため `bootloader`となる。これは既存の接続結果と整合する。分類時に追加packetは送らず、教育用ランタイム対応の証明やflash操作の許可には使わない。
+
 診断ページからWebHIDの `receiveFeatureReport(0xAA)` を呼び、GET_REPORT相当の読み取りが可能であることを確認した。
 
 実測結果:

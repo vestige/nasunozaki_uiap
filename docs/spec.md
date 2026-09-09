@@ -491,6 +491,16 @@ Blockly workspaceは公式serialization APIでJSONへ変換し、version付き�
 
 この段階ではメッセージ生成・応答解析の自動テストだけを行う。Report ID、HID report内の配置、timeout、再送、ファームウェア実装は未確定であり、bootloader用WebHID経路へ渡さない。
 
+### 10.3 実行モードの読み取り専用判定
+
+接続時にブラウザが取得済みのHID Collectionを走査し、子Collectionを含むInput、Output、Feature Report IDを重複なく表示する。追加のHID送受信は行わない。
+
+- Input/Output ReportがなくFeature Report `0xAA`だけ: `bootloader`
+- InputまたはOutput Reportがある: `runtime-candidate`
+- 上記以外: `unknown`
+
+現在確認済みの `32V003 / 0x1209:0xB803`はFeature Report `0xAA`だけを持つため、書き込み用bootloaderモードと案内する。`runtime-candidate`も対応確定を意味せず、ファームウェア仕様との照合が済むまで命令を送信しない。
+
 ## 11. ドキュメント更新ルール
 
 実装変更は、同じコミットまたは同じ作業単位で次を更新する。

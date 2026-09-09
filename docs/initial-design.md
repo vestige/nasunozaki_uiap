@@ -391,6 +391,7 @@ Blocklyの永続化はworkspace全体を公式serialization APIで保存し、�
 - WebHID接続画面を実装する
 - [x] 中間命令列を実行する共通 `BoardAdapter`境界を実装する
 - [x] 教育用ランタイムの初期プロトコルをオフラインで定義・検証する
+- [x] HID descriptorからbootloaderとランタイム候補を読み取り専用で区別する
 - [ ] ファームウェア側とReport ID、payload長、応答形式を照合する
 - [ ] 教育用ランタイムの実機Adapterを実装する
 - LED出力とボタン入力を実装する
@@ -402,6 +403,8 @@ Blocklyの永続化はworkspace全体を公式serialization APIで保存し、�
 `BoardAdapter`はLED操作と待機だけを受け持ち、Blockly block IDのハイライトなど画面固有の処理は `ExecutionObserver`へ分離する。これによりシミュレーターと実機で命令解釈を共有し、実機通信層がBlockly APIへ依存しない構造にする。
 
 初期プロトコル案は `UIAP`識別子、version、command、16bit sequence、1byte payload/statusからなる9バイト固定長とする。ただし、これはブラウザ内の純粋関数と自動テストだけで固定する暫定案であり、実機へ送信するReport IDやHID payloadへの格納方法はファームウェア側の実装と照合してから確定する。
+
+接続時のHID descriptorにInputまたはOutput Reportがあれば教育用ランタイム候補、Input/Output ReportがなくFeature Report `0xAA`だけならbootloaderと分類する。この分類はdescriptorから観測できる範囲の案内であり、ランタイム対応の確定や命令送信許可には使わない。
 
 ### Phase 3: ワークショップ検証
 

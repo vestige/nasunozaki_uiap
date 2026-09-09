@@ -77,6 +77,8 @@ Phase 0の実機通信調査と並行してPhase 1を開始し、Blocklyによ�
 
 Phase 2の準備として、Blocklyの実行エンジンを `BoardAdapter`方式へ切り替えました。画面のLED表示と命令順のハイライトを分離し、将来は同じ中間命令列へ実機Adapterを接続できます。教育用ランタイムの最小LEDメッセージもオフラインで生成・検証していますが、ファームウェアとの照合前なのでWebHID送信はまだ行いません。
 
+接続後のHID descriptorから実行モードを確認する読み取り専用表示も追加しました。現在確認済みの `32V003`はInput/Output Reportがなく、Report ID `0xAA`のFeature Reportだけを持つため、書き込み用bootloaderモードと判定します。教育用ランタイムを動かすには、別途ランタイム対応ファームウェアとReport仕様の確定が必要です。
+
 書き込み前確認は危険操作の警告ではなく確認専用の画面として、情報色（青系）で表示する。実際に消去・書き込みを有効化する段階だけ、明確な警告色と最終確認を使う。
 
 診断ページ: [UIAPduino接続診断](https://vestige.github.io/nasunozaki_uiap/)
