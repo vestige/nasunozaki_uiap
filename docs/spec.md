@@ -477,19 +477,21 @@ Blockly workspaceは公式serialization APIでJSONへ変換し、version付き�
 
 シミュレーターはTanStack QueryのLED状態を更新する `BoardAdapter`を使う。実機Adapterも同じ型を実装するが、ファームウェア側との通信仕様が確定するまで作成・接続しない。
 
-教育用ランタイムの暫定メッセージは9バイト固定長とする。
+教育用ランタイムのメッセージは8バイト固定長とする。UIAPduino HID Arduino core `1.2.14`のWebHID Onlyモードでは、ブラウザ→ボードがEP0 Feature Report（最大32バイト）、ボード→ブラウザがEP1 Input Report（8バイト）であるため、両方向を8バイトへ統一する。
 
 | byte | 内容                           |
 | ---: | ------------------------------ |
 | 0〜3 | ASCII `UIAP`                   |
 |    4 | protocol version `0x01`        |
 |    5 | command。応答時はbit 7を立てる |
-| 6〜7 | 16bit little-endian sequence   |
-|    8 | 命令payloadまたは応答status    |
+|    6 | 8bit sequence                  |
+|    7 | 命令payloadまたは応答status    |
 
 初期command `0x01`はLED出力で、payload `0`を消灯、`1`を点灯とする。応答statusは `0=ok`、`1=unsupported-command`、`2=invalid-payload`、`3=device-error`とする。sequenceは要求と応答の対応確認に使う。
 
-この段階ではメッセージ生成・応答解析の自動テストだけを行う。Report ID、HID report内の配置、timeout、再送、ファームウェア実装は未確定であり、bootloader用WebHID経路へ渡さない。
+`firmware/workshop-runtime/workshop-runtime.ino`はWebHID受信時に8バイト長、識別子、version、要求command、payloadを検証する。LED命令ではArduino pin 2を更新し、同じcommandとsequenceを持つ8バイト応答を返す。不正入力と未対応commandではLEDを変更せずstatusを返す。
+
+Arduino core `1.2.14`、WebHID Only、Smallest（`-Os` + LTO）でコンパイルし、Flash 4004 / 16384 bytes、RAM 172 / 2048 bytesを確認した。ランタイム用VID/PID、WebHID APIから見えるReport ID、timeout、再送は実機確認待ちであり、bootloader用WebHID経路へ渡さない。
 
 ### 10.3 実行モードの読み取り専用判定
 

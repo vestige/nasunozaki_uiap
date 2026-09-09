@@ -3,7 +3,7 @@ import type { RuntimeResponse } from "../types/protocol";
 export const RUNTIME_PROTOCOL_VERSION = 1;
 export const RUNTIME_COMMAND_SET_LED = 0x01;
 export const RUNTIME_RESPONSE_FLAG = 0x80;
-export const RUNTIME_MESSAGE_SIZE = 9;
+export const RUNTIME_MESSAGE_SIZE = 8;
 
 const MAGIC = [0x55, 0x49, 0x41, 0x50] as const; // "UIAP"
 const STATUS = [
@@ -19,8 +19,7 @@ export function buildSetLedMessage(sequence: number, on: boolean) {
     ...MAGIC,
     RUNTIME_PROTOCOL_VERSION,
     RUNTIME_COMMAND_SET_LED,
-    sequence & 0xff,
-    (sequence >>> 8) & 0xff,
+    sequence,
     on ? 1 : 0,
   ]);
 }
@@ -40,18 +39,18 @@ export function parseRuntimeResponse(data: Uint8Array): RuntimeResponse {
   if ((data[5] & RUNTIME_RESPONSE_FLAG) === 0) {
     throw new Error("教育用ランタイムの応答メッセージではありません。");
   }
-  const status = STATUS[data[8]];
+  const status = STATUS[data[7]];
   if (!status) throw new Error("教育用ランタイム応答のstatusが不正です。");
 
   return {
     command: data[5] & ~RUNTIME_RESPONSE_FLAG,
-    sequence: data[6] | (data[7] << 8),
+    sequence: data[6],
     status,
   };
 }
 
 function assertSequence(sequence: number) {
-  if (!Number.isInteger(sequence) || sequence < 0 || sequence > 0xffff) {
-    throw new Error("sequenceは0から65535の整数で指定してください。");
+  if (!Number.isInteger(sequence) || sequence < 0 || sequence > 0xff) {
+    throw new Error("sequenceは0から255の整数で指定してください。");
   }
 }

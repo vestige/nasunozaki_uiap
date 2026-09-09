@@ -133,7 +133,9 @@ Collections:  1
 
 同日に追加したBlockly作品ファイルの保存・読み込みはブラウザ内のworkspaceだけを対象とし、WebHID、bootloader、flashの診断・書き込み経路には接続しない。
 
-Phase 2準備として追加した `BoardAdapter`と教育用ランタイムの暫定9バイトメッセージも、純粋関数と自動テストだけを対象とする。Report IDと実機payloadは未確定で、Phase 0のbootloader送信処理やflash操作には接続しない。
+Phase 2準備として追加した `BoardAdapter`と教育用ランタイムは、UIAPduino HID Arduino core `1.2.14`の送受信幅と照合した。EP0 Feature Reportは最大32バイト、EP1 Input Reportは8バイトのため、要求と応答を8バイトへ統一した。内蔵LEDはArduino pin 2である。最小ランタイムはFlash 4004 bytes、RAM 172 bytesでコンパイル済みだが、実機へは未書き込みである。
+
+ランタイム用VID/PIDとReport IDは実機確認待ちで、Phase 0のbootloader送信処理やflash操作には接続しない。
 
 HID descriptorの読み取り専用分類では、実測済みのCollectionがInput/Output Reportを持たず、Feature Report `0xAA`だけを持つため `bootloader`となる。これは既存の接続結果と整合する。分類時に追加packetは送らず、教育用ランタイム対応の証明やflash操作の許可には使わない。
 
