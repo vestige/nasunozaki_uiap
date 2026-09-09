@@ -6,6 +6,7 @@ import { FlashWriteReviewCard } from "./features/device/components/FlashWriteRev
 import { DiagnosticLogPanel } from "./features/device/components/DiagnosticLogPanel";
 import { useDeviceDiagnostics } from "./features/device/hooks/useDeviceDiagnostics";
 import { BlocklyStudio } from "./features/blockly/components/BlocklyStudio";
+import { RuntimeDeviceCard } from "./features/runtime/components/RuntimeDeviceCard";
 
 export default function App() {
   const diagnostics = useDeviceDiagnostics();
@@ -13,6 +14,7 @@ export default function App() {
     <main className="min-h-screen bg-base-200 text-base-content">
       <PageHeader />
       <BlocklyStudio />
+      <RuntimeDeviceCard />
       <ConnectionGuide />
       <BrowserConnectionCard
         supported={diagnostics.supported}

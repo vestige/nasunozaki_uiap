@@ -19,10 +19,15 @@ export type HidDevice = {
   sendFeatureReport(reportId: number, data: BufferSource): Promise<void>;
 };
 
+export type HidDeviceFilter = {
+  vendorId: number;
+  productId: number;
+};
+
 export type HidNavigator = Navigator & {
   hid?: {
     requestDevice(options: {
-      filters: Array<{ vendorId: number; productId: number }>;
+      filters: HidDeviceFilter[];
     }): Promise<HidDevice[]>;
     addEventListener(
       type: "disconnect",

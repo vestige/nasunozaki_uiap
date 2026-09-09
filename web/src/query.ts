@@ -32,4 +32,6 @@ export const queryKeys = {
   simulatorLed: ["blockly", "simulator-led"] as const,
   simulatorBlock: ["blockly", "simulator-block"] as const,
   blocklySaveStatus: ["blockly", "save-status"] as const,
+  runtimeDevice: ["runtime", "device"] as const,
+  runtimeConnectionMessage: ["runtime", "connection-message"] as const,
 };

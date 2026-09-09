@@ -491,6 +491,8 @@ Blockly workspaceは公式serialization APIでJSONへ変換し、version付き�
 
 `firmware/workshop-runtime/workshop-runtime.ino`はWebHID受信時に8バイト長、識別子、version、要求command、payloadを検証する。LED命令ではArduino pin 2を更新し、同じcommandとsequenceを持つ8バイト応答を返す。不正入力と未対応commandではLEDを変更せずstatusを返す。
 
+通常動作モードの実機確認はbootloader診断とは別の接続ボタンから行う。選択ダイアログは `0x1209:0xD004`だけに絞り、接続後に製品名、VID/PID、HID descriptor、Input/Output/Feature Report構成を表示する。ここではFeature Report送信、LED命令、flash操作を行わない。USB切断時はランタイム側の表示だけを解除する。
+
 Arduino core `1.2.14`、WebHID Only、Smallest（`-Os` + LTO）でコンパイルし、Flash 4004 / 16384 bytes、RAM 172 / 2048 bytesを確認した。ランタイム用VID/PID、WebHID APIから見えるReport ID、timeout、再送は実機確認待ちであり、bootloader用WebHID経路へ渡さない。
 
 ### 10.3 実行モードの読み取り専用判定

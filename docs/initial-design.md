@@ -394,6 +394,7 @@ Blocklyの永続化はworkspace全体を公式serialization APIで保存し、�
 - [x] HID descriptorからbootloaderとランタイム候補を読み取り専用で区別する
 - [x] ファームウェア側とpayload長、応答形式、内蔵LED pinを照合する
 - [ ] ランタイム用VID/PIDとWebHIDのReport IDなし（0）の扱いを実機で確認する
+- [x] `0x1209:0xD004`専用の読み取り診断画面を実装する
 - [ ] 教育用ランタイムの実機Adapterを実装する
 - LED出力とボタン入力を実装する
 - 切断、再接続、タイムアウトを扱う
@@ -408,6 +409,8 @@ UIAPduino HID Arduino core `1.2.14`では、ブラウザからEP0 Feature Report
 `firmware/workshop-runtime/workshop-runtime.ino`へLED命令の受信、入力検証、LED更新、応答を実装し、core `1.2.14`、WebHID Only、`-Os` + LTOでコンパイルする。2026-09-09の結果はFlash 4004 / 16384 bytes、RAM 172 / 2048 bytesである。ブラウザの実機Adapterと書き込み導線は、ランタイムdescriptorを実機確認するまで接続しない。
 
 接続時のHID descriptorにInputまたはOutput Reportがあれば教育用ランタイム候補、Input/Output ReportがなくFeature Report `0xAA`だけならbootloaderと分類する。この分類はdescriptorから観測できる範囲の案内であり、ランタイム対応の確定や命令送信許可には使わない。
+
+ランタイム診断は `features/runtime/`内に型、WebHID処理、TanStack Query hook、表示Componentを分離する。bootloader用device stateとは別のquery keyを使用し、片方の切断が他方の表示を消さないようにする。初回の実機確認では命令送信を有効化せず、descriptorの観測結果を先に固定する。
 
 ### Phase 3: ワークショップ検証
 
