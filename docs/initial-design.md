@@ -413,6 +413,7 @@ UIAPduino HID Arduino core `1.2.14`では、ブラウザからEP0 Feature Report
 ランタイム診断は `features/runtime/`内に型、WebHID処理、TanStack Query hook、表示Componentを分離する。bootloader用device stateとは別のquery keyを使用し、片方の切断が他方の表示を消さないようにする。初回の実機確認では命令送信を有効化せず、descriptorの観測結果を先に固定する。
 
 Blocklyなど内部に独自の描画幅を持つComponentは、grid itemへ `min-width: 0`相当を指定してページ全体の横はみ出しを防ぐ。見出しと操作群はdesktop幅まで縦並びを維持し、操作可能領域と本文を潰さない。
+BlocklyはCSS幅の変更だけでは内部SVGの寸法が更新されないため、workspace Component内の `ResizeObserver`で `Blockly.svgResize()`を実行する。observerと予約済みanimation frameはcallback refのcleanupで破棄する。
 
 ### Phase 3: ワークショップ検証
 

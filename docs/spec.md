@@ -494,6 +494,7 @@ Blockly workspaceは公式serialization APIでJSONへ変換し、version付き�
 通常動作モードの実機確認はbootloader診断とは別の接続ボタンから行う。選択ダイアログは `0x1209:0xD004`だけに絞り、接続後に製品名、VID/PID、HID descriptor、Input/Output/Feature Report構成を表示する。ここではFeature Report送信、LED命令、flash操作を行わない。USB切断時はランタイム側の表示だけを解除する。
 
 Blockly workspace、LED simulator、ランタイムdescriptor表示は親gridの利用可能幅を超えない。幅の狭い画面では見出し、操作ボタン、診断内容を縦に並べ、横並びへの切り替えはdesktop幅から行う。
+Blockly workspaceのcontainer幅が変化した場合は `ResizeObserver`から `Blockly.svgResize()`を呼び、内部SVGとscrollbarの寸法を同期する。
 
 Arduino core `1.2.14`、WebHID Only、Smallest（`-Os` + LTO）でコンパイルし、Flash 4004 / 16384 bytes、RAM 172 / 2048 bytesを確認した。ランタイム用VID/PID、WebHID APIから見えるReport ID、timeout、再送は実機確認待ちであり、bootloader用WebHID経路へ渡さない。
 

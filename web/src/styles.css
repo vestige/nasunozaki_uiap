@@ -33,6 +33,7 @@
 html { scroll-behavior: smooth; }
 body { margin: 0; min-width: 0; font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, system-ui, sans-serif; }
 .hero-grid { background-image: radial-gradient(circle at 85% 25%, color-mix(in oklab, var(--color-warning) 22%, transparent) 0 12%, transparent 12.3%), linear-gradient(135deg, transparent 0 65%, color-mix(in oklab, var(--color-primary) 18%, transparent) 65% 100%); }
+.blockly-workspace { contain: inline-size; }
 pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 @media (prefers-reduced-motion: reduce) {

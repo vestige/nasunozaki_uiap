@@ -140,6 +140,7 @@ Phase 2準備として追加した `BoardAdapter`と教育用ランタイムは�
 2026-09-09に通常動作モード専用の読み取り診断を追加した。公開されているArduino coreの既定値 `0x1209:0xD004`だけを選択対象とし、接続後のHID descriptorをそのまま表示する。bootloader用 `0x1209:0xB803`の診断状態とは分離し、この時点ではFeature ReportやLED命令を送らない。実機へ教育用ランタイムを書き込んだ後、この画面でPIDとReport IDなし（0）のブラウザ上の見え方を確定する。
 
 追加後のレスポンシブ確認で、Blockly内部の最小幅が狭い画面のページ幅を押し広げる構造を修正した。これは表示だけの変更であり、Phase 0のWebHID通信条件やflash操作には影響しない。
+追加確認でBlockly内部SVGの寸法再計算も必要と判明したため、containerのサイズ変更時に `Blockly.svgResize()`を実行するよう修正した。
 
 HID descriptorの読み取り専用分類では、実測済みのCollectionがInput/Output Reportを持たず、Feature Report `0xAA`だけを持つため `bootloader`となる。これは既存の接続結果と整合する。分類時に追加packetは送らず、教育用ランタイム対応の証明やflash操作の許可には使わない。
 

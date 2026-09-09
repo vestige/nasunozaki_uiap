@@ -64,6 +64,12 @@ export function BlocklyStudio() {
         move: { scrollbars: true, drag: true, wheel: true },
       });
       workspaceRef.current = workspace;
+      let resizeFrame = 0;
+      const resizeObserver = new ResizeObserver(() => {
+        cancelAnimationFrame(resizeFrame);
+        resizeFrame = requestAnimationFrame(() => Blockly.svgResize(workspace));
+      });
+      resizeObserver.observe(node);
       const saved = loadBlocklyWorkspace(window.localStorage);
       Blockly.serialization.workspaces.load(saved ?? starterProgram, workspace);
       client.setQueryData(
@@ -98,6 +104,8 @@ export function BlocklyStudio() {
         if (!event.isUiEvent) updateProgram();
       });
       return () => {
+        resizeObserver.disconnect();
+        cancelAnimationFrame(resizeFrame);
         workspaceRef.current = null;
         workspace.dispose();
       };
@@ -203,7 +211,7 @@ export function BlocklyStudio() {
 
   return (
     <section
-      className="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8"
+      className="mx-auto w-full max-w-6xl overflow-x-clip px-5 py-12 sm:px-8"
       aria-labelledby="blockly-title"
     >
       <div className="mb-5 flex min-w-0 flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -248,7 +256,7 @@ export function BlocklyStudio() {
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div
           ref={mountWorkspace}
-          className="h-[34rem] min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl"
+          className="blockly-workspace h-[34rem] w-full min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl"
           aria-label="ブロックプログラミング編集エリア"
         />
         <LedSimulator ledOn={led.data} instructions={program.data} />

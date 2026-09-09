@@ -82,6 +82,7 @@ UIAPduino HID Arduino core `1.2.14`のWebHID APIに合わせ、教育用ラン�
 通常動作モード専用の読み取り診断も追加しました。`0x1209:0xD004`だけを選択対象にして、製品名、VID/PID、HID descriptorとReport構成を表示します。この診断はbootloader用の接続やflash操作から分離され、LED命令も送信しません。
 
 Blockly編集領域と通常動作モード診断は、狭い画面で内部要素がページ幅を押し広げないレスポンシブ構成にしています。操作ボタンは十分な幅がある場合だけ横並びになります。
+BlocklyのSVGは表示領域のサイズ変更を監視して再計算するため、端末幅や画面回転が変わっても編集領域内に収まります。
 
 接続後のHID descriptorから実行モードを確認する読み取り専用表示も追加しました。現在確認済みの `32V003`はInput/Output Reportがなく、Report ID `0xAA`のFeature Reportだけを持つため、書き込み用bootloaderモードと判定します。教育用ランタイムを動かすには、別途ランタイム対応ファームウェアとReport仕様の確定が必要です。
 
