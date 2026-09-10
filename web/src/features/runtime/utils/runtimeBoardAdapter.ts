@@ -8,6 +8,7 @@ import {
   parseRuntimeResponse,
   RUNTIME_COMMAND_SET_LED,
 } from "./runtimeProtocol";
+import { abortableDelay, withRuntimeResponseTimeout } from "./runtimeTiming";
 
 const DEFAULT_TIMEOUT_MS = 1_000;
 const DEFAULT_MAX_IGNORED_RESPONSES = 8;
@@ -31,7 +32,7 @@ export class RuntimeBoardAdapter implements BoardAdapter {
     await this.transport.send(buildSetLedMessage(sequence, on));
 
     for (let ignored = 0; ignored <= this.maxIgnoredResponses; ignored += 1) {
-      const bytes = await withTimeout(
+      const bytes = await withRuntimeResponseTimeout(
         this.transport.receive(),
         this.responseTimeoutMs,
       );
@@ -60,45 +61,4 @@ export class RuntimeBoardAdapter implements BoardAdapter {
     this.sequence = (this.sequence + 1) & 0xff;
     return current;
   }
-}
-
-function withTimeout<T>(promise: Promise<T>, milliseconds: number) {
-  if (!Number.isFinite(milliseconds) || milliseconds <= 0) {
-    return Promise.reject(new Error("応答timeoutは正の数で指定してください。"));
-  }
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new Error("UIAPduinoからの応答がtimeoutしました。")),
-      milliseconds,
-    );
-    promise.then(
-      (value) => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      (error) => {
-        clearTimeout(timer);
-        reject(error);
-      },
-    );
-  });
-}
-
-function abortableDelay(milliseconds: number, signal: AbortSignal) {
-  if (signal.aborted) {
-    return Promise.reject(new DOMException("停止しました", "AbortError"));
-  }
-  return new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(finish, milliseconds);
-    signal.addEventListener("abort", abort, { once: true });
-
-    function finish() {
-      signal.removeEventListener("abort", abort);
-      resolve();
-    }
-    function abort() {
-      clearTimeout(timer);
-      reject(new DOMException("停止しました", "AbortError"));
-    }
-  });
 }

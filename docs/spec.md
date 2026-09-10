@@ -492,6 +492,7 @@ Blockly workspaceは公式serialization APIでJSONへ変換し、version付き�
 `firmware/workshop-runtime/workshop-runtime.ino`はWebHID受信時に8バイト長、識別子、version、要求command、payloadを検証する。LED命令ではArduino pin 2を更新し、同じcommandとsequenceを持つ8バイト応答を返す。不正入力と未対応commandではLEDを変更せずstatusを返す。
 
 `RuntimeBoardAdapter`はLED命令のsequenceを0〜255で循環させ、送信したcommandとsequenceが一致する成功応答だけで操作完了とする。異なるsequenceの古い応答は最大8件まで無視し、デバイスのエラーstatusと1秒以内に応答がない場合は失敗にする。待機処理は `AbortSignal`による即時停止に対応する。通信先は注入可能な `RuntimeTransport`とし、実機descriptor確定まではWebHID実装を接続しない。
+時間制御は `runtimeTiming.ts`へ分離し、応答timeoutと中断可能な待機を独立してテストする。`RuntimeBoardAdapter`は命令生成、送信、応答照合、sequence管理だけを担当する。
 
 通常動作モードの実機確認はbootloader診断とは別の接続ボタンから行う。選択ダイアログは `0x1209:0xD004`だけに絞り、接続後に製品名、VID/PID、HID descriptor、Input/Output/Feature Report構成を表示する。ここではFeature Report送信、LED命令、flash操作を行わない。USB切断時はランタイム側の表示だけを解除する。
 

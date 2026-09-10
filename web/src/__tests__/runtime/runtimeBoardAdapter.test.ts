@@ -53,13 +53,4 @@ describe("RuntimeBoardAdapter", () => {
     vi.useRealTimers();
   });
 
-  it("待機中でも停止できる", async () => {
-    vi.useFakeTimers();
-    const adapter = new RuntimeBoardAdapter(fakeTransport([]));
-    const controller = new AbortController();
-    const pending = adapter.wait(500, controller.signal);
-    controller.abort();
-    await expect(pending).rejects.toMatchObject({ name: "AbortError" });
-    vi.useRealTimers();
-  });
 });
