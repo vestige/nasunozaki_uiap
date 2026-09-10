@@ -142,6 +142,8 @@ Phase 2準備として追加した `BoardAdapter`と教育用ランタイムは�
 2026-09-10に、WebHIDへ未接続の `RuntimeBoardAdapter` transactionを追加した。8バイトLED命令、sequence照合、古い応答の除外、エラーstatus、timeout、停止をfake transportで自動検証した。実機への送信可否やPhase 0のflash操作には変更がない。
 同日、責務を見直してtimeoutと中断可能な待機を `runtimeTiming.ts`へ分離し、テストも `runtimeBoardAdapter.test.ts`と `runtimeTiming.test.ts`へ分けた。動作仕様の変更はない。
 
+続いて通常動作用の `WebHidRuntimeTransport`を追加し、Report ID `0`のFeature Report送信、Input Reportのqueue、異なるReport IDの除外、未接続時の拒否、終了処理をfake deviceで検証した。Report IDは実機結果に合わせて差し替え可能であり、この時点では画面や実機へ送信する経路を接続していない。
+
 追加後のレスポンシブ確認で、Blockly内部の最小幅が狭い画面のページ幅を押し広げる構造を修正した。これは表示だけの変更であり、Phase 0のWebHID通信条件やflash操作には影響しない。
 追加確認でBlockly内部SVGの寸法再計算も必要と判明したため、containerのサイズ変更時に `Blockly.svgResize()`を実行するよう修正した。
 通常動作モード診断の追加により、bootloader接続手順の負のmarginが直前カードへ重なることが画像確認で判明した。接続手順を通常フローへ戻し、機能カードの操作領域を覆わないよう修正した。通信処理への変更はない。

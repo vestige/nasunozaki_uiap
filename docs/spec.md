@@ -494,6 +494,8 @@ Blockly workspaceは公式serialization APIでJSONへ変換し、version付き�
 `RuntimeBoardAdapter`はLED命令のsequenceを0〜255で循環させ、送信したcommandとsequenceが一致する成功応答だけで操作完了とする。異なるsequenceの古い応答は最大8件まで無視し、デバイスのエラーstatusと1秒以内に応答がない場合は失敗にする。待機処理は `AbortSignal`による即時停止に対応する。通信先は注入可能な `RuntimeTransport`とし、実機descriptor確定まではWebHID実装を接続しない。
 時間制御は `runtimeTiming.ts`へ分離し、応答timeoutと中断可能な待機を独立してテストする。`RuntimeBoardAdapter`は命令生成、送信、応答照合、sequence管理だけを担当する。
 
+`WebHidRuntimeTransport`は既定のReport ID `0`を使用して8バイトのFeature Reportを送信し、同じReport IDの `inputreport` eventだけを受け取る。先に到着した応答はFIFO queueへ保持し、待機中なら最古の待機へ直接渡す。終了時はlistenerを解除し、待機中の受信をすべて失敗させ、queueを破棄する。未接続deviceと8バイト以外の命令は送信前に拒否する。
+
 通常動作モードの実機確認はbootloader診断とは別の接続ボタンから行う。選択ダイアログは `0x1209:0xD004`だけに絞り、接続後に製品名、VID/PID、HID descriptor、Input/Output/Feature Report構成を表示する。ここではFeature Report送信、LED命令、flash操作を行わない。USB切断時はランタイム側の表示だけを解除する。
 
 Blockly workspace、LED simulator、ランタイムdescriptor表示は親gridの利用可能幅を超えない。幅の狭い画面では見出し、操作ボタン、診断内容を縦に並べ、横並びへの切り替えはdesktop幅から行う。

@@ -81,6 +81,7 @@ UIAPduino HID Arduino core `1.2.14`のWebHID APIに合わせ、教育用ラン�
 
 実機Adapterの通信ロジックは、WebHIDへ未接続の状態で実装済みです。LED命令ごとに8bit sequenceを付け、対応する成功応答だけを採用し、古い応答、デバイスエラー、1秒のtimeout、実行停止を扱います。
 可読性のため、命令送受信を `runtimeBoardAdapter.ts`、timeoutと中断可能な待機を `runtimeTiming.ts`へ分離しています。
+WebHID固有の送受信は `webHidRuntimeTransport.ts`へ分離しました。既定のReport ID `0`で8バイトFeature Reportを送り、Input Reportを到着順に保持します。実機確認前のため、まだ画面の実行操作には接続していません。
 
 通常動作モード専用の読み取り診断も追加しました。`0x1209:0xD004`だけを選択対象にして、製品名、VID/PID、HID descriptorとReport構成を表示します。この診断はbootloader用の接続やflash操作から分離され、LED命令も送信しません。
 

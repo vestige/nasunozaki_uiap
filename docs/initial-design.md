@@ -399,6 +399,7 @@ Blocklyの永続化はworkspace全体を公式serialization APIで保存し、�
 - [x] `0x1209:0xD004`専用の読み取り診断画面を実装する
 - [ ] 教育用ランタイムの実機Adapterを実装する
 - [x] 実機Adapterのtransport非依存なtransaction処理を実装する
+- [x] Report IDを差し替え可能なWebHID runtime transportを実装する
 - LED出力とボタン入力を実装する
 - 切断、再接続、タイムアウトを扱う
 - GitHub Pagesへ自動公開する
@@ -417,6 +418,8 @@ UIAPduino HID Arduino core `1.2.14`では、ブラウザからEP0 Feature Report
 
 ランタイム実機Adapterは `RuntimeTransport`境界へ8バイト命令の送受信だけを依頼する。Adapter側でsequence一致、status、timeout、停止を処理し、WebHIDのReport IDやevent listenerはtransport実装へ閉じ込める。実機descriptorが確定するまでtransportを画面へ接続しない。
 Adapterの可読性を保つため、時間に関するPromise処理は `runtimeTiming.ts`へ分ける。Adapter本体にはLED transactionとsequence管理を残し、時間制御のテストも別ファイルに配置する。
+
+WebHID固有処理は `webHidRuntimeTransport.ts`に閉じ込める。Input Reportは到着順のqueueとして扱い、Report IDが異なるeventをAdapterへ渡さない。transport終了時にはevent listener、待機中Promise、未処理queueをまとめて後始末する。Report ID `0`は既定値だがconstructorから差し替え可能にし、実機descriptor確認後もAdapter本体を変更しない。
 
 Blocklyなど内部に独自の描画幅を持つComponentは、grid itemへ `min-width: 0`相当を指定してページ全体の横はみ出しを防ぐ。見出しと操作群はdesktop幅まで縦並びを維持し、操作可能領域と本文を潰さない。
 BlocklyはCSS幅の変更だけでは内部SVGの寸法が更新されないため、workspace Component内の `ResizeObserver`で `Blockly.svgResize()`を実行する。observerと予約済みanimation frameはcallback refのcleanupで破棄する。
