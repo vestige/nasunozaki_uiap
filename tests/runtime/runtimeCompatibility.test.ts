@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assessRuntimeCompatibility } from "../../features/runtime/utils/runtimeCompatibility";
+import { assessRuntimeCompatibility } from "../../web/src/features/runtime/utils/runtimeCompatibility";
 
 describe("runtime compatibility assessment", () => {
   it("0xAA Feature Reportだけならbootloaderと判定する", () => {

@@ -3,14 +3,14 @@ import {
   BOOTLOADER_REPORT_ID,
   EXECUTION_MAGIC,
   REPORT_PAYLOAD_SIZE,
-} from "../../features/device/utils/bootloaderProtocol";
+} from "../../web/src/features/device/utils/bootloaderProtocol";
 import {
   buildWrite64PacketOffline,
   CH32V003_FLASH_BLOCK_SIZE,
   CH32V003_FLASH_END,
   CH32V003_FLASH_START,
   FLASH_STATUS_REGISTER,
-} from "../../features/device/utils/flashPacket";
+} from "../../web/src/features/device/utils/flashPacket";
 
 describe("buildWrite64PacketOffline", () => {
   const block = Uint8Array.from(

@@ -45,7 +45,7 @@ WebHID
 UIAPduino
 ```
 
-WebアプリのコードはBlockly機能とデバイス診断機能を `features/` 単位で分け、各機能の中を `components`、`hooks`、`utils`、`types` に整理しています。テストは実装ファイルと混在させず、`web/src/__tests__/` に機能別でまとめます。
+WebアプリのコードはBlockly機能とデバイス診断機能を `features/` 単位で分け、各機能の中を `components`、`hooks`、`utils`、`types` に整理しています。テストは実装ファイルと混在させず、プロジェクト直下の `tests/` に機能別でまとめます。
 
 公開先はGitHub Pagesに統一しています。Sites用の未使用設定だった `web/.openai/hosting.json` は不要なため削除しました。
 

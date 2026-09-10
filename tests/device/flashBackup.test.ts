@@ -6,8 +6,8 @@ import {
   parseFlashBackupFileName,
   validateFlashBackupAddress,
   verifyFlashBackupBytes,
-} from "../../features/device/utils/flashBackup";
-import { CH32V003_FLASH_START } from "../../features/device/utils/flashPacket";
+} from "../../web/src/features/device/utils/flashBackup";
+import { CH32V003_FLASH_START } from "../../web/src/features/device/utils/flashPacket";
 
 describe("flash backup helpers", () => {
   it("64バイト境界のflash addressだけを許可する", () => {

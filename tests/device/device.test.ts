@@ -4,9 +4,9 @@ import {
   readFlashStatus,
   runFlashEraseRestoreOnDevice,
   unlockFlashForInvestigation,
-} from "../../features/device/utils/device";
-import { CH32V003_FLASH_START } from "../../features/device/utils/flashPacket";
-import type { HidDevice } from "../../features/device/types/webhid";
+} from "../../web/src/features/device/utils/device";
+import { CH32V003_FLASH_START } from "../../web/src/features/device/utils/flashPacket";
+import type { HidDevice } from "../../web/src/features/device/types/webhid";
 
 const resultView = (value: number) => {
   const bytes = new Uint8Array(127);

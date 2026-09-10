@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   abortableDelay,
   withRuntimeResponseTimeout,
-} from "../../features/runtime/utils/runtimeTiming";
+} from "../../web/src/features/runtime/utils/runtimeTiming";
 
 describe("runtime timing", () => {
   it("応答待ちを指定時間でtimeoutする", async () => {

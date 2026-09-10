@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { EXECUTION_MAGIC } from "../../features/device/utils/bootloaderProtocol";
+import { EXECUTION_MAGIC } from "../../web/src/features/device/utils/bootloaderProtocol";
 import {
   buildErase64PacketOffline,
   buildFlashProgramPreparationSequenceOffline,
   buildFlashUnlockSequenceOffline,
   flashControlConstants,
-} from "../../features/device/utils/flashControlPacket";
+} from "../../web/src/features/device/utils/flashControlPacket";
 import {
   CH32V003_FLASH_START,
   FLASH_STATUS_REGISTER,
-} from "../../features/device/utils/flashPacket";
+} from "../../web/src/features/device/utils/flashPacket";
 
 describe("flash control packets", () => {
   it("flash unlockの6段階を参照実装どおりに生成する", () => {

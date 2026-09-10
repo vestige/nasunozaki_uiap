@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   interpretFlashSafety,
   interpretFlashStatus,
-} from "../../features/device/utils/flashSafety";
+} from "../../web/src/features/device/utils/flashSafety";
 
 describe("interpretFlashSafety", () => {
   it("lock中かつread protectionなしをunlock候補とする", () => {

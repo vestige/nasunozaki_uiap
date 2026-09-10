@@ -253,13 +253,14 @@ https://<user>.github.io/nasunozaki_uiap/
 │   └── initial-design.md
 ├── firmware/
 │   └── workshop-runtime/
+├── tests/
+│   ├── blockly/
+│   ├── device/
+│   ├── runtime/
+│   └── shared/
 ├── web/
 │   ├── public/
 │   ├── src/
-│   │   ├── __tests__/
-│   │   │   ├── blockly/
-│   │   │   ├── device/
-│   │   │   └── shared/
 │   │   ├── components/        # 複数機能で共有する表示
 │   │   ├── features/
 │   │   │   ├── blockly/
@@ -272,7 +273,8 @@ https://<user>.github.io/nasunozaki_uiap/
 │   │   │       └── utils/
 │   │   ├── query.ts
 │   │   └── diagnosticLog.ts
-│   └── package.json
+│   ├── package.json
+│   └── vitest.config.ts
 └── .github/
     └── workflows/
         └── pages.yml
@@ -289,7 +291,7 @@ https://<user>.github.io/nasunozaki_uiap/
 - WebHID固有の型は `features/device/types/`、定数・packet生成・通信処理は `features/device/utils/`へ分離し、表示ComponentからWebHID APIを直接呼ばない
 - 1ファイルに表示、状態調整、データ変換など複数の変更理由が集まったら分割する。行数だけを基準にせず、名前で責務を説明できる境界を優先する
 - 同じ画面だけで使う小さな表示は過度に分割せず、役割を名前で説明できる単位を目安にする
-- 自動テストは実装ファイルの隣へ混在させず、`src/__tests__/<feature>/`に配置する。純粋なutilsを中心に、実機なしで安全条件を確認する
+- 自動テストは実装ファイルの隣へ混在させず、プロジェクト直下の `tests/<feature>/`に配置する。純粋なutilsを中心に、実機なしで安全条件を確認する
 - 配信はGitHub Pagesを正とし、`.openai/hosting.json`は使用しない。将来別のホスティングへ移行すると決めた場合にだけ、そのサービス固有設定を追加する
 
 ### 8.2 TanStack Queryによる状態管理

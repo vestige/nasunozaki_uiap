@@ -3,8 +3,8 @@ import {
   CH32V003_FLASH_BLOCK_SIZE,
   CH32V003_FLASH_END,
   CH32V003_FLASH_START,
-} from "../../features/device/utils/flashPacket";
-import { createFlashWritePlan } from "../../features/device/utils/flashWritePlan";
+} from "../../web/src/features/device/utils/flashPacket";
+import { createFlashWritePlan } from "../../web/src/features/device/utils/flashWritePlan";
 
 describe("createFlashWritePlan", () => {
   it("64バイトの全blockを安全な操作順に展開する", () => {

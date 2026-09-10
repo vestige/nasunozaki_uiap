@@ -4,7 +4,7 @@ import {
   clearBlocklyWorkspace,
   loadBlocklyWorkspace,
   saveBlocklyWorkspace,
-} from "../../features/blockly/utils/persistence";
+} from "../../web/src/features/blockly/utils/persistence";
 
 const createStorage = () => {
   const values = new Map<string, string>();

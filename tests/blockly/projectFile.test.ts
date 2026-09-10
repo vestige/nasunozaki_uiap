@@ -4,7 +4,7 @@ import {
   createBlocklyProjectFileName,
   parseBlocklyProjectFile,
   stringifyBlocklyProjectFile,
-} from "../../features/blockly/utils/projectFile";
+} from "../../web/src/features/blockly/utils/projectFile";
 
 describe("Blockly project file", () => {
   const savedAt = new Date("2026-09-09T01:02:03.000Z");

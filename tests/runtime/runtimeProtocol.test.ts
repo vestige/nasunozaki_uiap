@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildSetLedMessage,
   parseRuntimeResponse,
-} from "../../features/runtime/utils/runtimeProtocol";
+} from "../../web/src/features/runtime/utils/runtimeProtocol";
 
 describe("education runtime protocol", () => {
   it("LED命令をversionとsequence付きで固定長にする", () => {

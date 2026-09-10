@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createDiagnosticLogEntry,
   formatDiagnosticLogs,
-} from "../../diagnosticLog";
+} from "../../web/src/diagnosticLog";
 
 describe("diagnosticLog", () => {
   it("共有しやすい1行形式へ診断値を整形する", () => {

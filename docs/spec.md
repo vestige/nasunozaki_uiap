@@ -81,7 +81,7 @@ WebHIDの選択ダイアログはVendor IDとProduct IDの両方で絞り込む�
 
 ソースは機能単位で `src/features/blockly/` と `src/features/device/` に分ける。各機能では必要に応じて `components`、`hooks`、`utils`、`types`を使い、表示、状態調整、純粋処理、型定義の責務を分離する。機能横断の表示と状態定義だけを `src/components/`、`src/query.ts`、`src/diagnosticLog.ts`へ置く。
 
-自動テストは `src/__tests__/blockly/`、`src/__tests__/device/`、`src/__tests__/shared/`へ集約する。現在の公開方式はGitHub ActionsからGitHub Pagesへの静的配信だけであり、Sites用の `.openai/hosting.json`は使用しない。
+自動テストはプロジェクト直下の `tests/blockly/`、`tests/device/`、`tests/runtime/`、`tests/shared/`へ集約する。`web/vitest.config.ts`からこの範囲だけを探索し、Webアプリのソースやビルド対象へテストを混在させない。現在の公開方式はGitHub ActionsからGitHub Pagesへの静的配信だけであり、Sites用の `.openai/hosting.json`は使用しない。
 
 ### 5.2 対応環境
 

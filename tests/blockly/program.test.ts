@@ -3,8 +3,8 @@ import * as Blockly from "blockly/core";
 import {
   registerUiapBlocks,
   starterProgram,
-} from "../../features/blockly/utils/blocks";
-import { compileWorkspace } from "../../features/blockly/utils/program";
+} from "../../web/src/features/blockly/utils/blocks";
+import { compileWorkspace } from "../../web/src/features/blockly/utils/program";
 
 describe("compileWorkspace", () => {
   it("点滅ブロックを安全な中間命令へ変換する", () => {

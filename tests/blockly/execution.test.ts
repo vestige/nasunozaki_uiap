@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import type { ProgramInstruction } from "../../features/blockly/utils/program";
-import type { BoardAdapter } from "../../features/blockly/types/execution";
-import { runProgram } from "../../features/blockly/utils/execution";
+import type { ProgramInstruction } from "../../web/src/features/blockly/utils/program";
+import type { BoardAdapter } from "../../web/src/features/blockly/types/execution";
+import { runProgram } from "../../web/src/features/blockly/utils/execution";
 
 const program: ProgramInstruction[] = [
   {

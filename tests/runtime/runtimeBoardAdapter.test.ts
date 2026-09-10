@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { RuntimeBoardAdapter } from "../../features/runtime/utils/runtimeBoardAdapter";
-import type { RuntimeTransport } from "../../features/runtime/types/transport";
+import { RuntimeBoardAdapter } from "../../web/src/features/runtime/utils/runtimeBoardAdapter";
+import type { RuntimeTransport } from "../../web/src/features/runtime/types/transport";
 
 const response = (sequence: number, status = 0) =>
   Uint8Array.from([0x55, 0x49, 0x41, 0x50, 0x01, 0x81, sequence, status]);

@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   runFlashEraseRestoreTransaction,
   type FlashRecoveryAdapter,
-} from "../../features/device/utils/flashRecoveryTransaction";
-import { CH32V003_FLASH_START } from "../../features/device/utils/flashPacket";
+} from "../../web/src/features/device/utils/flashRecoveryTransaction";
+import { CH32V003_FLASH_START } from "../../web/src/features/device/utils/flashPacket";
 
 const unlocked = {
   controlValue: 0x200,

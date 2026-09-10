@@ -6,7 +6,7 @@ import {
   EXECUTION_MAGIC,
   normalizeFeaturePayload,
   REPORT_PAYLOAD_SIZE,
-} from "../../features/device/utils/bootloaderProtocol";
+} from "../../web/src/features/device/utils/bootloaderProtocol";
 
 describe("buildReadWordRequest", () => {
   it("minichlink互換の127バイトpayloadを生成する", () => {
