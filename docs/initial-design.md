@@ -414,6 +414,7 @@ UIAPduino HID Arduino core `1.2.14`では、ブラウザからEP0 Feature Report
 
 Blocklyなど内部に独自の描画幅を持つComponentは、grid itemへ `min-width: 0`相当を指定してページ全体の横はみ出しを防ぐ。見出しと操作群はdesktop幅まで縦並びを維持し、操作可能領域と本文を潰さない。
 BlocklyはCSS幅の変更だけでは内部SVGの寸法が更新されないため、workspace Component内の `ResizeObserver`で `Blockly.svgResize()`を実行する。observerと予約済みanimation frameはcallback refのcleanupで破棄する。
+独立したカードSection同士は負のmarginで重ねない。装飾的な重なりを使う場合も、同一Section内に閉じて後続機能の操作領域を覆わないようにする。
 
 ### Phase 3: ワークショップ検証
 

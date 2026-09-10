@@ -8,7 +8,7 @@ const steps = [
 export function ConnectionGuide() {
   return (
     <section
-      className="relative z-10 mx-auto -mt-8 w-full max-w-6xl px-5 sm:px-8"
+      className="relative mx-auto mt-8 w-full max-w-6xl px-5 sm:px-8"
       aria-labelledby="steps-title"
     >
       <h2 id="steps-title" className="sr-only">

@@ -141,6 +141,7 @@ Phase 2準備として追加した `BoardAdapter`と教育用ランタイムは�
 
 追加後のレスポンシブ確認で、Blockly内部の最小幅が狭い画面のページ幅を押し広げる構造を修正した。これは表示だけの変更であり、Phase 0のWebHID通信条件やflash操作には影響しない。
 追加確認でBlockly内部SVGの寸法再計算も必要と判明したため、containerのサイズ変更時に `Blockly.svgResize()`を実行するよう修正した。
+通常動作モード診断の追加により、bootloader接続手順の負のmarginが直前カードへ重なることが画像確認で判明した。接続手順を通常フローへ戻し、機能カードの操作領域を覆わないよう修正した。通信処理への変更はない。
 
 HID descriptorの読み取り専用分類では、実測済みのCollectionがInput/Output Reportを持たず、Feature Report `0xAA`だけを持つため `bootloader`となる。これは既存の接続結果と整合する。分類時に追加packetは送らず、教育用ランタイム対応の証明やflash操作の許可には使わない。
 
