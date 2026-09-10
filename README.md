@@ -79,6 +79,8 @@ Phase 2の準備として、Blocklyの実行エンジンを `BoardAdapter`方式
 
 UIAPduino HID Arduino core `1.2.14`のWebHID APIに合わせ、教育用ランタイムのLED命令と応答を8バイト形式で実装しました。ブラウザからのFeature Reportは最大32バイト、ボードからのInput Reportは8バイトで、内蔵LEDはArduino pin 2です。最小ランタイムはFlash 4004 bytes、RAM 172 bytesでコンパイルできました。まだ実機への書き込みとブラウザの実機Adapterは有効にしていません。
 
+実機Adapterの通信ロジックは、WebHIDへ未接続の状態で実装済みです。LED命令ごとに8bit sequenceを付け、対応する成功応答だけを採用し、古い応答、デバイスエラー、1秒のtimeout、実行停止を扱います。
+
 通常動作モード専用の読み取り診断も追加しました。`0x1209:0xD004`だけを選択対象にして、製品名、VID/PID、HID descriptorとReport構成を表示します。この診断はbootloader用の接続やflash操作から分離され、LED命令も送信しません。
 
 Blockly編集領域と通常動作モード診断は、狭い画面で内部要素がページ幅を押し広げないレスポンシブ構成にしています。操作ボタンは十分な幅がある場合だけ横並びになります。

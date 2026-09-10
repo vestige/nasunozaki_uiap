@@ -139,6 +139,8 @@ Phase 2準備として追加した `BoardAdapter`と教育用ランタイムは�
 
 2026-09-09に通常動作モード専用の読み取り診断を追加した。公開されているArduino coreの既定値 `0x1209:0xD004`だけを選択対象とし、接続後のHID descriptorをそのまま表示する。bootloader用 `0x1209:0xB803`の診断状態とは分離し、この時点ではFeature ReportやLED命令を送らない。実機へ教育用ランタイムを書き込んだ後、この画面でPIDとReport IDなし（0）のブラウザ上の見え方を確定する。
 
+2026-09-10に、WebHIDへ未接続の `RuntimeBoardAdapter` transactionを追加した。8バイトLED命令、sequence照合、古い応答の除外、エラーstatus、timeout、停止をfake transportで自動検証した。実機への送信可否やPhase 0のflash操作には変更がない。
+
 追加後のレスポンシブ確認で、Blockly内部の最小幅が狭い画面のページ幅を押し広げる構造を修正した。これは表示だけの変更であり、Phase 0のWebHID通信条件やflash操作には影響しない。
 追加確認でBlockly内部SVGの寸法再計算も必要と判明したため、containerのサイズ変更時に `Blockly.svgResize()`を実行するよう修正した。
 通常動作モード診断の追加により、bootloader接続手順の負のmarginが直前カードへ重なることが画像確認で判明した。接続手順を通常フローへ戻し、機能カードの操作領域を覆わないよう修正した。通信処理への変更はない。

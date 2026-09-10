@@ -396,6 +396,7 @@ Blocklyの永続化はworkspace全体を公式serialization APIで保存し、�
 - [ ] ランタイム用VID/PIDとWebHIDのReport IDなし（0）の扱いを実機で確認する
 - [x] `0x1209:0xD004`専用の読み取り診断画面を実装する
 - [ ] 教育用ランタイムの実機Adapterを実装する
+- [x] 実機Adapterのtransport非依存なtransaction処理を実装する
 - LED出力とボタン入力を実装する
 - 切断、再接続、タイムアウトを扱う
 - GitHub Pagesへ自動公開する
@@ -411,6 +412,8 @@ UIAPduino HID Arduino core `1.2.14`では、ブラウザからEP0 Feature Report
 接続時のHID descriptorにInputまたはOutput Reportがあれば教育用ランタイム候補、Input/Output ReportがなくFeature Report `0xAA`だけならbootloaderと分類する。この分類はdescriptorから観測できる範囲の案内であり、ランタイム対応の確定や命令送信許可には使わない。
 
 ランタイム診断は `features/runtime/`内に型、WebHID処理、TanStack Query hook、表示Componentを分離する。bootloader用device stateとは別のquery keyを使用し、片方の切断が他方の表示を消さないようにする。初回の実機確認では命令送信を有効化せず、descriptorの観測結果を先に固定する。
+
+ランタイム実機Adapterは `RuntimeTransport`境界へ8バイト命令の送受信だけを依頼する。Adapter側でsequence一致、status、timeout、停止を処理し、WebHIDのReport IDやevent listenerはtransport実装へ閉じ込める。実機descriptorが確定するまでtransportを画面へ接続しない。
 
 Blocklyなど内部に独自の描画幅を持つComponentは、grid itemへ `min-width: 0`相当を指定してページ全体の横はみ出しを防ぐ。見出しと操作群はdesktop幅まで縦並びを維持し、操作可能領域と本文を潰さない。
 BlocklyはCSS幅の変更だけでは内部SVGの寸法が更新されないため、workspace Component内の `ResizeObserver`で `Blockly.svgResize()`を実行する。observerと予約済みanimation frameはcallback refのcleanupで破棄する。
