@@ -95,6 +95,8 @@ Blockly画面には「画面で試す」と「UIAPduinoで動かす」の実行�
 
 実機実行の安全処理として、USB切断を実行sessionでも監視し、切断時には待機中のWebHID通信を即時終了するようにしました。Blocklyの開始、正常完了、停止、通信失敗は共通診断ログへ残します。停止・失敗時は接続が残っていれば消灯を試し、正常完了時はプログラムが指定した最後のLED状態を維持します。再接続後は古いlistenerを再利用せず、新しい実行sessionを生成します。
 
+2026-09-11の実機確認で、USB切断後に通常動作モードへ再接続し、Blocklyから再びLEDを点灯できました。古いsessionを引きずらずに復旧できることを確認済みです。
+
 実機Adapterの通信ロジックは、WebHIDへ未接続の状態で実装済みです。LED命令ごとに8bit sequenceを付け、対応する成功応答だけを採用し、古い応答、デバイスエラー、1秒のtimeout、実行停止を扱います。
 可読性のため、命令送受信を `runtimeBoardAdapter.ts`、timeoutと中断可能な待機を `runtimeTiming.ts`へ分離しています。
 WebHID固有の送受信は `webHidRuntimeTransport.ts`へ分離しました。既定のReport ID `0`で8バイトFeature Reportを送り、Input Reportを到着順に保持します。実機確認前のため、まだ画面の実行操作には接続していません。

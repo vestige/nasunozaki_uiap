@@ -151,6 +151,8 @@ Phase 2では同じ実機AdapterをBlocklyへ接続し、画面とUIAPduinoの�
 
 続いてPhase 2の安全処理として、実行sessionへ通常動作deviceのdisconnect監視を追加した。切断時はtransportをdisposeし、Input Report待機を即時終了する。Blocklyの開始・完了・停止・失敗は共通診断ログへ記録し、停止・失敗時は可能な場合だけ消灯を試す。正常終了時は最後のLED命令を維持し、再接続後は新しいsessionを使用する。自動テストは成功しており、実機を実行中に抜く確認は未実施である。Phase 0のflash操作には変更がない。
 
+2026-09-11にUSB切断後、ボタンを押さず通常動作モードへ再接続し、Blocklyから再びLEDを点灯できた。新しいdeviceと実行sessionによる復旧経路が成立している。切断時の表示内容と実機timeoutの確認は未完了である。
+
 2026-09-09に、調査コードの読みやすさを保つため、デバイス診断を `features/device/` の `components`、`hooks`、`utils`、`types`へ再配置した。2026-09-10には全自動テストをプロジェクト直下の `tests/<feature>/`へ移し、`web/vitest.config.ts`から実行する構成へ変更した。通信packet、アドレス、安全条件、実機操作の仕様変更はない。GitHub Pagesでは使われていなかった `web/.openai/hosting.json`も削除した。
 
 同日に追加したBlockly作品ファイルの保存・読み込みはブラウザ内のworkspaceだけを対象とし、WebHID、bootloader、flashの診断・書き込み経路には接続しない。
