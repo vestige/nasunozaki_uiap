@@ -149,9 +149,11 @@ Phase 2では同じ実機AdapterをBlocklyへ接続し、画面とUIAPduinoの�
 
 2026-09-11にBlocklyの初期3回点滅プログラムを実機で実行し、想定どおりLEDが点滅することを確認した。画面シミュレーターと実機Adapterが同じ中間命令列を実行できた。Phase 0のbootloader経路や保留中のeraseは使用していない。
 
-続いてPhase 2の安全処理として、実行sessionへ通常動作deviceのdisconnect監視を追加した。切断時はtransportをdisposeし、Input Report待機を即時終了する。Blocklyの開始・完了・停止・失敗は共通診断ログへ記録し、停止・失敗時は可能な場合だけ消灯を試す。正常終了時は最後のLED命令を維持し、再接続後は新しいsessionを使用する。自動テストは成功しており、実機を実行中に抜く確認は未実施である。Phase 0のflash操作には変更がない。
+続いてPhase 2の安全処理として、実行sessionへ通常動作deviceのdisconnect監視を追加した。切断時はtransportをdisposeし、Input Report待機を即時終了する。Blocklyの開始・完了・停止・失敗は共通診断ログへ記録し、停止・失敗時は可能な場合だけ消灯を試す。正常終了時は最後のLED命令を維持し、再接続後は新しいsessionを使用する。Phase 0のflash操作には変更がない。
 
 2026-09-11にUSB切断後、ボタンを押さず通常動作モードへ再接続し、Blocklyから再びLEDを点灯できた。新しいdeviceと実行sessionによる復旧経路が成立している。切断時の表示内容と実機timeoutの確認は未完了である。
+
+実行中切断の実機ログでは、`RUNTIME_DISCONNECT`の1ms後に`BLOCKLY_RUN`がFeature Report送信失敗で終了した。約27秒後に再接続し、その約5秒後に開始したBlocklyプログラムは正常完了した。切断検出、失敗終了、新しいsessionでの復旧を確認できた。英語の送信失敗文言はtransportで日本語の再接続案内へ変換する。実機timeoutの確認だけが未完了である。
 
 2026-09-09に、調査コードの読みやすさを保つため、デバイス診断を `features/device/` の `components`、`hooks`、`utils`、`types`へ再配置した。2026-09-10には全自動テストをプロジェクト直下の `tests/<feature>/`へ移し、`web/vitest.config.ts`から実行する構成へ変更した。通信packet、アドレス、安全条件、実機操作の仕様変更はない。GitHub Pagesでは使われていなかった `web/.openai/hosting.json`も削除した。
 

@@ -95,4 +95,16 @@ describe("WebHidRuntimeTransport", () => {
     fake.device.opened = false;
     await expect(transport.send(new Uint8Array(8))).rejects.toThrow("接続されていません");
   });
+
+  it("ブラウザの送信失敗を日本語の再接続案内へ変換する", async () => {
+    const fake = fakeDevice();
+    fake.sendFeatureReport.mockRejectedValueOnce(
+      new Error("Failed to write the feature report."),
+    );
+    const transport = new WebHidRuntimeTransport(fake.device);
+
+    await expect(transport.send(new Uint8Array(8))).rejects.toThrow(
+      "通常動作モードへ再接続してください",
+    );
+  });
 });

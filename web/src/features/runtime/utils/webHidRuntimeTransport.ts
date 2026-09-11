@@ -31,7 +31,17 @@ export class WebHidRuntimeTransport implements RuntimeTransport {
         `教育用ランタイム命令は${RUNTIME_MESSAGE_SIZE}バイト必要です。`,
       );
     }
-    await this.device.sendFeatureReport(this.reportId, new Uint8Array(message));
+    try {
+      await this.device.sendFeatureReport(
+        this.reportId,
+        new Uint8Array(message),
+      );
+    } catch (cause) {
+      throw new Error(
+        "UIAPduinoへ命令を送信できませんでした。USB接続を確認し、通常動作モードへ再接続してください。",
+        { cause },
+      );
+    }
   }
 
   receive(): Promise<Uint8Array> {

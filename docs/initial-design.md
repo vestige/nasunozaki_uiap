@@ -439,6 +439,8 @@ Blocklyの実行先は専用Componentで選び、TanStack Queryの共有device s
 
 実行状態の確認には既存の共通診断ログを使用する。Blockly Componentは開始・完了・停止・失敗という利用者向けの単位だけを記録し、packet検証とtimeoutはAdapter、HID eventはtransportへ閉じ込める。
 
+WebHID APIが返す環境依存の英語エラーはtransport境界で利用者向けの日本語へ変換し、USB確認と通常動作モードへの再接続を案内する。元エラーは`cause`に保持し、上位のBlockly Componentはブラウザ固有文言を判定しない。
+
 初期3回点滅プログラムの実機動作を確認できたため、このAdapter境界をPhase 2以降の標準実行経路とする。画面と実機で別の命令コンパイラを持たず、今後のボタン入力や追加ブロックも共通の中間命令と実機protocolを拡張する。
 
 WebHID固有処理は `webHidRuntimeTransport.ts`に閉じ込める。Input Reportは到着順のqueueとして扱い、Report IDが異なるeventをAdapterへ渡さない。transport終了時にはevent listener、待機中Promise、未処理queueをまとめて後始末する。Report ID `0`は既定値だがconstructorから差し替え可能にし、実機descriptor確認後もAdapter本体を変更しない。
