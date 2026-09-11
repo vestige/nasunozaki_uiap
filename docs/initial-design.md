@@ -416,6 +416,8 @@ UIAPduino HID Arduino core `1.2.14`では、ブラウザからEP0 Feature Report
 
 教育用ランタイムの最初の実機導入は、公式UIAPduino HID coreに含まれる`uiapflash`へ限定する。Arduino CLIではcore導入、build、uploadをスクリプトの別commandに分け、Arduino IDEの標準Uploadも代替手順として残す。独自erase経路の安全保留と混同せず、既存プログラムの置換警告、固定するBoard・USB・Optimize設定、Upload後の通常接続までを専用Componentで案内する。
 
+core `1.2.14`のWebHID Only構成には、Configuration Descriptorの実データが34 bytesなのに`wTotalLength=41`とする不一致がある。macOSではUSB deviceだけが列挙されHID interfaceが生成されないため、CLIのsetup時に元の値が完全一致する場合だけ34 bytesへ補正する。未知のcore内容は自動変更せず停止し、core更新時に再確認する。
+
 接続時のHID descriptorにInputまたはOutput Reportがあれば教育用ランタイム候補、Input/Output ReportがなくFeature Report `0xAA`だけならbootloaderと分類する。この分類はdescriptorから観測できる範囲の案内であり、ランタイム対応の確定や命令送信許可には使わない。
 
 ランタイム診断は `features/runtime/`内に型、WebHID処理、TanStack Query hook、表示Componentを分離する。bootloader用device stateとは別のquery keyを使用し、片方の切断が他方の表示を消さないようにする。初回の実機確認では命令送信を有効化せず、descriptorの観測結果を先に固定する。

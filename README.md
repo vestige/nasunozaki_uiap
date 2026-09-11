@@ -81,7 +81,7 @@ Phase 0の実機通信調査と並行してPhase 1を開始し、Blocklyによ�
 
 Phase 2の準備として、Blocklyの実行エンジンを `BoardAdapter`方式へ切り替えました。画面のLED表示と命令順のハイライトを分離し、将来は同じ中間命令列へ実機Adapterを接続できます。
 
-UIAPduino HID Arduino core `1.2.14`のWebHID APIに合わせ、教育用ランタイムのLED命令と応答を8バイト形式で実装しました。ブラウザからのFeature Reportは最大32バイト、ボードからのInput Reportは8バイトで、内蔵LEDはArduino pin 2です。最小ランタイムはFlash 4004 bytes、RAM 172 bytesでコンパイルできました。2026-09-11にArduino CLIと公式`uiapflash`から実機へ書き込み、4224 bytesのverifyとアプリ起動に成功しました。ブラウザの実機Adapterはまだ有効にしていません。
+UIAPduino HID Arduino core `1.2.14`のWebHID APIに合わせ、教育用ランタイムのLED命令と応答を8バイト形式で実装しました。ブラウザからのFeature Reportは最大32バイト、ボードからのInput Reportは8バイトで、内蔵LEDはArduino pin 2です。最小ランタイムはFlash 4004 bytes、RAM 172 bytesでコンパイルできました。2026-09-11にArduino CLIと公式`uiapflash`から実機へ書き込み、4224 bytesのverifyとアプリ起動に成功しましたが、core `1.2.14`のWebHID構成全長が41 bytesと誤記され、macOSがHID interfaceを登録しないことを確認しました。スクリプトへ34 bytesに補正する処理を追加し、修正版を再ビルド済みです。
 
 実機Adapterの通信ロジックは、WebHIDへ未接続の状態で実装済みです。LED命令ごとに8bit sequenceを付け、対応する成功応答だけを採用し、古い応答、デバイスエラー、1秒のtimeout、実行停止を扱います。
 可読性のため、命令送受信を `runtimeBoardAdapter.ts`、timeoutと中断可能な待機を `runtimeTiming.ts`へ分離しています。

@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | Phase 0: 実機調査 | 継続・一部保留 | bootloaderの接続、読取、unlock、退避、復旧を確認済み。erase再試行は停止中 |
 | Phase 1: 画面プロトタイプ | 完了 | Blockly編集、シミュレーター、保存・復元、作品ファイル、実行位置表示を実装済み |
-| Phase 2: 実機MVP | 進行中 | 教育用firmwareの公式uiapflash書き込み・verify済み。次は通常動作descriptor確認 |
+| Phase 2: 実機MVP | 進行中 | 初回upload済み。公式coreのUSB descriptor全長不一致を補正し、再upload待ち |
 | Phase 3: ワークショップ検証 | 未着手 | Phase 2の実機LED点滅後に開始 |
 | Phase 4: 拡張 | 未着手 | 一部の作品保存機能だけPhase 1へ前倒し済み |
 
@@ -43,6 +43,7 @@
 - [x] `0x1209:0xD004`専用の読み取り診断画面を用意する
 - [x] Arduino IDEと公式UIAPduino HID coreを使う教育用ランタイム導入手順を画面とfirmware READMEへ追加する
 - [x] Arduino CLIでcore導入、build、uploadを分離するスクリプトを追加し、core `1.2.14`でbuildする
+- [x] core `1.2.14`のWebHID構成全長を41 bytesから実データの34 bytesへ補正する処理を追加する
 
 ### 保留中の安全課題
 
@@ -580,6 +581,8 @@ bootloader接続手順のカード群には負のmarginを使わず、直前の�
 Arduino core `1.2.14`、WebHID Only、Smallest（`-Os` + LTO）でコンパイルし、Flash 4004 / 16384 bytes、RAM 172 / 2048 bytesを確認した。ランタイム用VID/PID、WebHID APIから見えるReport ID、timeout、再送は実機確認待ちであり、bootloader用WebHID経路へ渡さない。
 
 2026-09-11にArduino CLI `1.5.1`から公式`uiapflash`を実行し、4164 bytesのbinを4224 bytesへpaddingして書き込み、全4224 bytesのverify成功とアプリ起動を確認した。次はボタンを押さずに通常接続し、読み取り専用診断からdescriptorを確定する。
+
+初回起動後、macOSのUSB treeでは`UIAPduino WebHID / 0x1209:0xD004`として認識されたが、IOHIDDeviceは生成されずWebHID chooserへ表示されなかった。core `1.2.14`の`config_descriptor`は実際にはConfiguration 9 + Interface 9 + HID 9 + Endpoint 7 = 34 bytesだが、`wTotalLength`が41 bytesと宣言されていた。スクリプトの`setup`または`patch-core`でこの値だけを34 bytesへ補正してからbuildする。修正版の実機再uploadとdescriptor確認は未完了である。
 
 ### 10.3 実行モードの読み取り専用判定
 

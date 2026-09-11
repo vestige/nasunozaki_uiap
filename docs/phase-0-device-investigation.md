@@ -135,6 +135,8 @@ Collections:  1
 
 2026-09-11にArduino IDEを必要としない`scripts/workshop-runtime.sh`を追加した。公式core `1.2.14`と同梱`uiapflash`を使用し、`setup`、非破壊の`build`、実機を書き換える`upload`を分離する。macOS上のArduino CLI `1.5.1`でcore導入とbuildに成功し、Flash 4004 bytes、RAM 172 bytesを再確認した。続いてbootloaderモードの実機へuploadし、4164 bytesのbinを4224 bytesへpaddingした書き込み、全4224 bytesのverify、アプリ起動に成功した。停止中のBrowser Studio独自erase経路は使用していない。
 
+通常接続後、macOSのUSB treeには`UIAPduino WebHID`、VID `0x1209`、PID `0xD004`として現れた一方、IOHIDDeviceが生成されずWebHID chooserには表示されなかった。core `1.2.14`のWebHID Only用Configuration Descriptorを確認すると、実データは34 bytes（9+9+9+7）なのに`wTotalLength=41`（9+9+9+7+7）と宣言されていた。`scripts/workshop-runtime.sh patch-core`で既知の値だけを34 bytesへ補正し、Flash 4004 bytes、RAM 172 bytesで再ビルドした。修正版の再uploadは未実施である。
+
 2026-09-09に、調査コードの読みやすさを保つため、デバイス診断を `features/device/` の `components`、`hooks`、`utils`、`types`へ再配置した。2026-09-10には全自動テストをプロジェクト直下の `tests/<feature>/`へ移し、`web/vitest.config.ts`から実行する構成へ変更した。通信packet、アドレス、安全条件、実機操作の仕様変更はない。GitHub Pagesでは使われていなかった `web/.openai/hosting.json`も削除した。
 
 同日に追加したBlockly作品ファイルの保存・読み込みはブラウザ内のworkspaceだけを対象とし、WebHID、bootloader、flashの診断・書き込み経路には接続しない。
