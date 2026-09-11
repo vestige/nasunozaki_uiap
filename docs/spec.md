@@ -12,13 +12,13 @@
 | --- | --- | --- |
 | Phase 0: 実機調査 | 継続・一部保留 | bootloaderの接続、読取、unlock、退避、復旧を確認済み。erase再試行は停止中 |
 | Phase 1: 画面プロトタイプ | 完了 | Blockly編集、シミュレーター、保存・復元、作品ファイル、実行位置表示を実装済み |
-| Phase 2: 実機MVP | 進行中 | 8バイトprotocol、教育用firmware、BoardAdapter、WebHID transportを実装・自動検証済み |
+| Phase 2: 実機MVP | 進行中 | 教育用firmwareの公式uiapflash書き込み・verify済み。次は通常動作descriptor確認 |
 | Phase 3: ワークショップ検証 | 未着手 | Phase 2の実機LED点滅後に開始 |
 | Phase 4: 拡張 | 未着手 | 一部の作品保存機能だけPhase 1へ前倒し済み |
 
 ### 次に行うタスク
 
-- [ ] 教育用ランタイムを書き込む安全な手順を確定し、`workshop-runtime.ino`を実機へ書き込む
+- [x] 教育用ランタイムを書き込む安全な手順を確定し、`workshop-runtime.ino`を実機へ書き込む
 - [ ] 通常動作モードで `0x1209:0xD004`、HID descriptor、Input Report、Report ID `0`の見え方を診断画面から記録する
 - [ ] 確認結果と一致した場合だけ `WebHidRuntimeTransport`を通常動作モードの接続へ組み込む
 - [ ] 専用の実機確認操作からLEDを1回点灯・消灯し、8バイト成功応答またはエラー応答を診断ログへ残す
@@ -42,6 +42,7 @@
 - [x] Report IDを差し替え可能な `WebHidRuntimeTransport`を自動テストする
 - [x] `0x1209:0xD004`専用の読み取り診断画面を用意する
 - [x] Arduino IDEと公式UIAPduino HID coreを使う教育用ランタイム導入手順を画面とfirmware READMEへ追加する
+- [x] Arduino CLIでcore導入、build、uploadを分離するスクリプトを追加し、core `1.2.14`でbuildする
 
 ### 保留中の安全課題
 
@@ -568,15 +569,17 @@ Blockly workspaceは公式serialization APIでJSONへ変換し、version付き�
 
 通常動作モードの実機確認はbootloader診断とは別の接続ボタンから行う。選択ダイアログは `0x1209:0xD004`だけに絞り、接続後に製品名、VID/PID、HID descriptor、Input/Output/Feature Report構成を表示する。ここではFeature Report送信、LED命令、flash操作を行わない。USB切断時はランタイム側の表示だけを解除する。
 
-教育用ランタイムの初回導入は、停止中のBrowser Studio独自erase経路を使わず、Arduino IDE 2.xと公式 `UIAPduino HID` core `1.2.14`の標準Uploadを使う。画面から `workshop-runtime.ino`とcore導入手順へ移動できるようにし、書き込み前には既存プログラムが置き換わることを警告する。Boardは `HID ProMicro CH32V003`、USBは `WebHID Only`、Optimizeは `Smallest (-Os) with LTO`に固定する。Upload後はボタンを押さずに通常接続し、ランタイム診断を行う。
+教育用ランタイムの初回導入は、停止中のBrowser Studio独自erase経路を使わず、公式 `UIAPduino HID` core `1.2.14`に含まれる`uiapflash`を使う。Arduino CLI用の`scripts/workshop-runtime.sh`では`setup`、`build`、`upload`を分離し、実機を書き換える操作を明確にする。Arduino IDE 2.xの標準Uploadも代替手順として維持する。Boardは `HID ProMicro CH32V003`、USBは `WebHID Only`、Optimizeは `Smallest (-Os) with LTO`に固定する。Upload後はボタンを押さずに通常接続し、ランタイム診断を行う。
 
-Arduino IDEのUploadが失敗した場合は連続して再試行せず、IDEの出力を保存して切り分ける。公式Board ManagerではmacOSが動作確認中とされているため、成功するまでは教育用ランタイムの実機書き込みを完了扱いにしない。
+CLIまたはArduino IDEのUploadが失敗した場合は連続して再試行せず、出力を保存して切り分ける。公式Board ManagerではmacOSが動作確認中とされているため、成功するまでは教育用ランタイムの実機書き込みを完了扱いにしない。
 
 Blockly workspace、LED simulator、ランタイムdescriptor表示は親gridの利用可能幅を超えない。幅の狭い画面では見出し、操作ボタン、診断内容を縦に並べ、横並びへの切り替えはdesktop幅から行う。
 Blockly workspaceのcontainer幅が変化した場合は `ResizeObserver`から `Blockly.svgResize()`を呼び、内部SVGとscrollbarの寸法を同期する。
 bootloader接続手順のカード群には負のmarginを使わず、直前の機能カードとの間に通常の余白を確保する。
 
 Arduino core `1.2.14`、WebHID Only、Smallest（`-Os` + LTO）でコンパイルし、Flash 4004 / 16384 bytes、RAM 172 / 2048 bytesを確認した。ランタイム用VID/PID、WebHID APIから見えるReport ID、timeout、再送は実機確認待ちであり、bootloader用WebHID経路へ渡さない。
+
+2026-09-11にArduino CLI `1.5.1`から公式`uiapflash`を実行し、4164 bytesのbinを4224 bytesへpaddingして書き込み、全4224 bytesのverify成功とアプリ起動を確認した。次はボタンを押さずに通常接続し、読み取り専用診断からdescriptorを確定する。
 
 ### 10.3 実行モードの読み取り専用判定
 

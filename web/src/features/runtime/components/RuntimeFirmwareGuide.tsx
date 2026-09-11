@@ -14,6 +14,23 @@ export function RuntimeFirmwareGuide() {
             この手順は現在のプログラムを教育用ランタイムへ置き換えます。必要なプログラムや退避ファイルがある場合は、先に保存してください。
           </span>
         </div>
+        <p>
+          Arduino IDEがない場合は、リポジトリ直下で次の順に実行できます。実機を書き換えるのは最後の
+          <code className="mx-1 rounded bg-base-300 px-1">upload</code>
+          だけです。
+        </p>
+        <div className="mockup-code max-w-full overflow-x-auto text-xs">
+          <pre data-prefix="1">
+            <code>./scripts/workshop-runtime.sh setup</code>
+          </pre>
+          <pre data-prefix="2">
+            <code>./scripts/workshop-runtime.sh build</code>
+          </pre>
+          <pre data-prefix="3">
+            <code>./scripts/workshop-runtime.sh upload</code>
+          </pre>
+        </div>
+        <p className="font-bold">Arduino IDEを使う場合の手順</p>
         <ol className="list-decimal space-y-2 pl-5">
           <li>Arduino IDE 2.xへ「UIAPduino HID」core 1.2.14を追加します。</li>
           <li>教育用ランタイムのスケッチをダウンロードして開きます。</li>
