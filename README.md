@@ -91,6 +91,8 @@ UIAPduino HID Arduino core `1.2.14`のWebHID APIに合わせ、教育用ラン�
 
 Blockly画面には「画面で試す」と「UIAPduinoで動かす」の実行先選択を追加しました。実機側は通常動作モードへの接続中だけ選択でき、同じ命令列と実行位置表示を`RuntimeBoardAdapter`で実行します。実行停止または通信エラー時は消灯を試してからWebHID listenerを破棄し、切断中は実行を開始しません。
 
+2026-09-11に、Blocklyの初期3回点滅プログラムを「UIAPduinoで動かす」から実行し、ブロックの順序どおり実機LEDが点滅することを確認しました。画面シミュレーターと実機で命令解釈を共有するPhase 2の主要経路が実機で成立しています。
+
 実機Adapterの通信ロジックは、WebHIDへ未接続の状態で実装済みです。LED命令ごとに8bit sequenceを付け、対応する成功応答だけを採用し、古い応答、デバイスエラー、1秒のtimeout、実行停止を扱います。
 可読性のため、命令送受信を `runtimeBoardAdapter.ts`、timeoutと中断可能な待機を `runtimeTiming.ts`へ分離しています。
 WebHID固有の送受信は `webHidRuntimeTransport.ts`へ分離しました。既定のReport ID `0`で8バイトFeature Reportを送り、Input Reportを到着順に保持します。実機確認前のため、まだ画面の実行操作には接続していません。

@@ -433,6 +433,8 @@ Adapterの可読性を保つため、時間に関するPromise処理は `runtime
 
 Blocklyの実行先は専用Componentで選び、TanStack Queryの共有device stateから実機を選択可能か判断する。実行ごとの`BoardExecutionSession`がAdapterとtransportの寿命を管理し、UI ComponentはWebHID listenerやpacketを直接扱わない。停止・失敗時は消灯を試すが、切断時の消灯失敗で原因となったエラーを隠さない。
 
+初期3回点滅プログラムの実機動作を確認できたため、このAdapter境界をPhase 2以降の標準実行経路とする。画面と実機で別の命令コンパイラを持たず、今後のボタン入力や追加ブロックも共通の中間命令と実機protocolを拡張する。
+
 WebHID固有処理は `webHidRuntimeTransport.ts`に閉じ込める。Input Reportは到着順のqueueとして扱い、Report IDが異なるeventをAdapterへ渡さない。transport終了時にはevent listener、待機中Promise、未処理queueをまとめて後始末する。Report ID `0`は既定値だがconstructorから差し替え可能にし、実機descriptor確認後もAdapter本体を変更しない。
 
 ページ上部のPhase表示はプロジェクト全体の現在マイルストーンを示す。Phase 0の一部に保留があっても表示をPhase 0へ固定せず、現在はPhase 2とし、erase保留は本文の補足として明示する。
