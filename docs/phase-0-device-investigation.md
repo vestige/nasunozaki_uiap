@@ -141,7 +141,9 @@ Collections:  1
 
 同日、GitHub Pagesの「通常動作モードを調べる」から`UIAPduino WebHID`を選択し、WebHID接続とHID情報取得に成功した。この確認ではLED命令やFeature Report送信を行っていない。次は確定したReport ID `0`を使う専用のLED往復確認へ進む。
 
-接続確認を受け、Report ID `0`でLEDを約400ms点灯して消灯する専用診断を追加した。点灯・消灯の各8バイト送信値と応答値を共通診断ログへ記録し、失敗時は消灯を追加試行する。自動テストでは点灯payload `1`、消灯payload `0`、sequence `0`と`1`の応答、listenerの後始末を確認した。実機でのLEDと応答確認は未実施である。画面の現在地はPhase 2へ更新し、Phase 0のerase調査は安全保留として分離表示する。
+接続確認を受け、Report ID `0`でLEDを約400ms点灯して消灯する専用診断を追加した。点灯・消灯の各8バイト送信値と応答値を共通診断ログへ記録し、失敗時は消灯を追加試行する。自動テストでは点灯payload `1`、消灯payload `0`、sequence `0`と`1`の応答、listenerの後始末を確認した。
+
+2026-09-11の実機確認では、LEDが約400ms点灯して消灯した。点灯要求`55 49 41 50 01 01 00 01`へ`55 49 41 50 01 81 00 00`、消灯要求`55 49 41 50 01 01 01 00`へ`55 49 41 50 01 81 01 00`を受信し、Report ID、command、sequence、statusの一致を確認した。これにより「ブラウザからLEDを1回点灯する最小命令を送り、UIAPduinoから応答を受信する」というPhase 0完了条件を満たした。原因未確定の破壊的erase再試行は中止したまま、Phase 0を完了扱いとしてPhase 2のBlockly実機接続へ進む。
 
 2026-09-09に、調査コードの読みやすさを保つため、デバイス診断を `features/device/` の `components`、`hooks`、`utils`、`types`へ再配置した。2026-09-10には全自動テストをプロジェクト直下の `tests/<feature>/`へ移し、`web/vitest.config.ts`から実行する構成へ変更した。通信packet、アドレス、安全条件、実機操作の仕様変更はない。GitHub Pagesでは使われていなかった `web/.openai/hosting.json`も削除した。
 
