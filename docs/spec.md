@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | Phase 0: 実機調査 | 継続・一部保留 | bootloaderの接続、読取、unlock、退避、復旧を確認済み。erase再試行は停止中 |
 | Phase 1: 画面プロトタイプ | 完了 | Blockly編集、シミュレーター、保存・復元、作品ファイル、実行位置表示を実装済み |
-| Phase 2: 実機MVP | 進行中 | 修正版firmwareのブラウザ接続まで確認済み。次は専用LED往復確認 |
+| Phase 2: 実機MVP | 進行中 | 専用LED往復確認を実装・自動検証済み。次はブラウザから実機確認 |
 | Phase 3: ワークショップ検証 | 未着手 | Phase 2の実機LED点滅後に開始 |
 | Phase 4: 拡張 | 未着手 | 一部の作品保存機能だけPhase 1へ前倒し済み |
 
@@ -20,7 +20,7 @@
 
 - [x] 教育用ランタイムを書き込む安全な手順を確定し、`workshop-runtime.ino`を実機へ書き込む
 - [x] 通常動作モードで `0x1209:0xD004`、HID descriptor、Input Report、Report ID `0`の見え方を診断画面から記録する
-- [ ] 確認結果と一致した場合だけ `WebHidRuntimeTransport`を通常動作モードの接続へ組み込む
+- [x] 確認結果と一致した場合だけ `WebHidRuntimeTransport`を通常動作モードの接続へ組み込む
 - [ ] 専用の実機確認操作からLEDを1回点灯・消灯し、8バイト成功応答またはエラー応答を診断ログへ残す
 - [ ] Blocklyの実行先を「画面」と「UIAPduino」から選べるようにし、切断、再接続、timeout時の表示を確認する
 - [ ] ボタン入力をprotocol、firmware、Blocklyへ追加する
@@ -44,6 +44,8 @@
 - [x] Arduino IDEと公式UIAPduino HID coreを使う教育用ランタイム導入手順を画面とfirmware READMEへ追加する
 - [x] Arduino CLIでcore導入、build、uploadを分離するスクリプトを追加し、core `1.2.14`でbuildする
 - [x] core `1.2.14`のWebHID構成全長を41 bytesから実データの34 bytesへ補正する処理を追加する
+- [x] 現在地を示すヒーロー表示をPhase 2へ更新し、Phase 0のerase保留を補足として分離する
+- [x] LED点灯・消灯と2回の応答を確認する専用操作を実装し、自動テストする
 
 ### 保留中の安全課題
 
@@ -569,6 +571,8 @@ Blockly workspaceは公式serialization APIでJSONへ変換し、version付き�
 `WebHidRuntimeTransport`は既定のReport ID `0`を使用して8バイトのFeature Reportを送信し、同じReport IDの `inputreport` eventだけを受け取る。先に到着した応答はFIFO queueへ保持し、待機中なら最古の待機へ直接渡す。終了時はlistenerを解除し、待機中の受信をすべて失敗させ、queueを破棄する。未接続deviceと8バイト以外の命令は送信前に拒否する。
 
 通常動作モードの実機確認はbootloader診断とは別の接続ボタンから行う。選択ダイアログは `0x1209:0xD004`だけに絞り、接続後に製品名、VID/PID、HID descriptor、Input/Output/Feature Report構成を表示する。ここではFeature Report送信、LED命令、flash操作を行わない。USB切断時はランタイム側の表示だけを解除する。
+
+descriptorがInput Reportを持つランタイム候補と判定された後だけ、専用のLED往復確認を表示する。この操作はReport ID `0`の8バイトFeature Reportで点灯を要求し、成功応答後に約400ms待って消灯を要求する。点灯・消灯それぞれの送信値と受信値を16進数で共通診断ログへ残す。途中で失敗した場合は消灯命令を追加で試し、元のエラーを表示・記録する。
 
 教育用ランタイムの初回導入は、停止中のBrowser Studio独自erase経路を使わず、公式 `UIAPduino HID` core `1.2.14`に含まれる`uiapflash`を使う。Arduino CLI用の`scripts/workshop-runtime.sh`では`setup`、`build`、`upload`を分離し、実機を書き換える操作を明確にする。Arduino IDE 2.xの標準Uploadも代替手順として維持する。Boardは `HID ProMicro CH32V003`、USBは `WebHID Only`、Optimizeは `Smallest (-Os) with LTO`に固定する。Upload後はボタンを押さずに通常接続し、ランタイム診断を行う。
 

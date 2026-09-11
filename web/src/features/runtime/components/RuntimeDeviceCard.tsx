@@ -50,6 +50,31 @@ export function RuntimeDeviceCard() {
 
           <RuntimeFirmwareGuide />
 
+          {device && compatibility?.mode === "runtime-candidate" && (
+            <div className="rounded-box border border-success/40 bg-success/10 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="font-black">LEDの通信を確認する</h3>
+                  <p className="mt-1 text-sm leading-6 text-base-content/70">
+                    LEDを約0.4秒点灯して消灯し、2回の8バイト応答を診断ログへ記録します。
+                  </p>
+                </div>
+                <button
+                  className="btn btn-success w-full font-black sm:w-auto sm:shrink-0"
+                  disabled={diagnostics.ledCheck.isPending}
+                  onClick={() => diagnostics.ledCheck.mutate()}
+                >
+                  {diagnostics.ledCheck.isPending && (
+                    <span className="loading loading-spinner" />
+                  )}
+                  {diagnostics.ledCheck.isPending
+                    ? "確認中…"
+                    : "LEDを1回光らせる"}
+                </button>
+              </div>
+            </div>
+          )}
+
           {device && (
             <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,.7fr)_minmax(0,1.3fr)]">
               <dl className="grid gap-3 rounded-box bg-base-200 p-4 text-sm sm:grid-cols-2 lg:grid-cols-1">

@@ -2,6 +2,7 @@ import type {
   HidDevice,
   HidNavigator,
 } from "../../device/types/webhid";
+import type { RuntimeHidDevice } from "../types/transport";
 
 export const UIAP_RUNTIME_VENDOR_ID = 0x1209;
 export const UIAP_RUNTIME_PRODUCT_ID = 0xd004;
@@ -15,7 +16,7 @@ function getHid() {
   return (navigator as HidNavigator).hid;
 }
 
-export async function requestUiapRuntimeDevice(): Promise<HidDevice> {
+export async function requestUiapRuntimeDevice(): Promise<RuntimeHidDevice> {
   const hid = getHid();
   if (!hid) {
     throw new Error(
@@ -38,7 +39,7 @@ export async function requestUiapRuntimeDevice(): Promise<HidDevice> {
     );
   }
   if (!selected.opened) await selected.open();
-  return selected;
+  return selected as RuntimeHidDevice;
 }
 
 export function watchRuntimeDisconnect(
