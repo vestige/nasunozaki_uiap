@@ -27,6 +27,10 @@ import { ProjectFileActions } from "./ProjectFileActions";
 import { ExecutionTargetSelector } from "./ExecutionTargetSelector";
 import type { ExecutionTarget } from "../types/execution";
 import type { RuntimeHidDevice } from "../../runtime/types/transport";
+import {
+  createDiagnosticLogEntry,
+  type DiagnosticLogEntry,
+} from "../../../diagnosticLog";
 
 type SaveStatus = {
   kind: "restored" | "saved" | "unavailable";
@@ -67,6 +71,20 @@ export function BlocklyStudio() {
     initialData: null,
     enabled: false,
   });
+
+  const appendLog = (
+    level: "info" | "success" | "warning" | "error",
+    action: string,
+    message: string,
+    details?: Record<string, string | number | boolean>,
+  ) =>
+    client.setQueryData<DiagnosticLogEntry[]>(
+      queryKeys.diagnosticLog,
+      (entries = []) => [
+        ...entries,
+        createDiagnosticLogEntry(level, action, message, details),
+      ],
+    );
 
   const mountWorkspace = useCallback(
     (node: HTMLDivElement | null) => {
@@ -135,6 +153,10 @@ export function BlocklyStudio() {
       if (!workspace) throw new Error("Blocklyを準備中です。");
       const controller = new AbortController();
       abortRef.current = controller;
+      appendLog("info", "BLOCKLY_RUN", "Blocklyプログラムを開始しました。", {
+        target: executionTarget.data,
+        topLevelInstructions: program.data.length,
+      });
       const session = createBoardExecutionSession({
         target: executionTarget.data,
         runtimeDevice: runtimeDevice.data,
@@ -161,6 +183,23 @@ export function BlocklyStudio() {
       } finally {
         await session.close(turnOff || controller.signal.aborted);
       }
+    },
+    onSuccess: () => {
+      appendLog("success", "BLOCKLY_RUN", "Blocklyプログラムを完了しました。", {
+        target: executionTarget.data,
+      });
+    },
+    onError: (error) => {
+      const stopped =
+        error instanceof DOMException && error.name === "AbortError";
+      appendLog(
+        stopped ? "warning" : "error",
+        stopped ? "BLOCKLY_STOP" : "BLOCKLY_RUN",
+        stopped
+          ? "Blocklyプログラムを停止しました。"
+          : "Blocklyプログラムを完了できませんでした。",
+        { target: executionTarget.data, error: errorMessage(error) },
+      );
     },
     onSettled: () => {
       abortRef.current = null;
@@ -330,4 +369,8 @@ function downloadTextFile(fileName: string, contents: string) {
   anchor.download = fileName;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
 }

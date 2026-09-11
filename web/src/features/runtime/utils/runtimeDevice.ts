@@ -60,3 +60,16 @@ export function watchRuntimeDisconnect(
   };
   hid.addEventListener("disconnect", runtimeDisconnectListener);
 }
+
+export function subscribeRuntimeDisconnect(
+  device: HidDevice,
+  onDisconnect: () => void,
+) {
+  const hid = getHid();
+  if (!hid) return () => undefined;
+  const listener = (event: Event & { device: HidDevice }) => {
+    if (event.device === device) onDisconnect();
+  };
+  hid.addEventListener("disconnect", listener);
+  return () => hid.removeEventListener("disconnect", listener);
+}

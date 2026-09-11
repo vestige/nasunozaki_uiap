@@ -86,4 +86,19 @@ describe("board execution session", () => {
       }),
     ).toThrow("接続されていません");
   });
+
+  it("実機sessionを正常終了しても最後のLED状態は変更しない", async () => {
+    const fake = respondingRuntimeDevice();
+    const session = createBoardExecutionSession({
+      target: "uiapduino",
+      runtimeDevice: fake.device,
+      setSimulatorLed: () => undefined,
+    });
+
+    await session.board.setLed(true);
+    await session.close(false);
+
+    expect(fake.payloads).toEqual([1]);
+    expect(fake.hasListener()).toBe(false);
+  });
 });

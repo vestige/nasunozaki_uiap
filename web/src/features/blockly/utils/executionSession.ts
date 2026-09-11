@@ -1,5 +1,6 @@
 import type { RuntimeHidDevice } from "../../runtime/types/transport";
 import { RuntimeBoardAdapter } from "../../runtime/utils/runtimeBoardAdapter";
+import { subscribeRuntimeDisconnect } from "../../runtime/utils/runtimeDevice";
 import { WebHidRuntimeTransport } from "../../runtime/utils/webHidRuntimeTransport";
 import type {
   BoardExecutionSession,
@@ -37,11 +38,19 @@ export function createBoardExecutionSession({
 
   const transport = new WebHidRuntimeTransport(runtimeDevice);
   const board = new RuntimeBoardAdapter(transport);
+  let disconnected = false;
+  const stopWatchingDisconnect = subscribeRuntimeDisconnect(
+    runtimeDevice,
+    () => {
+      disconnected = true;
+      transport.dispose();
+    },
+  );
   return {
     board,
     async close(turnOff) {
       try {
-        if (turnOff && runtimeDevice.opened) {
+        if (turnOff && !disconnected && runtimeDevice.opened) {
           try {
             await board.setLed(false);
           } catch {
@@ -49,6 +58,7 @@ export function createBoardExecutionSession({
           }
         }
       } finally {
+        stopWatchingDisconnect();
         transport.dispose();
       }
     },

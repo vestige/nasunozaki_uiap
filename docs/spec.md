@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | Phase 0: 実機調査 | 完了 | bootloader調査、runtime書き込み、ブラウザLED往復に成功。破壊的erase再試行は中止 |
 | Phase 1: 画面プロトタイプ | 完了 | Blockly編集、シミュレーター、保存・復元、作品ファイル、実行位置表示を実装済み |
-| Phase 2: 実機MVP | 進行中 | Blocklyから実機3回点滅に成功。次は切断・再接続・timeout確認 |
+| Phase 2: 実機MVP | 進行中 | 切断監視と実行ログを実装・自動検証済み。次は実機切断・再接続確認 |
 | Phase 3: ワークショップ検証 | 未着手 | Phase 2の実機LED点滅後に開始 |
 | Phase 4: 拡張 | 未着手 | 一部の作品保存機能だけPhase 1へ前倒し済み |
 
@@ -48,6 +48,8 @@
 - [x] LED点灯・消灯と2回の応答を確認する専用操作を実装し、自動テストする
 - [x] Blocklyへ画面・実機の実行先選択と実機sessionの安全な終了処理を実装する
 - [x] Blocklyの初期3回点滅プログラムを実機で実行する
+- [x] 実行sessionへUSB切断監視を追加し、通信待機を即時終了できるようにする
+- [x] Blocklyの開始、完了、停止、失敗を共通診断ログへ記録する
 
 ### 保留中の安全課題
 
@@ -579,6 +581,10 @@ descriptorがInput Reportを持つランタイム候補と判定された後だ�
 2026-09-11の実機確認では、点灯要求`55 49 41 50 01 01 00 01`と応答`55 49 41 50 01 81 00 00`、消灯要求`55 49 41 50 01 01 01 00`と応答`55 49 41 50 01 81 01 00`を確認した。両応答ともcommand `0x01`、対応sequence、status `0x00`が一致し、LEDも約400ms点灯した。
 
 Blocklyの実行先はTanStack Queryで`simulator`または`uiapduino`として管理する。`uiapduino`は通常動作モードのdeviceがopen中だけ選択・実行でき、実行ごとに`WebHidRuntimeTransport`と`RuntimeBoardAdapter`のsessionを生成する。命令解釈とblock highlightは画面実行と共有する。正常終了時はプログラム最後のLED状態を維持し、停止・エラー時は消灯を追加試行してlistenerを破棄する。切断やtimeoutの元エラーは消灯失敗で上書きしない。
+
+実機sessionは`navigator.hid`のdisconnectも独立して監視する。対象deviceの切断時はtransportをdisposeし、待機中のInput Report受信を即時rejectする。通常動作診断側のdevice state更新と実行sessionの終了は同じdisconnect eventから行うが、listenerの責務と寿命は分離する。再接続後の実行では新しいtransport、Adapter、listenerを生成する。
+
+Blockly実行は`BLOCKLY_RUN`として開始、成功、エラーを記録し、利用者による停止は`BLOCKLY_STOP`としてwarningを記録する。ログには実行先とトップレベル命令数を含める。応答timeoutは1秒を上限とし、故意に実機を無応答にする試験は行わずfake transportの自動テストで固定する。
 
 2026-09-11にBlocklyの初期3回点滅プログラムを実機実行し、ブロックの順序どおりLEDが動作することを確認した。実行先切り替え、命令解釈、WebHID transactionの主要経路は成立した。切断・再接続・timeoutの実機表示は引き続き確認する。
 
