@@ -41,6 +41,7 @@
 - [x] 8バイトprotocolと `RuntimeBoardAdapter`を自動テストする
 - [x] Report IDを差し替え可能な `WebHidRuntimeTransport`を自動テストする
 - [x] `0x1209:0xD004`専用の読み取り診断画面を用意する
+- [x] Arduino IDEと公式UIAPduino HID coreを使う教育用ランタイム導入手順を画面とfirmware READMEへ追加する
 
 ### 保留中の安全課題
 
@@ -566,6 +567,10 @@ Blockly workspaceは公式serialization APIでJSONへ変換し、version付き�
 `WebHidRuntimeTransport`は既定のReport ID `0`を使用して8バイトのFeature Reportを送信し、同じReport IDの `inputreport` eventだけを受け取る。先に到着した応答はFIFO queueへ保持し、待機中なら最古の待機へ直接渡す。終了時はlistenerを解除し、待機中の受信をすべて失敗させ、queueを破棄する。未接続deviceと8バイト以外の命令は送信前に拒否する。
 
 通常動作モードの実機確認はbootloader診断とは別の接続ボタンから行う。選択ダイアログは `0x1209:0xD004`だけに絞り、接続後に製品名、VID/PID、HID descriptor、Input/Output/Feature Report構成を表示する。ここではFeature Report送信、LED命令、flash操作を行わない。USB切断時はランタイム側の表示だけを解除する。
+
+教育用ランタイムの初回導入は、停止中のBrowser Studio独自erase経路を使わず、Arduino IDE 2.xと公式 `UIAPduino HID` core `1.2.14`の標準Uploadを使う。画面から `workshop-runtime.ino`とcore導入手順へ移動できるようにし、書き込み前には既存プログラムが置き換わることを警告する。Boardは `HID ProMicro CH32V003`、USBは `WebHID Only`、Optimizeは `Smallest (-Os) with LTO`に固定する。Upload後はボタンを押さずに通常接続し、ランタイム診断を行う。
+
+Arduino IDEのUploadが失敗した場合は連続して再試行せず、IDEの出力を保存して切り分ける。公式Board ManagerではmacOSが動作確認中とされているため、成功するまでは教育用ランタイムの実機書き込みを完了扱いにしない。
 
 Blockly workspace、LED simulator、ランタイムdescriptor表示は親gridの利用可能幅を超えない。幅の狭い画面では見出し、操作ボタン、診断内容を縦に並べ、横並びへの切り替えはdesktop幅から行う。
 Blockly workspaceのcontainer幅が変化した場合は `ResizeObserver`から `Blockly.svgResize()`を呼び、内部SVGとscrollbarの寸法を同期する。

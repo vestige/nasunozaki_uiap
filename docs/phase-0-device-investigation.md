@@ -131,6 +131,8 @@ Collections:  1
 
 2026-09-11にプロダクトの入口をブロック開発モードとコード開発モードへ分ける方針を追加した。ブロック側はチュートリアル型とUIAPduino向け限定サンドボックス型を比較して決定する。これは将来の体験設計であり、Phase 0のbootloader安全条件、停止中のerase、現在の教育用ランタイム実機確認手順は変更しない。
 
+同日、教育用ランタイムの導入手順を通常動作診断カードとfirmware READMEへ追加した。実機書き込みはArduino IDE 2.x、公式UIAPduino HID core `1.2.14`、標準Uploadへ限定し、Browser Studioで停止中の独自erase経路は使わない。macOSは公式Board Manager上で動作確認中のため、Upload失敗時は再試行を繰り返さずIDE出力を保存する。実機への書き込み結果は未確認である。
+
 2026-09-09に、調査コードの読みやすさを保つため、デバイス診断を `features/device/` の `components`、`hooks`、`utils`、`types`へ再配置した。2026-09-10には全自動テストをプロジェクト直下の `tests/<feature>/`へ移し、`web/vitest.config.ts`から実行する構成へ変更した。通信packet、アドレス、安全条件、実機操作の仕様変更はない。GitHub Pagesでは使われていなかった `web/.openai/hosting.json`も削除した。
 
 同日に追加したBlockly作品ファイルの保存・読み込みはブラウザ内のworkspaceだけを対象とし、WebHID、bootloader、flashの診断・書き込み経路には接続しない。

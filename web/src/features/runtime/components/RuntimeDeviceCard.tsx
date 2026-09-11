@@ -4,6 +4,7 @@ import {
   UIAP_RUNTIME_PRODUCT_ID,
   UIAP_RUNTIME_VENDOR_ID,
 } from "../utils/runtimeDevice";
+import { RuntimeFirmwareGuide } from "./RuntimeFirmwareGuide";
 
 const hex = (value: number) =>
   `0x${value.toString(16).toUpperCase().padStart(4, "0")}`;
@@ -46,6 +47,8 @@ export function RuntimeDeviceCard() {
           <div className="alert alert-info" role="status">
             <span>{diagnostics.message}</span>
           </div>
+
+          <RuntimeFirmwareGuide />
 
           {device && (
             <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,.7fr)_minmax(0,1.3fr)]">

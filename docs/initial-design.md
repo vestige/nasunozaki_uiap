@@ -414,6 +414,8 @@ UIAPduino HID Arduino core `1.2.14`では、ブラウザからEP0 Feature Report
 
 `firmware/workshop-runtime/workshop-runtime.ino`へLED命令の受信、入力検証、LED更新、応答を実装し、core `1.2.14`、WebHID Only、`-Os` + LTOでコンパイルする。2026-09-09の結果はFlash 4004 / 16384 bytes、RAM 172 / 2048 bytesである。ブラウザの実機Adapterと書き込み導線は、ランタイムdescriptorを実機確認するまで接続しない。
 
+教育用ランタイムの最初の実機導入は、Arduino IDE 2.xと公式UIAPduino HID coreの標準Uploadへ限定する。独自erase経路の安全保留と混同せず、既存プログラムの置換警告、固定するBoard・USB・Optimize設定、Upload後の通常接続までを専用Componentで案内する。
+
 接続時のHID descriptorにInputまたはOutput Reportがあれば教育用ランタイム候補、Input/Output ReportがなくFeature Report `0xAA`だけならbootloaderと分類する。この分類はdescriptorから観測できる範囲の案内であり、ランタイム対応の確定や命令送信許可には使わない。
 
 ランタイム診断は `features/runtime/`内に型、WebHID処理、TanStack Query hook、表示Componentを分離する。bootloader用device stateとは別のquery keyを使用し、片方の切断が他方の表示を消さないようにする。初回の実機確認では命令送信を有効化せず、descriptorの観測結果を先に固定する。

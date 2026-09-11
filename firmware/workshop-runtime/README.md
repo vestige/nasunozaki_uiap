@@ -31,4 +31,21 @@ Flash: 4004 / 16384 bytes (24%)
 RAM:    172 / 2048 bytes (8%)
 ```
 
-この段階ではブラウザの実機Adapterと書き込み導線は未実装です。既存プログラムを上書きするため、明示的な次段階まではボードへ書き込まないでください。
+## Arduino IDEから実機へ書き込む
+
+この操作はUIAPduino上の現在のプログラムを置き換えます。必要なプログラムや、Phase 0で保存した復旧用binがある場合は先に保管してください。停止中のブラウザ独自erase経路は使用しません。
+
+1. Arduino IDE 2.xの設定へBoard Manager URLを追加する
+2. Board Managerで `UIAPduino HID` version `1.2.14`をインストールする
+3. このフォルダの `workshop-runtime.ino`をArduino IDEで開く
+4. Boardを `HID ProMicro CH32V003`にする
+5. USBを `WebHID Only`、Optimizeを `Smallest (-Os) with LTO`にする
+6. UIAPduinoをUSBから外す
+7. ボード上のボタンを押したままUSBへ接続し、約1秒後にボタンを離す
+8. Arduino IDEの `Upload`を実行し、成功表示を確認する
+9. USBを外し、今度はボタンを押さず通常どおり接続する
+10. Browser Studioの「通常動作モードを調べる」からdescriptorを確認する
+
+coreの公式導入手順は[UIAPduino HID Board Manager Files](https://github.com/tarosay/board_manager_files)を参照してください。macOSは公式ページ上で動作確認中と記載されているため、Uploadが失敗した場合は繰り返し書き込まず、Arduino IDEの出力を保存して原因を確認します。
+
+ブラウザの実機AdapterとBlocklyからの送信導線はまだ有効にしていません。実機descriptorを確認してから接続します。
