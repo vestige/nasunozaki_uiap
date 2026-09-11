@@ -2,6 +2,7 @@ type Props = {
   isRunning: boolean;
   canRun: boolean;
   saveMessage: string;
+  runLabel: string;
   onRun: () => void;
   onStop: () => void;
   onReset: () => void;
@@ -11,6 +12,7 @@ export function BlocklyToolbar({
   isRunning,
   canRun,
   saveMessage,
+  runLabel,
   onRun,
   onStop,
   onReset,
@@ -27,7 +29,7 @@ export function BlocklyToolbar({
           disabled={isRunning || !canRun}
         >
           {isRunning && <span className="loading loading-spinner" />}
-          {isRunning ? "実行中…" : "▶ 画面で実行"}
+          {isRunning ? "実行中…" : `▶ ${runLabel}`}
         </button>
         <button
           className="btn btn-outline btn-lg font-black"

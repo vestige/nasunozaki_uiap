@@ -145,6 +145,8 @@ Collections:  1
 
 2026-09-11の実機確認では、LEDが約400ms点灯して消灯した。点灯要求`55 49 41 50 01 01 00 01`へ`55 49 41 50 01 81 00 00`、消灯要求`55 49 41 50 01 01 01 00`へ`55 49 41 50 01 81 01 00`を受信し、Report ID、command、sequence、statusの一致を確認した。これにより「ブラウザからLEDを1回点灯する最小命令を送り、UIAPduinoから応答を受信する」というPhase 0完了条件を満たした。原因未確定の破壊的erase再試行は中止したまま、Phase 0を完了扱いとしてPhase 2のBlockly実機接続へ進む。
 
+Phase 2では同じ実機AdapterをBlocklyへ接続し、画面とUIAPduinoの実行先選択を追加した。実機sessionは通常動作deviceがopen中だけ生成し、停止・エラー時に消灯を試してtransportを破棄する。これは教育用ランタイムの8バイト命令だけを使用し、Phase 0のbootloader、unlock、erase経路には接続しない。Blocklyからの実機点滅は未確認である。
+
 2026-09-09に、調査コードの読みやすさを保つため、デバイス診断を `features/device/` の `components`、`hooks`、`utils`、`types`へ再配置した。2026-09-10には全自動テストをプロジェクト直下の `tests/<feature>/`へ移し、`web/vitest.config.ts`から実行する構成へ変更した。通信packet、アドレス、安全条件、実機操作の仕様変更はない。GitHub Pagesでは使われていなかった `web/.openai/hosting.json`も削除した。
 
 同日に追加したBlockly作品ファイルの保存・読み込みはブラウザ内のworkspaceだけを対象とし、WebHID、bootloader、flashの診断・書き込み経路には接続しない。

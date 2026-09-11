@@ -6,3 +6,10 @@ export type BoardAdapter = {
 export type ExecutionObserver = {
   onInstruction?(blockId: string): void;
 };
+
+export type ExecutionTarget = "simulator" | "uiapduino";
+
+export type BoardExecutionSession = {
+  board: BoardAdapter;
+  close(turnOff: boolean): Promise<void>;
+};

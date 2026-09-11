@@ -8,6 +8,7 @@ import {
 } from "../utils/blocks";
 import { compileWorkspace, type ProgramInstruction } from "../utils/program";
 import { runProgram } from "../utils/execution";
+import { createBoardExecutionSession } from "../utils/executionSession";
 import {
   clearBlocklyWorkspace,
   loadBlocklyWorkspace,
@@ -23,6 +24,9 @@ import { queryKeys } from "../../../query";
 import { BlocklyToolbar } from "./BlocklyToolbar";
 import { LedSimulator } from "./LedSimulator";
 import { ProjectFileActions } from "./ProjectFileActions";
+import { ExecutionTargetSelector } from "./ExecutionTargetSelector";
+import type { ExecutionTarget } from "../types/execution";
+import type { RuntimeHidDevice } from "../../runtime/types/transport";
 
 type SaveStatus = {
   kind: "restored" | "saved" | "unavailable";
@@ -49,6 +53,18 @@ export function BlocklyStudio() {
     queryKey: queryKeys.blocklySaveStatus,
     queryFn: async () => ({ kind: "saved", savedAt: "" }),
     initialData: { kind: "saved", savedAt: "" },
+    enabled: false,
+  });
+  const executionTarget = useQuery<ExecutionTarget>({
+    queryKey: queryKeys.blocklyExecutionTarget,
+    queryFn: async (): Promise<ExecutionTarget> => "simulator",
+    initialData: "simulator",
+    enabled: false,
+  });
+  const runtimeDevice = useQuery<RuntimeHidDevice | null>({
+    queryKey: queryKeys.runtimeDevice,
+    queryFn: async () => null,
+    initialData: null,
     enabled: false,
   });
 
@@ -119,22 +135,32 @@ export function BlocklyStudio() {
       if (!workspace) throw new Error("Blocklyを準備中です。");
       const controller = new AbortController();
       abortRef.current = controller;
-      await runProgram(
-        program.data,
-        {
-          setLed: (on) => {
-            client.setQueryData(queryKeys.simulatorLed, on);
-          },
-          wait: delay,
+      const session = createBoardExecutionSession({
+        target: executionTarget.data,
+        runtimeDevice: runtimeDevice.data,
+        setSimulatorLed: (on) => {
+          client.setQueryData(queryKeys.simulatorLed, on);
         },
-        controller.signal,
-        {
-          onInstruction: (blockId) => {
-            client.setQueryData(queryKeys.simulatorBlock, blockId);
-            workspace.highlightBlock(blockId);
+      });
+      let turnOff = false;
+      try {
+        await runProgram(
+          program.data,
+          session.board,
+          controller.signal,
+          {
+            onInstruction: (blockId) => {
+              client.setQueryData(queryKeys.simulatorBlock, blockId);
+              workspace.highlightBlock(blockId);
+            },
           },
-        },
-      );
+        );
+      } catch (error) {
+        turnOff = true;
+        throw error;
+      } finally {
+        await session.close(turnOff || controller.signal.aborted);
+      }
     },
     onSettled: () => {
       abortRef.current = null;
@@ -145,10 +171,8 @@ export function BlocklyStudio() {
 
   const stop = () => {
     abortRef.current?.abort();
-    client.setQueryData(queryKeys.simulatorLed, false);
     client.setQueryData(queryKeys.simulatorBlock, null);
     workspaceRef.current?.highlightBlock(null);
-    run.reset();
   };
 
   const exportProject = useMutation({
@@ -223,14 +247,33 @@ export function BlocklyStudio() {
             ブロックでLEDを動かそう
           </h2>
           <p className="mt-2 text-base text-base-content/65">
-            左からブロックを運び、「画面で実行」を押してください。まだ実機には送信しません。
+            左からブロックを運び、画面または接続したUIAPduinoで実行できます。
           </p>
         </div>
         <div className="min-w-0 flex flex-col gap-3 lg:items-end">
+          <ExecutionTargetSelector
+            target={executionTarget.data}
+            runtimeConnected={Boolean(runtimeDevice.data?.opened)}
+            disabled={run.isPending}
+            message={run.error?.message}
+            onChange={(target) => {
+              run.reset();
+              client.setQueryData(queryKeys.blocklyExecutionTarget, target);
+            }}
+          />
           <BlocklyToolbar
             isRunning={run.isPending}
-            canRun={program.data.length > 0}
+            canRun={
+              program.data.length > 0 &&
+              (executionTarget.data === "simulator" ||
+                Boolean(runtimeDevice.data?.opened))
+            }
             saveMessage={saveMessage}
+            runLabel={
+              executionTarget.data === "uiapduino"
+                ? "UIAPduinoで実行"
+                : "画面で実行"
+            }
             onRun={() => run.mutate()}
             onStop={stop}
             onReset={resetWorkspace}
@@ -287,18 +330,4 @@ function downloadTextFile(fileName: string, contents: string) {
   anchor.download = fileName;
   anchor.click();
   URL.revokeObjectURL(url);
-}
-
-function delay(milliseconds: number, signal: AbortSignal) {
-  return new Promise<void>((resolve, reject) => {
-    const timer = window.setTimeout(resolve, milliseconds);
-    signal.addEventListener(
-      "abort",
-      () => {
-        window.clearTimeout(timer);
-        reject(new DOMException("停止しました", "AbortError"));
-      },
-      { once: true },
-    );
-  });
 }

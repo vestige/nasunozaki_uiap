@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | Phase 0: 実機調査 | 完了 | bootloader調査、runtime書き込み、ブラウザLED往復に成功。破壊的erase再試行は中止 |
 | Phase 1: 画面プロトタイプ | 完了 | Blockly編集、シミュレーター、保存・復元、作品ファイル、実行位置表示を実装済み |
-| Phase 2: 実機MVP | 進行中 | 専用LED往復確認に実機で成功。次はBlocklyの実行先へ接続 |
+| Phase 2: 実機MVP | 進行中 | Blocklyの実行先選択を実装・自動検証済み。次は実機で点滅確認 |
 | Phase 3: ワークショップ検証 | 未着手 | Phase 2の実機LED点滅後に開始 |
 | Phase 4: 拡張 | 未着手 | 一部の作品保存機能だけPhase 1へ前倒し済み |
 
@@ -22,7 +22,7 @@
 - [x] 通常動作モードで `0x1209:0xD004`、HID descriptor、Input Report、Report ID `0`の見え方を診断画面から記録する
 - [x] 確認結果と一致した場合だけ `WebHidRuntimeTransport`を通常動作モードの接続へ組み込む
 - [x] 専用の実機確認操作からLEDを1回点灯・消灯し、8バイト成功応答またはエラー応答を診断ログへ残す
-- [ ] Blocklyの実行先を「画面」と「UIAPduino」から選べるようにし、切断、再接続、timeout時の表示を確認する
+- [ ] Blocklyの実行先を「画面」と「UIAPduino」から選べるようにし、実機点滅、切断、再接続、timeout時の表示を確認する（実装・自動検証済み、実機確認待ち）
 - [ ] ボタン入力をprotocol、firmware、Blocklyへ追加する
 
 ### 設計判断が必要なタスク
@@ -46,6 +46,7 @@
 - [x] core `1.2.14`のWebHID構成全長を41 bytesから実データの34 bytesへ補正する処理を追加する
 - [x] 現在地を示すヒーロー表示をPhase 2へ更新し、Phase 0のerase保留を補足として分離する
 - [x] LED点灯・消灯と2回の応答を確認する専用操作を実装し、自動テストする
+- [x] Blocklyへ画面・実機の実行先選択と実機sessionの安全な終了処理を実装する
 
 ### 保留中の安全課題
 
@@ -575,6 +576,8 @@ Blockly workspaceは公式serialization APIでJSONへ変換し、version付き�
 descriptorがInput Reportを持つランタイム候補と判定された後だけ、専用のLED往復確認を表示する。この操作はReport ID `0`の8バイトFeature Reportで点灯を要求し、成功応答後に約400ms待って消灯を要求する。点灯・消灯それぞれの送信値と受信値を16進数で共通診断ログへ残す。途中で失敗した場合は消灯命令を追加で試し、元のエラーを表示・記録する。
 
 2026-09-11の実機確認では、点灯要求`55 49 41 50 01 01 00 01`と応答`55 49 41 50 01 81 00 00`、消灯要求`55 49 41 50 01 01 01 00`と応答`55 49 41 50 01 81 01 00`を確認した。両応答ともcommand `0x01`、対応sequence、status `0x00`が一致し、LEDも約400ms点灯した。
+
+Blocklyの実行先はTanStack Queryで`simulator`または`uiapduino`として管理する。`uiapduino`は通常動作モードのdeviceがopen中だけ選択・実行でき、実行ごとに`WebHidRuntimeTransport`と`RuntimeBoardAdapter`のsessionを生成する。命令解釈とblock highlightは画面実行と共有する。正常終了時はプログラム最後のLED状態を維持し、停止・エラー時は消灯を追加試行してlistenerを破棄する。切断やtimeoutの元エラーは消灯失敗で上書きしない。
 
 教育用ランタイムの初回導入は、停止中のBrowser Studio独自erase経路を使わず、公式 `UIAPduino HID` core `1.2.14`に含まれる`uiapflash`を使う。Arduino CLI用の`scripts/workshop-runtime.sh`では`setup`、`build`、`upload`を分離し、実機を書き換える操作を明確にする。Arduino IDE 2.xの標準Uploadも代替手順として維持する。Boardは `HID ProMicro CH32V003`、USBは `WebHID Only`、Optimizeは `Smallest (-Os) with LTO`に固定する。Upload後はボタンを押さずに通常接続し、ランタイム診断を行う。
 
