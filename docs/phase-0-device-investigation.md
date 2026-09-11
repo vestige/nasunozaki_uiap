@@ -137,7 +137,9 @@ Collections:  1
 
 通常接続後、macOSのUSB treeには`UIAPduino WebHID`、VID `0x1209`、PID `0xD004`として現れた一方、IOHIDDeviceが生成されずWebHID chooserには表示されなかった。core `1.2.14`のWebHID Only用Configuration Descriptorを確認すると、実データは34 bytes（9+9+9+7）なのに`wTotalLength=41`（9+9+9+7+7）と宣言されていた。`scripts/workshop-runtime.sh patch-core`で既知の値だけを34 bytesへ補正し、Flash 4004 bytes、RAM 172 bytesで再ビルドした。
 
-修正版をbootloaderモードから再uploadし、4224 bytesのverifyとアプリ起動に成功した。再列挙後はmacOSのIOHIDDeviceとIOHIDInterfaceが生成され、`UIAPduino WebHID / 0x1209:0xD004`、vendor usage page `0xFF00`、usage `0x01`、Input Report 8 bytes、Feature Report 32 bytes、Report ID `0`を確認した。次はブラウザの読み取り専用診断で同じ値を確認する。
+修正版をbootloaderモードから再uploadし、4224 bytesのverifyとアプリ起動に成功した。再列挙後はmacOSのIOHIDDeviceとIOHIDInterfaceが生成され、`UIAPduino WebHID / 0x1209:0xD004`、vendor usage page `0xFF00`、usage `0x01`、Input Report 8 bytes、Feature Report 32 bytes、Report ID `0`を確認した。
+
+同日、GitHub Pagesの「通常動作モードを調べる」から`UIAPduino WebHID`を選択し、WebHID接続とHID情報取得に成功した。この確認ではLED命令やFeature Report送信を行っていない。次は確定したReport ID `0`を使う専用のLED往復確認へ進む。
 
 2026-09-09に、調査コードの読みやすさを保つため、デバイス診断を `features/device/` の `components`、`hooks`、`utils`、`types`へ再配置した。2026-09-10には全自動テストをプロジェクト直下の `tests/<feature>/`へ移し、`web/vitest.config.ts`から実行する構成へ変更した。通信packet、アドレス、安全条件、実機操作の仕様変更はない。GitHub Pagesでは使われていなかった `web/.openai/hosting.json`も削除した。
 

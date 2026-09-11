@@ -412,7 +412,7 @@ Blocklyの永続化はworkspace全体を公式serialization APIで保存し、�
 
 UIAPduino HID Arduino core `1.2.14`では、ブラウザからEP0 Feature Reportを最大32バイト受信し、ボードからEP1 Input Reportを8バイト送信できる。この制約に合わせ、初期プロトコルは `UIAP`識別子、version、command、8bit sequence、1byte payload/statusからなる8バイト固定長とする。内蔵LEDはArduino pin 2を使う。
 
-`firmware/workshop-runtime/workshop-runtime.ino`へLED命令の受信、入力検証、LED更新、応答を実装し、core `1.2.14`、WebHID Only、`-Os` + LTOでコンパイルする。結果はFlash 4004 / 16384 bytes、RAM 172 / 2048 bytesで、2026-09-11に公式`uiapflash`による実機書き込みとverifyにも成功した。ブラウザの実機Adapterは、ランタイムdescriptorを実機確認するまで接続しない。
+`firmware/workshop-runtime/workshop-runtime.ino`へLED命令の受信、入力検証、LED更新、応答を実装し、core `1.2.14`、WebHID Only、`-Os` + LTOでコンパイルする。結果はFlash 4004 / 16384 bytes、RAM 172 / 2048 bytesで、2026-09-11に公式`uiapflash`による実機書き込みとverify、GitHub Pagesからの読み取り専用ブラウザ接続に成功した。実機Adapterは専用LED往復確認から段階的に接続する。
 
 教育用ランタイムの最初の実機導入は、公式UIAPduino HID coreに含まれる`uiapflash`へ限定する。Arduino CLIではcore導入、build、uploadをスクリプトの別commandに分け、Arduino IDEの標準Uploadも代替手順として残す。独自erase経路の安全保留と混同せず、既存プログラムの置換警告、固定するBoard・USB・Optimize設定、Upload後の通常接続までを専用Componentで案内する。
 

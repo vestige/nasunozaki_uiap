@@ -12,14 +12,14 @@
 | --- | --- | --- |
 | Phase 0: 実機調査 | 継続・一部保留 | bootloaderの接続、読取、unlock、退避、復旧を確認済み。erase再試行は停止中 |
 | Phase 1: 画面プロトタイプ | 完了 | Blockly編集、シミュレーター、保存・復元、作品ファイル、実行位置表示を実装済み |
-| Phase 2: 実機MVP | 進行中 | 修正版firmwareの再uploadとmacOS HID登録を確認済み。次はブラウザ診断 |
+| Phase 2: 実機MVP | 進行中 | 修正版firmwareのブラウザ接続まで確認済み。次は専用LED往復確認 |
 | Phase 3: ワークショップ検証 | 未着手 | Phase 2の実機LED点滅後に開始 |
 | Phase 4: 拡張 | 未着手 | 一部の作品保存機能だけPhase 1へ前倒し済み |
 
 ### 次に行うタスク
 
 - [x] 教育用ランタイムを書き込む安全な手順を確定し、`workshop-runtime.ino`を実機へ書き込む
-- [ ] 通常動作モードで `0x1209:0xD004`、HID descriptor、Input Report、Report ID `0`の見え方を診断画面から記録する
+- [x] 通常動作モードで `0x1209:0xD004`、HID descriptor、Input Report、Report ID `0`の見え方を診断画面から記録する
 - [ ] 確認結果と一致した場合だけ `WebHidRuntimeTransport`を通常動作モードの接続へ組み込む
 - [ ] 専用の実機確認操作からLEDを1回点灯・消灯し、8バイト成功応答またはエラー応答を診断ログへ残す
 - [ ] Blocklyの実行先を「画面」と「UIAPduino」から選べるようにし、切断、再接続、timeout時の表示を確認する
@@ -582,7 +582,7 @@ Arduino core `1.2.14`、WebHID Only、Smallest（`-Os` + LTO）でコンパイ�
 
 2026-09-11にArduino CLI `1.5.1`から公式`uiapflash`を実行し、4164 bytesのbinを4224 bytesへpaddingして書き込み、全4224 bytesのverify成功とアプリ起動を確認した。次はボタンを押さずに通常接続し、読み取り専用診断からdescriptorを確定する。
 
-初回起動後、macOSのUSB treeでは`UIAPduino WebHID / 0x1209:0xD004`として認識されたが、IOHIDDeviceは生成されずWebHID chooserへ表示されなかった。core `1.2.14`の`config_descriptor`は実際にはConfiguration 9 + Interface 9 + HID 9 + Endpoint 7 = 34 bytesだが、`wTotalLength`が41 bytesと宣言されていた。スクリプトの`setup`または`patch-core`でこの値だけを34 bytesへ補正してからbuildする。修正版を再uploadした結果、macOSでHID interface、vendor usage page `0xFF00`、Input Report 8 bytes、Feature Report 32 bytes、Report ID `0`を確認した。ブラウザ診断画面からの確認は未完了である。
+初回起動後、macOSのUSB treeでは`UIAPduino WebHID / 0x1209:0xD004`として認識されたが、IOHIDDeviceは生成されずWebHID chooserへ表示されなかった。core `1.2.14`の`config_descriptor`は実際にはConfiguration 9 + Interface 9 + HID 9 + Endpoint 7 = 34 bytesだが、`wTotalLength`が41 bytesと宣言されていた。スクリプトの`setup`または`patch-core`でこの値だけを34 bytesへ補正してからbuildする。修正版を再uploadした結果、macOSでHID interface、vendor usage page `0xFF00`、Input Report 8 bytes、Feature Report 32 bytes、Report ID `0`を確認した。続いてGitHub Pagesの読み取り専用診断からデバイス選択とHID情報取得に成功した。
 
 ### 10.3 実行モードの読み取り専用判定
 
