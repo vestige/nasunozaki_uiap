@@ -33,7 +33,7 @@ RAM:    172 / 2048 bytes (8%)
 
 2026-09-11にmacOS上のArduino CLI `1.5.1`と公式`uiapflash`で実機へ書き込み、4224 bytesのverifyとアプリ起動に成功しました。
 
-ただしcore `1.2.14`のWebHID Only用USB構成は、実データ34 bytesに対して全長41 bytesと宣言されており、macOSがHID interfaceを登録しません。`workshop-runtime.sh setup`は既知の誤記だけを34 bytesへ補正します。coreを先に導入済みの場合は、`patch-core`を一度実行してから再ビルドしてください。
+core `1.2.14`のWebHID Only用USB構成は、実データ34 bytesに対して全長41 bytesと宣言されており、そのままではmacOSがHID interfaceを登録しません。`workshop-runtime.sh setup`は既知の誤記だけを34 bytesへ補正します。coreを先に導入済みの場合は、`patch-core`を一度実行してから再ビルドしてください。補正後の実機ではHID interface、Input Report 8 bytes、Feature Report 32 bytes、Report ID `0`を確認済みです。
 
 ## Arduino CLIから実機へ書き込む（推奨）
 

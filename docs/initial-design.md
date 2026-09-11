@@ -418,6 +418,8 @@ UIAPduino HID Arduino core `1.2.14`では、ブラウザからEP0 Feature Report
 
 core `1.2.14`のWebHID Only構成には、Configuration Descriptorの実データが34 bytesなのに`wTotalLength=41`とする不一致がある。macOSではUSB deviceだけが列挙されHID interfaceが生成されないため、CLIのsetup時に元の値が完全一致する場合だけ34 bytesへ補正する。未知のcore内容は自動変更せず停止し、core更新時に再確認する。
 
+34 bytesへ補正したfirmwareの再upload後は、macOSでHID interfaceが生成されることを確認した。観測値はvendor usage page `0xFF00`、usage `0x01`、Input Report 8 bytes、Feature Report 32 bytes、Report ID `0`であり、初期protocolと`WebHidRuntimeTransport`の既定値に一致する。
+
 接続時のHID descriptorにInputまたはOutput Reportがあれば教育用ランタイム候補、Input/Output ReportがなくFeature Report `0xAA`だけならbootloaderと分類する。この分類はdescriptorから観測できる範囲の案内であり、ランタイム対応の確定や命令送信許可には使わない。
 
 ランタイム診断は `features/runtime/`内に型、WebHID処理、TanStack Query hook、表示Componentを分離する。bootloader用device stateとは別のquery keyを使用し、片方の切断が他方の表示を消さないようにする。初回の実機確認では命令送信を有効化せず、descriptorの観測結果を先に固定する。
