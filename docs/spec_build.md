@@ -186,7 +186,7 @@ MVPでは`.bin`をresponseへ含めず、ビルド終了時に一時ファイル
 
 ## 8. AWS構成
 
-### 8.1 MVP構成
+### 8.1 MVP構成（暫定）
 
 ```text
 GitHub Pages
@@ -208,7 +208,21 @@ CloudWatch Logs ── 制限付き運用ログ
 AWS Budgets / CloudWatch Alarm ── 料金・異常呼び出し監視
 ```
 
-Lambdaはコンテナイメージを利用する。AWS公式仕様では非圧縮10GBまでのイメージと、512MB〜10,240MBの `/tmp` を利用できる。toolchainとcoreは実行時にdownloadせず、version固定でイメージへ含める。
+ECRは利用者のsourceやbuild成果物を保存する場所ではない。Arduino CLI、RISC-V compiler、UIAPduino core、API実装をまとめたLambda実行用container imageを保管する。containerの作成はDocker、保管はECR、実行はLambdaという責務に分ける。
+
+Lambdaをcontainer image方式で使う場合、imageはECRへ置き、Lambdaはそのimage URIまたはdigestを参照する。AWS公式仕様ではcontainer imageは非圧縮10GBまで利用できる。一方、ZIPとLambda Layerの合計は展開後250MBまでである。compiler一式の実容量が未計測なので、現時点では容量と再現性に余裕のあるcontainer + ECRを有力候補とする。
+
+ECR採用はまだ確定ではない。WB1でtoolchain、core、APIを含む容量とbuild時間を測り、次を比較してから確定する。
+
+| 配布方式 | 利点 | 検討事項 |
+| --- | --- | --- |
+| Lambda container + ECR | 非圧縮10GBまで、Dockerでlocal/AWS環境を合わせやすい、digestでversion固定・rollback可能 | ECRが増える、image容量とcold startを測る必要がある |
+| Lambda ZIP + Layer | ECRが不要でAWS resourceを減らせる | functionと全Layerの展開後合計250MBまで |
+| CodeBuild | build単位の環境と相性がよい | 起動時間、非同期API、費用、成果物受け渡しが複雑になる |
+
+採用条件は「最小構成」だけでなく、toolchain versionの固定、localとAWSの再現性、起動時間、費用、安全な更新とrollbackを含めて判断する。ECRを採用した場合はimage scanとlifecycle policyを有効にし、古いimageを無制限に保管しない。
+
+toolchainとcoreは実行時にdownloadせず、version固定でimageまたはZIPへ含める。Lambdaの一時workspaceには `/tmp` を使い、sourceと成果物をrequest終了後に削除する。
 
 初期段階ではVPCとNAT Gatewayを作らない。常時料金が発生する構成を避け、ビルド処理から外部networkへ依存しない。network隔離の要件とLambdaの実行特性が合わない場合は、公開前にCodeBuildなどビルド単位の隔離環境へ移行する。
 
@@ -231,6 +245,15 @@ Lambdaはコンテナイメージを利用する。AWS公式仕様では非圧�
 - endpoint、repository、function名のoutput
 
 コンテナのbuildとECRへのpushはTerraformの責務に含めない。Terraformはinfra state、CIはimage artifactとdigestを管理し、Lambdaは可能ならtagではなくimage digestで更新する。
+
+container方式を採用する場合の初回deployは次の流れに分ける。
+
+1. TerraformでECR repositoryを先に作る
+2. localまたはCIでcontainerをbuildし、ECRへpushする
+3. pushしたimage digestを取得する
+4. digestをTerraform variableへ渡し、LambdaとHTTP APIを作る
+
+Terraformの`local-exec`などからDocker buildやpushを実行しない。infra stateとbuild artifactを混ぜず、同じdigestを指定すれば同じLambda実行環境を再現できるようにする。
 
 最初はlocal stateで個人検証し、共同運用前にS3 backendとstate lockを別のbootstrapとして用意する。backend自身を同じstateから無理に作らない。
 
@@ -310,6 +333,7 @@ AWS Budgetは課金の強制停止装置ではない。通知に加え、API側�
 
 - [AWS Lambda料金](https://aws.amazon.com/jp/lambda/pricing/)
 - [Lambdaコンテナイメージ要件](https://docs.aws.amazon.com/lambda/latest/dg/images-create.html)
+- [Lambda ZIP deployment package](https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-zip.html)
 - [API Gateway料金](https://aws.amazon.com/jp/api-gateway/pricing/)
 - [Amazon ECR料金](https://aws.amazon.com/jp/ecr/pricing/)
 - [Lambda実行roleの最小権限](https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html)
@@ -376,13 +400,17 @@ AWS Budgetは課金の強制停止装置ではない。通知に加え、API側�
 - [x] MVPをbuild確認だけに限定する
 - [x] 入力上限とFlash/RAM判定を定義する
 - [x] AWSとTerraformの初期構成を定義する
+- [x] ECRの役割とZIP・CodeBuildとの比較を明文化する
 - [ ] 通常コード向けUSB設定とcore補正の扱いを決める
+- [ ] toolchain実容量を測り、container + ECRまたはZIP + Layerを決定する
 - [ ] AWS region、通知先、公開範囲を決める
 
 ### WB1: ローカルbuild container
 
 - [ ] `services/web-build`を作る
 - [ ] compilerとcoreをversion固定でimageへ入れる
+- [ ] toolchain、core、APIを含む展開後容量を測定する
+- [ ] container image容量とcold startの見積り材料を記録する
 - [ ] networkなしで最小sketchをbuildする
 - [ ] errorと容量を構造化する
 - [ ] 30秒、64 KiB、library allowlistを実装する
@@ -393,7 +421,7 @@ AWS Budgetは課金の強制停止装置ではない。通知に加え、API側�
 ### WB2: TerraformとAWS private prototype
 
 - [ ] `infra/web-build`を作る
-- [ ] ECR、Lambda、HTTP API、IAM、LogsをTerraform化する
+- [ ] WB1の比較結果に基づき、ECRまたはZIP配布をTerraform化する
 - [ ] budget、alarm、reserved concurrencyを設定する
 - [ ] 手動または限定tokenでのみ呼べる状態でdeployする
 - [ ] cold start、build時間、GB秒、log量を測定する
