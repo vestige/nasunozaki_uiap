@@ -20,14 +20,18 @@ https://raw.githubusercontent.com/tarosay/board_manager_files/main/package_uiap_
 - ブラウザ → UIAPduino: EP0 Feature Report、8バイトを使用（コアは最大32バイト）
 - UIAPduino → ブラウザ: EP1 Input Report、8バイト
 
-両方向とも `UIAP`識別子、version、command、8bit sequence、payload/statusからなる同じ8バイト構造を使います。
+両方向とも `UIAP`識別子、version、command、8bit sequence、payload/statusからなる同じ8バイト構造を使います。command `0x01`は内蔵LED、`0x02`はD5（PC3）へ接続した外付けボタンの単発読み取りです。
+
+## 外付けボタン
+
+基板上のボタンはリセット／起動モード切替に使われるため、教材の入力ボタンには使用しません。通常のタクトスイッチをD5とGNDの間へ接続してください。内蔵pull-upを使うため外付け抵抗は不要で、押していない状態を`0`、押した状態を`1`としてブラウザへ返します。
 
 ## 現在の確認範囲
 
 `workshop-runtime.ino`はArduino core `1.2.14`でコンパイル済みです。
 
 ```text
-Flash: 4004 / 16384 bytes (24%)
+Flash: 4976 / 16384 bytes (30%)
 RAM:    172 / 2048 bytes (8%)
 ```
 
@@ -70,4 +74,4 @@ coreをすでに導入済みで補正だけを行う場合:
 
 coreの公式導入手順は[UIAPduino HID Board Manager Files](https://github.com/tarosay/board_manager_files)を参照してください。macOSは公式ページ上で動作確認中と記載されているため、Uploadが失敗した場合は繰り返し書き込まず、CLIまたはArduino IDEの出力を保存して原因を確認します。
 
-ブラウザの実機AdapterとBlocklyからの送信導線はまだ有効にしていません。実機descriptorを確認してから接続します。
+ブラウザの実機AdapterとBlocklyからのLED送信は実機確認済みです。外付けボタンは単発診断を先に確認し、その後Blocklyの待機ブロックへ接続します。

@@ -1,6 +1,6 @@
 # UIAPduino Browser Studio 仕様書
 
-更新日: 2026-09-11
+更新日: 2026-09-12
 
 この文書を、現在実装されている仕様と確定した設計判断の正本とする。構想の背景は `initial-design.md`、実機での検証履歴は `phase-0-device-investigation.md`に記録する。
 
@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | Phase 0: 実機調査 | 完了 | bootloader調査、runtime書き込み、ブラウザLED往復に成功。破壊的erase再試行は中止 |
 | Phase 1: 画面プロトタイプ | 完了 | Blockly編集、シミュレーター、保存・復元、作品ファイル、実行位置表示を実装済み |
-| Phase 2: 実機MVP | 進行中 | 実行中切断と再接続後の正常実行を確認済み。次はtimeout確認 |
+| Phase 2: 実機MVP | 進行中 | LED経路を確認済み。D5外付けボタンの読み取りを実機確認する |
 | Phase 3: ワークショップ検証 | 未着手 | Phase 2の実機LED点滅後に開始 |
 | Phase 4: 拡張 | 未着手 | 一部の作品保存機能だけPhase 1へ前倒し済み |
 
@@ -23,7 +23,7 @@
 - [x] 確認結果と一致した場合だけ `WebHidRuntimeTransport`を通常動作モードの接続へ組み込む
 - [x] 専用の実機確認操作からLEDを1回点灯・消灯し、8バイト成功応答またはエラー応答を診断ログへ残す
 - [ ] Blocklyの実行先を「画面」と「UIAPduino」から選べるようにし、実機点滅、切断、再接続、timeout時の表示を確認する（timeout以外は確認済み）
-- [ ] ボタン入力をprotocol、firmware、Blocklyへ追加する
+- [ ] ボタン入力をprotocol、firmware、Blocklyへ追加する（protocol、firmware、単発診断まで実装済み。実機確認後にBlocklyへ追加）
 
 ### 設計判断が必要なタスク
 
@@ -53,6 +53,7 @@
 - [x] USB切断後に通常動作モードへ再接続し、Blocklyから再び実機LEDを点灯する
 - [x] Blockly実行中にUSBを切断し、切断ログ、実行失敗、再接続後の正常完了を確認する
 - [x] Feature Report送信失敗を日本語の再接続案内へ変換する
+- [x] D5（PC3）の外付けボタン入力commandと単発診断を実装し、自動テストする
 
 ### 保留中の安全課題
 
@@ -594,6 +595,8 @@ Blocklyの実行先はTanStack Queryで`simulator`または`uiapduino`として�
 Blockly実行は`BLOCKLY_RUN`として開始、成功、エラーを記録し、利用者による停止は`BLOCKLY_STOP`としてwarningを記録する。ログには実行先とトップレベル命令数を含める。応答timeoutは1秒を上限とし、故意に実機を無応答にする試験は行わずfake transportの自動テストで固定する。
 
 2026-09-11にBlocklyの初期3回点滅プログラムを実機実行し、ブロックの順序どおりLEDが動作することを確認した。実行先切り替え、命令解釈、WebHID transactionの主要経路は成立した。切断・再接続・timeoutの実機表示は引き続き確認する。
+
+ボタン入力は基板上のリセット／boot切替ボタンを通常GPIOとして扱わない。初期教材では競合の少ないD5（PC3）を`INPUT_PULLUP`にし、外付けタクトスイッチをD5とGNDの間へ接続する。command `0x02`のrequest payloadは`0`固定、成功responseの末尾は未押下`0`、押下`1`とする。まず通常動作カードの単発診断で実機状態を確認し、その結果が安定してから共通中間命令とBlocklyの「ボタンが押されるまで待つ」へ追加する。
 
 教育用ランタイムの初回導入は、停止中のBrowser Studio独自erase経路を使わず、公式 `UIAPduino HID` core `1.2.14`に含まれる`uiapflash`を使う。Arduino CLI用の`scripts/workshop-runtime.sh`では`setup`、`build`、`upload`を分離し、実機を書き換える操作を明確にする。Arduino IDE 2.xの標準Uploadも代替手順として維持する。Boardは `HID ProMicro CH32V003`、USBは `WebHID Only`、Optimizeは `Smallest (-Os) with LTO`に固定する。Upload後はボタンを押さずに通常接続し、ランタイム診断を行う。
 

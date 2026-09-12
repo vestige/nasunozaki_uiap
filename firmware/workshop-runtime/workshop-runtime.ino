@@ -8,6 +8,8 @@ namespace {
 constexpr uint8_t kMessageSize = 8;
 constexpr uint8_t kVersion = 1;
 constexpr uint8_t kSetLed = 0x01;
+constexpr uint8_t kReadButton = 0x02;
+constexpr uint8_t kButtonPin = 5;  // D5 / PC3. Connect a switch between D5 and GND.
 constexpr uint8_t kResponse = 0x80;
 constexpr uint8_t kOk = 0;
 constexpr uint8_t kUnsupportedCommand = 1;
@@ -38,6 +40,15 @@ void handleMessage(const uint8_t *message, uint8_t length) {
     sendResponse(command, sequence, kInvalidPayload);
     return;
   }
+  if (command == kReadButton) {
+    if (message[7] != 0) {
+      sendResponse(command, sequence, kInvalidPayload);
+      return;
+    }
+    // For READ_BUTTON, the final response byte is the sampled state (0 or 1).
+    sendResponse(command, sequence, digitalRead(kButtonPin) == LOW ? 1 : 0);
+    return;
+  }
   if (command != kSetLed) {
     sendResponse(command, sequence, kUnsupportedCommand);
     return;
@@ -55,6 +66,7 @@ void handleMessage(const uint8_t *message, uint8_t length) {
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
+  pinMode(kButtonPin, INPUT_PULLUP);
   WebHID.begin();
 }
 

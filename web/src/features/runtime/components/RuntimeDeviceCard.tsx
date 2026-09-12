@@ -51,6 +51,7 @@ export function RuntimeDeviceCard() {
           <RuntimeFirmwareGuide />
 
           {device && compatibility?.mode === "runtime-candidate" && (
+            <div className="grid gap-4">
             <div className="rounded-box border border-success/40 bg-success/10 p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -72,6 +73,29 @@ export function RuntimeDeviceCard() {
                     : "LEDを1回光らせる"}
                 </button>
               </div>
+            </div>
+            <div className="rounded-box border border-info/40 bg-info/10 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="font-black">外付けボタンを確認する</h3>
+                  <p className="mt-1 text-sm leading-6 text-base-content/70">
+                    タクトスイッチをD5とGNDの間につなぎ、押したまま状態を読みます。基板上のリセットボタンは使いません。
+                  </p>
+                </div>
+                <button
+                  className="btn btn-info w-full font-black sm:w-auto sm:shrink-0"
+                  disabled={diagnostics.buttonCheck.isPending}
+                  onClick={() => diagnostics.buttonCheck.mutate()}
+                >
+                  {diagnostics.buttonCheck.isPending && (
+                    <span className="loading loading-spinner" />
+                  )}
+                  {diagnostics.buttonCheck.isPending
+                    ? "確認中…"
+                    : "今のボタン状態を読む"}
+                </button>
+              </div>
+            </div>
             </div>
           )}
 

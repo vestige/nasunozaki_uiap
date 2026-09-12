@@ -4,8 +4,11 @@ import type {
   RuntimeTransport,
 } from "../types/transport";
 import {
+  buildReadButtonMessage,
   buildSetLedMessage,
+  parseButtonStateResponse,
   parseRuntimeResponse,
+  RUNTIME_COMMAND_READ_BUTTON,
   RUNTIME_COMMAND_SET_LED,
 } from "./runtimeProtocol";
 import { abortableDelay, withRuntimeResponseTimeout } from "./runtimeTiming";
@@ -50,6 +53,27 @@ export class RuntimeBoardAdapter implements BoardAdapter {
     }
 
     throw new Error("対応するLED命令の応答を確認できませんでした。");
+  }
+
+  async isButtonPressed() {
+    const sequence = this.nextSequence();
+    await this.transport.send(buildReadButtonMessage(sequence));
+
+    for (let ignored = 0; ignored <= this.maxIgnoredResponses; ignored += 1) {
+      const bytes = await withRuntimeResponseTimeout(
+        this.transport.receive(),
+        this.responseTimeoutMs,
+      );
+      if (
+        (bytes[5] & 0x7f) !== RUNTIME_COMMAND_READ_BUTTON ||
+        bytes[6] !== sequence
+      ) {
+        continue;
+      }
+      return parseButtonStateResponse(bytes, sequence);
+    }
+
+    throw new Error("対応するボタン読み取りの応答を確認できませんでした。");
   }
 
   wait(milliseconds: number, signal: AbortSignal) {

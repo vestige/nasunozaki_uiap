@@ -53,4 +53,16 @@ describe("RuntimeBoardAdapter", () => {
     vi.useRealTimers();
   });
 
+  it("外付けボタンの押下状態を読み取る", async () => {
+    const transport = fakeTransport([
+      Uint8Array.from([0x55, 0x49, 0x41, 0x50, 0x01, 0x82, 0x00, 0x01]),
+    ]);
+    const adapter = new RuntimeBoardAdapter(transport);
+
+    await expect(adapter.isButtonPressed()).resolves.toBe(true);
+    expect([...transport.sent[0]]).toEqual([
+      0x55, 0x49, 0x41, 0x50, 0x01, 0x02, 0x00, 0x00,
+    ]);
+  });
+
 });

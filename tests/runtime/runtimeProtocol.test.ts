@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildReadButtonMessage,
   buildSetLedMessage,
+  parseButtonStateResponse,
   parseRuntimeResponse,
 } from "../../web/src/features/runtime/utils/runtimeProtocol";
 
@@ -17,6 +19,18 @@ describe("education runtime protocol", () => {
         Uint8Array.from([0x55, 0x49, 0x41, 0x50, 0x01, 0x81, 0x34, 0x00]),
       ),
     ).toEqual({ command: 1, sequence: 0x34, status: "ok" });
+  });
+
+  it("外付けボタンの要求と押下応答を扱う", () => {
+    expect([...buildReadButtonMessage(0x35)]).toEqual([
+      0x55, 0x49, 0x41, 0x50, 0x01, 0x02, 0x35, 0x00,
+    ]);
+    expect(
+      parseButtonStateResponse(
+        Uint8Array.from([0x55, 0x49, 0x41, 0x50, 0x01, 0x82, 0x35, 0x01]),
+        0x35,
+      ),
+    ).toBe(true);
   });
 
   it("範囲外sequenceと識別できない応答を拒否する", () => {

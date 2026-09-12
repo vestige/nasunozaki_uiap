@@ -13,6 +13,7 @@ import {
   formatRuntimeBytes,
   runRuntimeLedDiagnostic,
 } from "../utils/runtimeLedDiagnostic";
+import { readRuntimeButton } from "../utils/runtimeButtonDiagnostic";
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
@@ -119,10 +120,42 @@ export function useRuntimeDeviceDiagnostics() {
     },
   });
 
+  const buttonCheck = useMutation({
+    mutationFn: () => readRuntimeButton(deviceQuery.data!),
+    onMutate: () => {
+      client.setQueryData(
+        queryKeys.runtimeConnectionMessage,
+        "D5につないだボタンの状態を読み取っています。",
+      );
+      appendLog("info", "RUNTIME_BUTTON_CHECK", "外付けボタンの読み取りを開始しました。");
+    },
+    onSuccess: (pressed) => {
+      const state = pressed ? "押されています" : "押されていません";
+      client.setQueryData(
+        queryKeys.runtimeConnectionMessage,
+        `D5につないだボタンは${state}。`,
+      );
+      appendLog("success", "RUNTIME_BUTTON_CHECK", "外付けボタンの状態を読み取りました。", {
+        pin: "D5 / PC3",
+        pressed,
+      });
+    },
+    onError: (error) => {
+      client.setQueryData(
+        queryKeys.runtimeConnectionMessage,
+        `ボタンを確認できませんでした：${errorMessage(error)}`,
+      );
+      appendLog("error", "RUNTIME_BUTTON_CHECK", "外付けボタンを読み取れませんでした。", {
+        error: errorMessage(error),
+      });
+    },
+  });
+
   return {
     device: deviceQuery.data,
     message: messageQuery.data,
     connect,
     ledCheck,
+    buttonCheck,
   };
 }

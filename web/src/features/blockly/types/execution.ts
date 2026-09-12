@@ -1,5 +1,6 @@
 export type BoardAdapter = {
   setLed(on: boolean): void | Promise<void>;
+  isButtonPressed?(): boolean | Promise<boolean>;
   wait(milliseconds: number, signal: AbortSignal): Promise<void>;
 };
 
