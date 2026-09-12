@@ -337,3 +337,5 @@ Phase 1側では続いてBlockly workspaceのブラウザ内自動保存、自�
 2026-09-09にPhase 1側へ実行中ブロックのハイライトを追加した。シミュレーターruntimeはBlockly block IDを命令とともに受け取り、繰り返しの内側を含めて現在位置を表示する。停止時は待機、LED、ハイライトを解除する。これも実機通信から独立しており、Phase 0の未完了項目とerase停止状態に変更はない。
 
 2026-09-12のPhase 2入力調査では、公式coreのvariant定義でオンボード`USER_BTN`が未定義、D17（PD7）がRESET、D13/D14がUSB、D11がSWIOであることを確認した。オンボードのリセット／boot切替ボタンは通常入力に流用せず、最初の外付けボタンをD5（PC3）とGNDへ接続する。これは教育用ランタイムの通常動作通信の追加であり、停止中のbootloader erase経路は変更しない。
+
+同日の設計確認で、現在のBlockly実機実行は中間命令のWebHID転送であり、CH32V003向けのcompileやflash書き込みではないことを仕様上明文化した。教育用ランタイムの拡張とネイティブfirmware buildは別機能として扱い、通常動作protocolをbootloader書き込み経路へ流用しない。
