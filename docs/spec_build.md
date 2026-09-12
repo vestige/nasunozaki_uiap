@@ -1,4 +1,4 @@
-# UIAPduino Web Build 仕様・実装作戦
+# UIAPduino コード開発・Web Build仕様
 
 更新日: 2026-09-12
 
@@ -6,7 +6,24 @@
 
 この文書は、UIAPduino Browser Studioの「コード開発モード」と、C/C++をUIAPduino向けにクラウドビルドするAWS基盤の仕様・実装計画の正本とする。
 
-既存の `spec.md` はプロダクト全体とBlockly実行を扱い、この文書はWeb Buildに限定する。実装中に仕様を変更した場合は、この文書と `spec.md` の進捗を同じ作業単位で更新する。
+既存の `spec.md` はプロダクト全体、Blockly、教材構想を扱い、この文書はコード開発モードとWeb Buildに限定する。実装中に仕様を変更した場合は、この文書と `spec.md` の進捗を同じ作業単位で更新する。
+
+### 現在の状況
+
+- 構想・MVP仕様・AWS構成案を作成済み
+- ローカルでは既存scriptからUIAPduino HID core `1.2.14`によるbuildに成功済み
+- Web Build用container、AWS、Terraform、コードeditorは未実装
+- 実機への書き込みは本仕様のMVPに含めない
+
+### 残りタスクの概要
+
+1. ローカルbuild containerで再現性、所要時間、image容量、licenseを確認する
+2. Terraformで費用上限を考慮したAWS private prototypeを構築する
+3. Blocklyとは別のコード開発画面を作り、Web Build APIへ接続する
+4. compiler errorとFlash・RAM使用量を表示する
+5. 限定公開後に実測料金と運用安全性を評価する
+
+詳細なチェックリストは「13. 実装フェーズ」を正本とする。
 
 ## 2. 目的
 
