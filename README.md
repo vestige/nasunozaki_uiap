@@ -56,6 +56,7 @@ WebアプリのコードはBlockly機能とデバイス診断機能を `features
 ## ドキュメント
 
 - [現在の仕様](docs/spec.md)
+- [コード開発モード・Web Build仕様](docs/Spec_WebBuild.md)
 - [実装方針と初期設計](docs/initial-design.md)
 - [Phase 0 実機調査記録](docs/phase-0-device-investigation.md)
 
@@ -125,6 +126,7 @@ BlocklyのSVGは表示領域のサイズ変更を監視して再計算するた�
 
 実装を変更するたびに、README、`docs/spec.md`、Phaseごとの調査記録を同じ作業内で更新します。仕様と実装が食い違ったまま次へ進まないことを基本ルールとします。
 `docs/spec.md`冒頭の「開発進捗」を現在地・残タスク・安全保留事項の正本とし、実機の詳細履歴はPhase別の調査記録へ分離します。
+コード開発モードのクラウドビルドについては、`docs/Spec_WebBuild.md`を詳細仕様と進捗の正本にします。最初はAWS上で実際のcompiler errorとFlash・RAM使用量を返すところまでとし、実機書き込みは含めません。
 
 ## ローカルで診断ページを開く
 

@@ -339,3 +339,5 @@ Phase 1側では続いてBlockly workspaceのブラウザ内自動保存、自�
 2026-09-12のPhase 2入力調査では、公式coreのvariant定義でオンボード`USER_BTN`が未定義、D17（PD7）がRESET、D13/D14がUSB、D11がSWIOであることを確認した。オンボードのリセット／boot切替ボタンは通常入力に流用せず、最初の外付けボタンをD5（PC3）とGNDへ接続する。これは教育用ランタイムの通常動作通信の追加であり、停止中のbootloader erase経路は変更しない。
 
 同日の設計確認で、現在のBlockly実機実行は中間命令のWebHID転送であり、CH32V003向けのcompileやflash書き込みではないことを仕様上明文化した。教育用ランタイムの拡張とネイティブfirmware buildは別機能として扱い、通常動作protocolをbootloader書き込み経路へ流用しない。
+
+コード開発モードのbuild調査はPhase 0のbootloader調査から分離し、`Spec_WebBuild.md`で管理する。最初のAWS試作はcompiler errorと容量確認だけを返し、ここで停止中としているerase・write経路や実機への書き込みを呼び出さない。

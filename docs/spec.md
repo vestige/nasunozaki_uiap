@@ -4,6 +4,8 @@
 
 この文書を、現在実装されている仕様と確定した設計判断の正本とする。構想の背景は `initial-design.md`、実機での検証履歴は `phase-0-device-investigation.md`に記録する。
 
+コード開発モードとAWS上のC/C++ビルド基盤は [`Spec_WebBuild.md`](Spec_WebBuild.md) を詳細仕様・進捗の正本とする。
+
 ## 開発進捗
 
 現在のマイルストーンは、Phase 2「Blocklyの実機実行」である。Phase 0は最小LED命令と成功応答まで確認して完了し、破壊的なerase経路だけは再試行を中止した安全保留事項として残す。Phase 1の画面プロトタイプも完了している。
@@ -30,8 +32,10 @@
 - [ ] ブロックプログラミングの最終的な体験を、順番に課題を進める「チュートリアル型」と、利用できる部品や配線を絞った「限定サンドボックス型」のどちらへ寄せるか決める
 - [ ] 小学生向けワークショップで両方式の小さな試作を比較し、開始までの時間、迷った回数、自由制作への移行しやすさを記録する
 - [ ] 限定サンドボックス型を採用する場合、UIAPduino本体、LED、ボタンなど初期部品の範囲と、仮想配線・シミュレーションをどこまで実装するか決める
-- [ ] Blocklyとは別に、通常コードを編集してブラウザからビルド・書き込みできる「コード開発モード」を設計する
-- [ ] GitHub Pagesだけでコードをビルドする方法として、ブラウザ内compiler、対応済みtemplateの生成、外部build serviceのどれを採用するか安全性・保守性・オフライン性で比較する
+- [x] Blocklyとは別の「コード開発モード」とWeb Build MVPを `Spec_WebBuild.md` に設計する
+- [x] 初期Web BuildをGitHub Pages + AWS Lambda container + API Gateway HTTP APIで試作する方針を定める
+- [ ] ローカルbuild containerでUIAPduino coreとtoolchainの再現性、実行時間、image容量を検証する
+- [ ] TerraformでECR、Lambda、HTTP API、最小権限IAM、Logs、alarm、budgetを構築する
 - [ ] コード開発モードでも、対象ボード確認、build結果、書き込み範囲、backup、verify、復旧導線をBlocklyの実機書き込みと共通化する
 
 ### 直近の完了項目
