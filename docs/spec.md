@@ -1,6 +1,6 @@
 # UIAPduino Browser Studio 仕様書
 
-更新日: 2026-09-12
+更新日: 2026-09-14
 
 この文書を、プロジェクト全体の構想、現在の確定仕様、現在地、残タスク、Blockly教材原案の正本とする。実機調査の重要な結果もこの文書へ統合し、詳細な時系列ログはGit履歴とアプリの診断ログで確認する。
 
@@ -15,7 +15,7 @@ BlocklyのPhase 2では実機LED実行まで成立した。外付け部品の採
 | Phase 0: 実機調査 | 完了 | bootloader調査、runtime書き込み、ブラウザLED往復に成功。破壊的erase再試行は中止 |
 | Phase 1: 画面プロトタイプ | 完了 | Blockly編集、シミュレーター、保存・復元、作品ファイル、実行位置表示を実装済み |
 | Phase 2: 実機MVP | 一時停止 | LED経路を確認済み。D5ボタン診断は仮実装。教材部品決定後に再開 |
-| Web Build WB0 | 進行中 | コード開発モードの仕様とAWS/Terraform作戦を確定中 |
+| Web Build WB1 | 進行中 | local build containerとAPI処理を実装済み。Docker環境でのbuildと容量計測待ち |
 | Phase 3: ワークショップ検証 | 未着手 | 部品構成とチュートリアル原案の検証後に開始 |
 | Phase 4: 拡張 | 未着手 | 一部の作品保存機能だけPhase 1へ前倒し済み |
 
@@ -27,7 +27,8 @@ BlocklyのPhase 2では実機LED実行まで成立した。外付け部品の採
 - [x] 専用の実機確認操作からLEDを1回点灯・消灯し、8バイト成功応答またはエラー応答を診断ログへ残す
 - [ ] Blocklyの実行先を「画面」と「UIAPduino」から選べるようにし、実機点滅、切断、再接続、timeout時の表示を確認する（timeout以外は確認済み）
 - [ ] D5ボタン仮診断を教材仕様から切り離し、部品構成決定後に採用・変更・削除を判断する
-- [ ] `spec_build.md`のWB1としてローカルbuild containerを試作する
+- [x] `spec_build.md`のWB1としてローカルbuild containerとAPI処理を試作する
+- [ ] Docker環境でcontainerをbuildし、容量、所要時間、networkなしbuildを実測する
 
 ### 設計判断が必要なタスク
 

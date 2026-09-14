@@ -37,7 +37,8 @@ UIAPduino教育用ランタイム
 - 実行中のUSB切断と再接続後の再実行を確認済み
 - 独自erase経路は過去の部分消去事故のため停止中。保存済みbinから完全復旧済み
 - 外付け部品の採用と教材の見せ方を決めるまでBlocklyの部品追加は一時停止
-- コード開発モードはWeb Buildの仕様策定を終え、次はローカルbuild containerを試作する段階
+- コード開発モードはWeb Build用containerとAPI処理の初期実装まで完了
+- 現在はDocker環境でcontainer build、容量、所要時間、networkなしbuildを確認する段階
 
 D5の外付けボタン診断は技術検討用の仮実装です。タクトスイッチを教材へ正式採用したことや、D5を正式なボタンポートに決定したことを意味しません。
 
@@ -82,6 +83,12 @@ npm run dev
 ```bash
 npm --prefix web test
 npm --prefix web run build
+```
+
+Web Build serviceの入力検証と結果解析は次で確認できます。containerの作り方は [`services/web-build/README.md`](services/web-build/README.md) を参照してください。
+
+```bash
+python3 -m unittest discover -s tests/web-build -p 'test_*.py' -v
 ```
 
 ## 教育用ランタイム

@@ -1,6 +1,6 @@
 # UIAPduino コード開発・Web Build仕様
 
-更新日: 2026-09-12
+更新日: 2026-09-14
 
 ## 1. この文書の役割
 
@@ -12,7 +12,9 @@
 
 - 構想・MVP仕様・AWS構成案を作成済み
 - ローカルでは既存scriptからUIAPduino HID core `1.2.14`によるbuildに成功済み
-- Web Build用container、AWS、Terraform、コードeditorは未実装
+- Web Build用containerの初期実装と入力検証・結果解析の単体テストを追加済み
+- 現在の開発PCにDockerがないため、containerのbuild、容量、networkなしの統合テストは未確認
+- AWS、Terraform、コードeditorは未実装
 - 実機への書き込みは本仕様のMVPに含めない
 
 ### 残りタスクの概要
@@ -394,7 +396,7 @@ AWS Budgetは課金の強制停止装置ではない。通知に加え、API側�
 
 ## 13. 実装フェーズ
 
-### WB0: 仕様確定（現在）
+### WB0: 仕様確定
 
 - [x] Blockly実行とネイティブbuildの違いを明文化する
 - [x] MVPをbuild確認だけに限定する
@@ -405,18 +407,32 @@ AWS Budgetは課金の強制停止装置ではない。通知に加え、API側�
 - [ ] toolchain実容量を測り、container + ECRまたはZIP + Layerを決定する
 - [ ] AWS region、通知先、公開範囲を決める
 
-### WB1: ローカルbuild container
+### WB1: ローカルbuild container（現在）
 
-- [ ] `services/web-build`を作る
-- [ ] compilerとcoreをversion固定でimageへ入れる
+- [x] `services/web-build`を作る
+- [x] compilerとcoreをversion固定でimageへ入れるDockerfileを作る
 - [ ] toolchain、core、APIを含む展開後容量を測定する
 - [ ] container image容量とcold startの見積り材料を記録する
 - [ ] networkなしで最小sketchをbuildする
-- [ ] errorと容量を構造化する
-- [ ] 30秒、64 KiB、library allowlistを実装する
-- [ ] 単体・統合テストを追加する
+- [x] errorとFlash・RAM容量を構造化する
+- [x] 30秒、64 KiB、library allowlistを実装する
+- [x] 入力検証と結果解析の単体テストを追加する
+- [ ] Docker環境でコンテナ統合テストを追加する
 
 この段階ではAWSアカウントへリソースを作らない。
+
+AWS準備はWB1の実測後に行う。人間のTerraform操作は長期access keyを持つ新規IAM Userを基本にせず、IAM Identity Centerなどの一時credentialを使う。GitHub ActionsはrepositoryとbranchまたはEnvironmentを限定したOIDC trustからdeploy用Roleを引き受ける。Lambda execution Roleはこれらと分離し、build APIの実行に必要な最小権限だけを与える。
+
+推奨する準備順:
+
+1. AWSを使わずWB1のlocal containerを作る
+2. toolchain容量、build時間、再配布条件を確認して配布方式を決める
+3. root MFA、料金通知、regionなどAWS accountの基本設定を確認する
+4. 人間が一時credentialでTerraformの初回bootstrapを行う
+5. TerraformでGitHub OIDC deploy RoleとLambda execution Roleを用途別に作る
+6. CIが短期credentialを取得してartifactをdeployする
+
+2026-09-14のpackage index確認では、公式UIAPduino packageが`x86_64-linux-gnu`向けRISC-V toolchainを提供しており、その圧縮archiveだけで約331MBだった。core、Arduino CLI、APIを加える前からLambda ZIPの展開後250MB上限を超える可能性が高いため、container + ECRを現時点の第一候補とする。最終決定は実際のcontainer image容量とcold start計測後に行う。
 
 ### WB2: TerraformとAWS private prototype
 
