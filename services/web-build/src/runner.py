@@ -13,7 +13,14 @@ ARDUINO_CLI = os.getenv("ARDUINO_CLI", "arduino-cli")
 ARDUINO_CONFIG = os.getenv("ARDUINO_CONFIG", "/etc/arduino-cli/arduino-cli.yaml")
 FQBN = "UIAP_HID:ch32v:CH32V003"
 BOARD_OPTIONS = "pnum=V14,upload_method=uiapflash,clock=48MHz_HSI,usb=webhid,pwm=default,xserial=none,opt=oslto,dbg=none,rtlib=none"
-BUILD_TIMEOUT_SECONDS = 30
+BUILD_TIMEOUT_SECONDS = int(os.getenv("BUILD_TIMEOUT_SECONDS", "30"))
+BUILD_ENV = {
+    "PATH": os.getenv("PATH", ""),
+    "HOME": "/tmp",
+    "TMPDIR": "/tmp",
+    "LANG": os.getenv("LANG", "C.UTF-8"),
+    "LD_LIBRARY_PATH": os.getenv("LD_LIBRARY_PATH", ""),
+}
 USAGE = re.compile(
     r"Sketch uses (?P<flash>\d+) bytes .* Maximum is (?P<flash_limit>\d+) bytes\."
     r".*Global variables use (?P<ram>\d+) bytes .* Maximum is (?P<ram_limit>\d+) bytes\.",
@@ -38,7 +45,10 @@ def run_build(project: BuildProject) -> dict:
     started = time.monotonic()
     with tempfile.TemporaryDirectory(prefix="uiap-build-") as temp:
         root = Path(temp)
-        sketch = root / "sketch"
+        main_ino = next(source for source in project.files if source.name.lower().endswith(".ino"))
+        # Arduino CLI requires the sketch directory and its primary .ino file
+        # to have the same base name.
+        sketch = root / Path(main_ino.name).stem
         output = root / "output"
         sketch.mkdir(mode=0o700)
         output.mkdir(mode=0o700)
@@ -66,7 +76,9 @@ def run_build(project: BuildProject) -> dict:
                 text=True,
                 timeout=BUILD_TIMEOUT_SECONDS,
                 check=False,
-                env={"PATH": os.getenv("PATH", "")},
+                # Lambda credentials and request-specific environment variables
+                # must never reach compiler subprocesses.
+                env=BUILD_ENV,
             )
         except subprocess.TimeoutExpired:
             return _response("timeout", started, diagnostics=[{

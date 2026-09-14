@@ -13,7 +13,7 @@
 - 構想・MVP仕様・AWS構成案を作成済み
 - ローカルでは既存scriptからUIAPduino HID core `1.2.14`によるbuildに成功済み
 - Web Build用containerの初期実装と入力検証・結果解析の単体テストを追加済み
-- 現在の開発PCにDockerがないため、containerのbuild、容量、networkなしの統合テストは未確認
+- x86_64 containerを作成し、networkなしの最小sketch buildとFlash・RAM解析に成功済み
 - AWS、Terraform、コードeditorは未実装
 - 実機への書き込みは本仕様のMVPに含めない
 
@@ -404,20 +404,33 @@ AWS Budgetは課金の強制停止装置ではない。通知に加え、API側�
 - [x] AWSとTerraformの初期構成を定義する
 - [x] ECRの役割とZIP・CodeBuildとの比較を明文化する
 - [ ] 通常コード向けUSB設定とcore補正の扱いを決める
-- [ ] toolchain実容量を測り、container + ECRまたはZIP + Layerを決定する
+- [x] toolchain実容量を測り、container + ECRを採用する
 - [ ] AWS region、通知先、公開範囲を決める
 
 ### WB1: ローカルbuild container（現在）
 
 - [x] `services/web-build`を作る
 - [x] compilerとcoreをversion固定でimageへ入れるDockerfileを作る
-- [ ] toolchain、core、APIを含む展開後容量を測定する
-- [ ] container image容量とcold startの見積り材料を記録する
-- [ ] networkなしで最小sketchをbuildする
+- [x] toolchain、core、APIを含む展開後容量を測定する
+- [x] local container image容量とbuild時間を記録する
+- [ ] Lambda x86_64でcold startとbuild時間を測定する
+- [x] networkなしで最小sketchをbuildする
 - [x] errorとFlash・RAM容量を構造化する
 - [x] 30秒、64 KiB、library allowlistを実装する
 - [x] 入力検証と結果解析の単体テストを追加する
-- [ ] Docker環境でコンテナ統合テストを追加する
+- [x] Docker環境でコンテナ統合テストscriptを追加する
+
+実測結果（2026-09-14）:
+
+- Docker報告のlocal image容量: `575,026,108 bytes`（約548 MiB）
+- image内のArduino data: `1,352,248,175 bytes`（約1.26 GiB）
+- そのうちRISC-V toolchain: `1.2 GiB`
+- 初回の成功image build: 約15分（Apple Silicon上のx86_64エミュレーション）
+- networkなし最小sketch build: 成功、`65,236 ms`（同エミュレーション）
+- 生成物の使用量: Flash `2,728 / 16,384 bytes`、RAM `156 / 2,048 bytes`
+- core `1.2.14`はMIT Licenseで、copyrightとlicense noticeの同梱が必要。xPack toolchainはGCCなど複数componentのlicense一式をimage内に保持している
+
+Lambda ZIP + Layerは展開後250MB上限に対し、toolchainだけで約1.2GiBあるため採用しない。Web BuildはLambda container + ECR方式でWB2へ進む。local時間はCPUエミュレーションの影響が大きいため、serviceの30秒timeoutの適否とcold startはAWS上で別途測定する。
 
 この段階ではAWSアカウントへリソースを作らない。
 
