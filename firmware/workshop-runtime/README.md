@@ -39,11 +39,12 @@ RAM:    172 / 2048 bytes (8%)
 
 core `1.2.14`のWebHID Only用USB構成は、実データ34 bytesに対して全長41 bytesと宣言されており、そのままではmacOSがHID interfaceを登録しません。`workshop-runtime.sh setup`は既知の誤記だけを34 bytesへ補正します。coreを先に導入済みの場合は、`patch-core`を一度実行してから再ビルドしてください。補正後の実機ではHID interface、Input Report 8 bytes、Feature Report 32 bytes、Report ID `0`を確認済みです。
 
-## Arduino CLIから実機へ書き込む（推奨）
+## ZIPから実機へ書き込む
 
-Arduino IDEがなくても、リポジトリ直下から次の3コマンドで準備できます。`setup`は公式coreと公式`uiapflash`を導入し、`build`はPC内でのコンパイルだけを行います。実機を書き換えるのは`upload`だけです。
+先にArduino CLIをインストールしてください。公開ページのZIPを展開し、展開した`workshop-runtime`フォルダで次のコマンドを実行します。`setup`は公式coreと公式`uiapflash`を導入し、`build`はPC内でのコンパイルだけを行います。実機を書き換えるのは`upload`だけです。
 
 ```bash
+cd workshop-runtime
 ./scripts/workshop-runtime.sh setup
 ./scripts/workshop-runtime.sh build
 ./scripts/workshop-runtime.sh upload
@@ -55,23 +56,8 @@ coreをすでに導入済みで補正だけを行う場合:
 ./scripts/workshop-runtime.sh patch-core
 ```
 
-`upload`の直前に、UIAPduinoのボタンを押したままUSBへ接続し、約1秒後にボタンを離してください。成功したらUSBを一度外し、ボタンを押さずに通常接続します。生成したbinは`.build/workshop-runtime/`へ置かれ、Git管理には含めません。
+`upload`の直前に、UIAPduinoのボタンを押したままUSBへ接続し、約1秒後にボタンを離してください。成功したらUSBを一度外し、ボタンを押さずに通常接続します。生成したbinは`.build/workshop-runtime/`へ置かれます。ZIPにはビルド済みbinやArduino coreは含まれません。
 
-## Arduino IDEから実機へ書き込む（代替手順）
-
-この操作はUIAPduino上の現在のプログラムを置き換えます。必要なプログラムや、Phase 0で保存した復旧用binがある場合は先に保管してください。停止中のブラウザ独自erase経路は使用しません。
-
-1. Arduino IDE 2.xの設定へBoard Manager URLを追加する
-2. Board Managerで `UIAPduino HID` version `1.2.14`をインストールする
-3. このフォルダの `workshop-runtime.ino`をArduino IDEで開く
-4. Boardを `HID ProMicro CH32V003`にする
-5. USBを `WebHID Only`、Optimizeを `Smallest (-Os) with LTO`にする
-6. UIAPduinoをUSBから外す
-7. ボード上のボタンを押したままUSBへ接続し、約1秒後にボタンを離す
-8. Arduino IDEの `Upload`を実行し、成功表示を確認する
-9. USBを外し、今度はボタンを押さず通常どおり接続する
-10. Browser Studioの「通常動作モードを調べる」からdescriptorを確認する
-
-coreの公式導入手順は[UIAPduino HID Board Manager Files](https://github.com/tarosay/board_manager_files)を参照してください。macOSは公式ページ上で動作確認中と記載されているため、Uploadが失敗した場合は繰り返し書き込まず、CLIまたはArduino IDEの出力を保存して原因を確認します。
+この操作はUIAPduino上の現在のプログラムを置き換えます。必要なプログラムや、保存した復旧用binがある場合は先に保管してください。停止中のブラウザ独自erase経路は使用しません。Uploadが失敗した場合は繰り返し書き込まず、CLIの出力を保存して原因を確認します。
 
 ブラウザの実機AdapterとBlocklyからのLED送信は実機確認済みです。外付けボタンは単発診断を先に確認し、その後Blocklyの待機ブロックへ接続します。
