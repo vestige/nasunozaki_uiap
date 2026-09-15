@@ -2,7 +2,6 @@ import { BrowserConnectionCard } from "./features/device/components/BrowserConne
 import { ConnectionGuide } from "./features/device/components/ConnectionGuide";
 import { DeviceReport } from "./features/device/components/DeviceReport";
 import { PageHeader } from "./components/PageHeader";
-import { FlashWriteReviewCard } from "./features/device/components/FlashWriteReviewCard";
 import { DiagnosticLogPanel } from "./features/device/components/DiagnosticLogPanel";
 import { useDeviceDiagnostics } from "./features/device/hooks/useDeviceDiagnostics";
 import { BlocklyStudio } from "./features/blockly/components/BlocklyStudio";
@@ -21,9 +20,6 @@ export default function App() {
         message={diagnostics.message}
         connect={diagnostics.connect}
       />
-      <section className="mx-auto w-full max-w-6xl px-5 pt-8 sm:px-8">
-        <FlashWriteReviewCard diagnostics={diagnostics} />
-      </section>
       <DeviceReport diagnostics={diagnostics} />
       <DiagnosticLogPanel diagnostics={diagnostics} />
       <footer className="footer bg-neutral px-5 py-8 text-sm text-neutral-content/70 sm:px-[max(2rem,calc((100%-72rem)/2))]">
