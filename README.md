@@ -86,9 +86,9 @@ npm --prefix web run build
 
 ## 教育用ランタイム
 
-公開ページから[教育用ランタイムのZIP](https://vestige.github.io/nasunozaki_uiap/workshop-runtime.zip)をダウンロードできます。ZIPにはスケッチ、CLI補助script、手順書を含みます。展開した`workshop-runtime`フォルダで、同梱READMEの手順に従って書き込んでください。ビルド済みbinは含みません。
+公開ページから教育用ランタイムをブラウザで直接書き込めます。利用者にArduino CLIは不要です。[ZIP](https://vestige.github.io/nasunozaki_uiap/workshop-runtime.zip)には完成済みbin、ソース、ビルド条件、手順書を含みます。
 
-Arduino CLIを使う補助scriptは、環境準備、PC内だけのbuild、実機uploadを分離しています。
+ソースから再ビルドする開発者向けに、Arduino CLIを使う補助scriptも残しています。環境準備、PC内だけのbuild、実機uploadを分離しています。
 
 ```bash
 ./scripts/workshop-runtime.sh setup

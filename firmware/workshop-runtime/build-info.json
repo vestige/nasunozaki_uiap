@@ -1,0 +1,8 @@
+{
+  "core": "UIAPduino HID 1.2.14",
+  "board": "HID ProMicro CH32V003",
+  "usb": "WebHID Only",
+  "optimize": "Smallest (-Os) with LTO",
+  "source_sha256": "c904cbfd1329ca3b03a3e67bf90679cb5b5e27fcc0a3358e4b57dd4b42f62228",
+  "binary_sha256": "801f87c68e19e11f2988c605e7c9c3d862067f4bf5859ebec88b008d09afccaa"
+}

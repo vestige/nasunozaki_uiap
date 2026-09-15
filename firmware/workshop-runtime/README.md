@@ -37,27 +37,23 @@ RAM:    172 / 2048 bytes (8%)
 
 2026-09-11にmacOS上のArduino CLI `1.5.1`と公式`uiapflash`で実機へ書き込み、4224 bytesのverifyとアプリ起動に成功しました。
 
-core `1.2.14`のWebHID Only用USB構成は、実データ34 bytesに対して全長41 bytesと宣言されており、そのままではmacOSがHID interfaceを登録しません。`workshop-runtime.sh setup`は既知の誤記だけを34 bytesへ補正します。coreを先に導入済みの場合は、`patch-core`を一度実行してから再ビルドしてください。補正後の実機ではHID interface、Input Report 8 bytes、Feature Report 32 bytes、Report ID `0`を確認済みです。
+core `1.2.14`のWebHID Only用USB構成は、実データ34 bytesに対して全長41 bytesと宣言されており、そのままではmacOSがHID interfaceを登録しません。同梱の完成済みbinは、この全長を34 bytesへ補正したcoreでビルドしています。補正後の実機ではHID interface、Input Report 8 bytes、Feature Report 32 bytes、Report ID `0`を確認済みです。
 
-## ZIPから実機へ書き込む
+## ブラウザから実機へ書き込む
 
-先にArduino CLIをインストールしてください。公開ページのZIPを展開し、展開した`workshop-runtime`フォルダで次のコマンドを実行します。`setup`は公式coreと公式`uiapflash`を導入し、`build`はPC内でのコンパイルだけを行います。実機を書き換えるのは`upload`だけです。
+公開ページに完成済みファームウェアを用意しています。利用者のPCにArduino CLI、Arduino IDE、ボードcoreをインストールする必要はありません。PC版ChromeまたはEdgeのWebHIDを使います。
 
-```bash
-cd workshop-runtime
-./scripts/workshop-runtime.sh setup
-./scripts/workshop-runtime.sh build
-./scripts/workshop-runtime.sh upload
-```
+1. 必要なプログラムや保存した復旧用binを先に保管する
+2. UIAPduinoのボタンを押したままUSBへ接続し、約1秒後に離す
+3. [公開ページ](https://vestige.github.io/nasunozaki_uiap/)の「はじめて通常動作モードを使うとき」を開き、「教育用ランタイムを書き込む」を押す
+4. 書き込みモードのUIAPduinoを選択し、書き込みと照合の完了表示を待つ
+5. USBを外し、ボタンを押さずに接続し直す
+6. 「通常動作モードを調べる」で接続を確認する
 
-coreをすでに導入済みで補正だけを行う場合:
+ZIPには同じ完成済み`workshop-runtime.bin`、ソースの`workshop-runtime.ino`、ビルド条件とSHA-256を記録した`build-info.json`を含みます。ZIPの展開はブラウザ書き込みには必要ありません。
 
-```bash
-./scripts/workshop-runtime.sh patch-core
-```
+この操作はUIAPduino上の現在のプログラムを置き換えます。停止中のブラウザ独自erase試験経路は使用しません。書き込みが失敗した場合は連続して再試行せず、画面のメッセージと接続状態を確認してください。
 
-`upload`の直前に、UIAPduinoのボタンを押したままUSBへ接続し、約1秒後にボタンを離してください。成功したらUSBを一度外し、ボタンを押さずに通常接続します。生成したbinは`.build/workshop-runtime/`へ置かれます。ZIPにはビルド済みbinやArduino coreは含まれません。
-
-この操作はUIAPduino上の現在のプログラムを置き換えます。必要なプログラムや、保存した復旧用binがある場合は先に保管してください。停止中のブラウザ独自erase経路は使用しません。Uploadが失敗した場合は繰り返し書き込まず、CLIの出力を保存して原因を確認します。
+ソースから再ビルドする開発者だけがArduino coreとArduino CLIを使用します。既存の`./scripts/workshop-runtime.sh`はそのために残しています。
 
 ブラウザの実機AdapterとBlocklyからのLED送信は実機確認済みです。外付けボタンは単発診断を先に確認し、その後Blocklyの待機ブロックへ接続します。

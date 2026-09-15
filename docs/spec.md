@@ -392,7 +392,7 @@ binファイルを選択すると、ブラウザ内でArrayBufferとして読む
 
 この画面には「書き込む」「実行する」操作を置かない。実機操作を追加する段階で、別途明示的な確認、接続状態確認、復旧案内を加える。
 
-dry-runの計画生成機能は検証用コードとして保持するが、公開ページの試験用カードは表示しない。教育用ランタイムの導入は、公開ページで配布するArduinoスケッチと手順書のZIPから行う。
+dry-runの計画生成機能は検証用コードとして保持するが、公開ページの試験用カードは表示しない。教育用ランタイムの導入は、完成済みbinを公開ページからWebHIDで書き込む。ZIPは完成済みbin、スケッチ、ビルド条件、手順書を保存するために配布する。
 
 実機環境では `onboard_led_blink.bin`（436 bytes）を選択し、開始address `0x08000000`、対象7 blockの計画が生成されることを確認した。この結果はdry-runの成功であり、flash書き込みの成功を意味しない。
 
@@ -629,9 +629,9 @@ Blockly実行は`BLOCKLY_RUN`として開始、成功、エラーを記録し、
 
 ボタン入力は基板上のリセット／boot切替ボタンを通常GPIOとして扱わない。初期教材では競合の少ないD5（PC3）を`INPUT_PULLUP`にし、外付けタクトスイッチをD5とGNDの間へ接続する。command `0x02`のrequest payloadは`0`固定、成功responseの末尾は未押下`0`、押下`1`とする。まず通常動作カードの単発診断で実機状態を確認し、その結果が安定してから共通中間命令とBlocklyの「ボタンが押されるまで待つ」へ追加する。
 
-教育用ランタイムの初回導入は、停止中のBrowser Studio独自erase経路を使わず、公式 `UIAPduino HID` core `1.2.14`に含まれる`uiapflash`を使う。Arduino CLI用の`scripts/workshop-runtime.sh`では`setup`、`build`、`upload`を分離し、実機を書き換える操作を明確にする。Arduino IDE 2.xの標準Uploadも代替手順として維持する。Boardは `HID ProMicro CH32V003`、USBは `WebHID Only`、Optimizeは `Smallest (-Os) with LTO`に固定する。Upload後はボタンを押さずに通常接続し、ランタイム診断を行う。
+教育用ランタイムの初回導入は、停止中のBrowser Studio独自erase試験経路を使わず、[UIAPduino WebHID Labで使用されているrv003usb用WebHIDフラッシャー](https://github.com/tarosay/uiap-hid-web/blob/main/docs/lib/flasher/rv003usb_webflasher.js)に完成済みbinを渡す。binは公式 `UIAPduino HID` core `1.2.14`を使い、Board `HID ProMicro CH32V003`、USB `WebHID Only`、Optimize `Smallest (-Os) with LTO`でビルドする。公開ページは書き込みモードのVID/PIDを確認し、binのSHA-256と容量を検証してから書き込み、フラッシャーのread-back照合成功後だけ完了を表示する。利用者にArduino CLIは不要。Arduino CLI用の`scripts/workshop-runtime.sh`はソース再ビルド用に残す。書き込み後はボタンを押さずに通常接続し、ランタイム診断を行う。
 
-CLIまたはArduino IDEのUploadが失敗した場合は連続して再試行せず、出力を保存して切り分ける。公式Board ManagerではmacOSが動作確認中とされているため、成功するまでは教育用ランタイムの実機書き込みを完了扱いにしない。
+ブラウザ書き込みが失敗した場合は連続して再試行せず、画面のメッセージと接続状態を確認する。既存の実機verifyはCLI経由で確認済みだが、公開ページの新しいブラウザ書き込み操作自体は実機確認が必要である。
 
 Blockly workspace、LED simulator、ランタイムdescriptor表示は親gridの利用可能幅を超えない。幅の狭い画面では見出し、操作ボタン、診断内容を縦に並べ、横並びへの切り替えはdesktop幅から行う。
 Blockly workspaceのcontainer幅が変化した場合は `ResizeObserver`から `Blockly.svgResize()`を呼び、内部SVGとscrollbarの寸法を同期する。
