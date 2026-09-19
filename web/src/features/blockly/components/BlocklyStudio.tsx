@@ -24,6 +24,7 @@ import {
 import { queryKeys } from "../../../query";
 import { BlocklyToolbar } from "./BlocklyToolbar";
 import { LedSimulator } from "./LedSimulator";
+import { TactSwitchWiringGuide } from "./TactSwitchWiringGuide";
 import { ProjectFileActions } from "./ProjectFileActions";
 import { ExecutionTargetSelector } from "./ExecutionTargetSelector";
 import type { ExecutionTarget } from "../types/execution";
@@ -373,6 +374,11 @@ export function BlocklyStudio() {
             {tactSwitchExtension.data ? "タクトスイッチを外す" : "タクトスイッチを使う"}
           </button>
         </div>
+        {tactSwitchExtension.data && (
+          <div className="lg:col-span-2">
+            <TactSwitchWiringGuide />
+          </div>
+        )}
         <div
           ref={mountWorkspace}
           className="blockly-workspace h-[34rem] w-full min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl"
