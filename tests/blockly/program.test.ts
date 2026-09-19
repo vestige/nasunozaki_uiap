@@ -57,4 +57,32 @@ describe("compileWorkspace", () => {
       expect(program[0].elseBody[0]).toMatchObject({ type: "led", on: false });
     }
   });
+
+  it("ずっとブロックを停止可能な中間命令へ変換する", () => {
+    registerUiapBlocks();
+    const workspace = new Blockly.Workspace();
+    Blockly.serialization.workspaces.load(
+      {
+        blocks: {
+          languageVersion: 0,
+          blocks: [
+            {
+              type: "uiap_forever",
+              inputs: {
+                DO: { block: { type: "uiap_led", fields: { STATE: "ON" } } },
+              },
+            },
+          ],
+        },
+      },
+      workspace,
+    );
+
+    const program = compileWorkspace(workspace);
+
+    expect(program[0]).toMatchObject({ type: "forever" });
+    if (program[0].type === "forever") {
+      expect(program[0].body[0]).toMatchObject({ type: "led", on: true });
+    }
+  });
 });
