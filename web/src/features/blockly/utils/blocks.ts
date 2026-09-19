@@ -64,6 +64,15 @@ export function registerUiapBlocks() {
       tooltip: "中に入れたブロックをくり返します。",
     },
     {
+      type: "uiap_forever",
+      message0: "ずっと",
+      message1: "%1",
+      args1: [{ type: "input_statement", name: "DO" }],
+      previousStatement: null,
+      colour: 275,
+      tooltip: "とめるボタンを押すまで、中のブロックをくり返します。",
+    },
+    {
       type: "uiap_if_button",
       message0: "もし タクトスイッチが押されている なら",
       message1: "%1",
@@ -86,6 +95,7 @@ export const uiapToolbox: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: "block", type: "uiap_led" },
     { kind: "block", type: "uiap_wait" },
     { kind: "block", type: "uiap_repeat" },
+    { kind: "block", type: "uiap_forever" },
   ],
 };
 

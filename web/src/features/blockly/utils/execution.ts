@@ -1,6 +1,8 @@
 import type { ProgramInstruction } from "./program";
 import type { BoardAdapter, ExecutionObserver } from "../types/execution";
 
+const FOREVER_LOOP_INTERVAL_MS = 50;
+
 export async function runProgram(
   instructions: ProgramInstruction[],
   board: BoardAdapter,
@@ -20,6 +22,13 @@ export async function runProgram(
       await board.wait(180, signal);
       for (let index = 0; index < instruction.times; index += 1) {
         await runProgram(instruction.body, board, signal, observer);
+      }
+    } else if (instruction.type === "forever") {
+      await board.wait(180, signal);
+      while (true) {
+        assertRunning(signal);
+        await runProgram(instruction.body, board, signal, observer);
+        await board.wait(FOREVER_LOOP_INTERVAL_MS, signal);
       }
     } else {
       if (!board.isButtonPressed) {

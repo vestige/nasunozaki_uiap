@@ -109,4 +109,68 @@ describe("runProgram", () => {
     expect(events).toContain(expected);
     expect(events).not.toContain(pressed ? "led:false" : "led:true");
   });
+
+  it("ずっとブロックは停止されるまで入力と分岐を繰り返す", async () => {
+    const controller = new AbortController();
+    const ledStates: boolean[] = [];
+    const buttonStates = [true, false];
+    const waits: number[] = [];
+    const board: BoardAdapter = {
+      async setLed(on) {
+        ledStates.push(on);
+        if (ledStates.length === 2) controller.abort();
+      },
+      async isButtonPressed() {
+        return buttonStates.shift() ?? false;
+      },
+      async wait(milliseconds) {
+        waits.push(milliseconds);
+      },
+    };
+    const forever: ProgramInstruction[] = [
+      {
+        type: "forever",
+        blockId: "forever",
+        body: [
+          {
+            type: "ifButton",
+            blockId: "if",
+            body: [{ type: "led", on: true, blockId: "on" }],
+            elseBody: [{ type: "led", on: false, blockId: "off" }],
+          },
+        ],
+      },
+    ];
+
+    await expect(runProgram(forever, board, controller.signal)).rejects.toMatchObject({
+      name: "AbortError",
+    });
+
+    expect(ledStates).toEqual([true, false]);
+    expect(waits).toContain(50);
+  });
+
+  it("空のずっとブロックでも待機を入れて停止できる", async () => {
+    const controller = new AbortController();
+    const waits: number[] = [];
+    const board: BoardAdapter = {
+      setLed: () => undefined,
+      async wait(milliseconds) {
+        waits.push(milliseconds);
+        if (milliseconds === 50 && waits.filter((value) => value === 50).length === 2) {
+          controller.abort();
+        }
+      },
+    };
+
+    await expect(
+      runProgram(
+        [{ type: "forever", blockId: "forever", body: [] }],
+        board,
+        controller.signal,
+      ),
+    ).rejects.toMatchObject({ name: "AbortError" });
+
+    expect(waits).toEqual([180, 50, 50]);
+  });
 });

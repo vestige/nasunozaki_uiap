@@ -10,6 +10,11 @@ export type ProgramInstruction =
       blockId: string;
     }
   | {
+      type: "forever";
+      body: ProgramInstruction[];
+      blockId: string;
+    }
+  | {
       type: "ifButton";
       body: ProgramInstruction[];
       elseBody: ProgramInstruction[];
@@ -42,6 +47,12 @@ function compileChain(first: Blockly.Block | null): ProgramInstruction[] {
       instructions.push({
         type: "repeat",
         times: clampNumber(block.getFieldValue("TIMES"), 1, 20),
+        body: compileChain(block.getInputTargetBlock("DO")),
+        blockId: block.id,
+      });
+    } else if (block.type === "uiap_forever") {
+      instructions.push({
+        type: "forever",
         body: compileChain(block.getInputTargetBlock("DO")),
         blockId: block.id,
       });

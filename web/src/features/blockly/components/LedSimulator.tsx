@@ -79,6 +79,8 @@ function countInstructions(instructions: ProgramInstruction[]): number {
       total +
       (instruction.type === "repeat"
         ? instruction.times * countInstructions(instruction.body)
+        : instruction.type === "forever"
+          ? 1 + countInstructions(instruction.body)
         : instruction.type === "ifButton"
           ? 1 + Math.max(
               countInstructions(instruction.body),
