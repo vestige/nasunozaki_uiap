@@ -63,6 +63,19 @@ export function registerUiapBlocks() {
       colour: 275,
       tooltip: "中に入れたブロックをくり返します。",
     },
+    {
+      type: "uiap_if_button",
+      message0: "もし タクトスイッチが押されている なら",
+      message1: "%1",
+      args1: [{ type: "input_statement", name: "DO" }],
+      message2: "でなければ",
+      message3: "%1",
+      args3: [{ type: "input_statement", name: "ELSE" }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: 210,
+      tooltip: "タクトスイッチの状態で、実行するブロックを選びます。",
+    },
   ]);
   registered = true;
 }
@@ -73,6 +86,14 @@ export const uiapToolbox: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: "block", type: "uiap_led" },
     { kind: "block", type: "uiap_wait" },
     { kind: "block", type: "uiap_repeat" },
+  ],
+};
+
+export const tactSwitchToolbox: Blockly.utils.toolbox.ToolboxDefinition = {
+  kind: "flyoutToolbox",
+  contents: [
+    ...uiapToolbox.contents,
+    { kind: "block", type: "uiap_if_button" },
   ],
 };
 

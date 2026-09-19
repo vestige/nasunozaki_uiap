@@ -4,6 +4,7 @@ import * as Blockly from "blockly/core";
 import {
   registerUiapBlocks,
   starterProgram,
+  tactSwitchToolbox,
   uiapToolbox,
 } from "../utils/blocks";
 import { compileWorkspace, type ProgramInstruction } from "../utils/program";
@@ -49,6 +50,18 @@ export function BlocklyStudio() {
   });
   const led = useQuery<boolean>({
     queryKey: queryKeys.simulatorLed,
+    queryFn: async () => false,
+    initialData: false,
+    enabled: false,
+  });
+  const button = useQuery<boolean>({
+    queryKey: queryKeys.simulatorButton,
+    queryFn: async () => false,
+    initialData: false,
+    enabled: false,
+  });
+  const tactSwitchExtension = useQuery<boolean>({
+    queryKey: queryKeys.tactSwitchExtension,
     queryFn: async () => false,
     initialData: false,
     enabled: false,
@@ -163,6 +176,8 @@ export function BlocklyStudio() {
         setSimulatorLed: (on) => {
           client.setQueryData(queryKeys.simulatorLed, on);
         },
+        getSimulatorButton: () =>
+          client.getQueryData<boolean>(queryKeys.simulatorButton) ?? false,
       });
       let turnOff = false;
       try {
@@ -336,12 +351,42 @@ export function BlocklyStudio() {
         </div>
       </div>
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <div className="lg:col-span-2 rounded-box border border-base-300 bg-base-200 p-4 sm:flex sm:items-center sm:justify-between">
+          <div>
+            <p className="font-black">拡張：タクトスイッチ</p>
+            <p className="mt-1 text-sm text-base-content/65">
+              固定配線はD5とGNDです。追加すると条件ブロックと画面上のスイッチが使えます。
+            </p>
+          </div>
+          <button
+            type="button"
+            className={`btn mt-3 sm:mt-0 ${tactSwitchExtension.data ? "btn-outline" : "btn-primary"}`}
+            onClick={() => {
+              const enabled = !tactSwitchExtension.data;
+              client.setQueryData(queryKeys.tactSwitchExtension, enabled);
+              client.setQueryData(queryKeys.simulatorButton, false);
+              workspaceRef.current?.updateToolbox(
+                enabled ? tactSwitchToolbox : uiapToolbox,
+              );
+            }}
+          >
+            {tactSwitchExtension.data ? "タクトスイッチを外す" : "タクトスイッチを使う"}
+          </button>
+        </div>
         <div
           ref={mountWorkspace}
           className="blockly-workspace h-[34rem] w-full min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl"
           aria-label="ブロックプログラミング編集エリア"
         />
-        <LedSimulator ledOn={led.data} instructions={program.data} />
+        <LedSimulator
+          ledOn={led.data}
+          buttonPressed={button.data}
+          extensionEnabled={tactSwitchExtension.data}
+          instructions={program.data}
+          onButtonChange={(pressed) =>
+            client.setQueryData(queryKeys.simulatorButton, pressed)
+          }
+        />
       </div>
     </section>
   );

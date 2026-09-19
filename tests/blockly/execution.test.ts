@@ -83,4 +83,30 @@ describe("runProgram", () => {
       "led:false",
     ]);
   });
+
+  it.each([
+    [true, "led:true"],
+    [false, "led:false"],
+  ])("タクトスイッチが%sの分岐を実行する", async (pressed, expected) => {
+    const { board, observer, events } = createExecution();
+    board.isButtonPressed = async () => pressed;
+    const conditional: ProgramInstruction[] = [
+      {
+        type: "ifButton",
+        blockId: "if",
+        body: [{ type: "led", on: true, blockId: "then" }],
+        elseBody: [{ type: "led", on: false, blockId: "else" }],
+      },
+    ];
+
+    await runProgram(
+      conditional,
+      board,
+      new AbortController().signal,
+      observer,
+    );
+
+    expect(events).toContain(expected);
+    expect(events).not.toContain(pressed ? "led:false" : "led:true");
+  });
 });

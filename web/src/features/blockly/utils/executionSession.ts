@@ -11,17 +11,20 @@ type Options = {
   target: ExecutionTarget;
   runtimeDevice: RuntimeHidDevice | null;
   setSimulatorLed(on: boolean): void;
+  getSimulatorButton(): boolean;
 };
 
 export function createBoardExecutionSession({
   target,
   runtimeDevice,
   setSimulatorLed,
+  getSimulatorButton,
 }: Options): BoardExecutionSession {
   if (target === "simulator") {
     return {
       board: {
         setLed: setSimulatorLed,
+        isButtonPressed: getSimulatorButton,
         wait: abortableDelay,
       },
       async close(turnOff) {
