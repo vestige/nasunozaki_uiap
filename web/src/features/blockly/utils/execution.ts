@@ -16,11 +16,23 @@ export async function runProgram(
       await board.wait(180, signal);
     } else if (instruction.type === "wait") {
       await board.wait(instruction.milliseconds, signal);
-    } else {
+    } else if (instruction.type === "repeat") {
       await board.wait(180, signal);
       for (let index = 0; index < instruction.times; index += 1) {
         await runProgram(instruction.body, board, signal, observer);
       }
+    } else {
+      if (!board.isButtonPressed) {
+        throw new Error("この実行先ではタクトスイッチを使えません。");
+      }
+      const pressed = await board.isButtonPressed();
+      await board.wait(180, signal);
+      await runProgram(
+        pressed ? instruction.body : instruction.elseBody,
+        board,
+        signal,
+        observer,
+      );
     }
   }
 }

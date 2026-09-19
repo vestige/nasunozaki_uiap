@@ -54,6 +54,7 @@ describe("board execution session", () => {
       target: "simulator",
       runtimeDevice: null,
       setSimulatorLed: (on) => states.push(on),
+      getSimulatorButton: () => true,
     });
 
     await session.board.setLed(true);
@@ -68,6 +69,7 @@ describe("board execution session", () => {
       target: "uiapduino",
       runtimeDevice: fake.device,
       setSimulatorLed: () => undefined,
+      getSimulatorButton: () => false,
     });
 
     await session.board.setLed(true);
@@ -83,6 +85,7 @@ describe("board execution session", () => {
         target: "uiapduino",
         runtimeDevice: null,
         setSimulatorLed: () => undefined,
+        getSimulatorButton: () => false,
       }),
     ).toThrow("接続されていません");
   });
@@ -93,6 +96,7 @@ describe("board execution session", () => {
       target: "uiapduino",
       runtimeDevice: fake.device,
       setSimulatorLed: () => undefined,
+      getSimulatorButton: () => false,
     });
 
     await session.board.setLed(true);

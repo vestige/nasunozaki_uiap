@@ -8,6 +8,12 @@ export type ProgramInstruction =
       times: number;
       body: ProgramInstruction[];
       blockId: string;
+    }
+  | {
+      type: "ifButton";
+      body: ProgramInstruction[];
+      elseBody: ProgramInstruction[];
+      blockId: string;
     };
 
 export function compileWorkspace(
@@ -37,6 +43,13 @@ function compileChain(first: Blockly.Block | null): ProgramInstruction[] {
         type: "repeat",
         times: clampNumber(block.getFieldValue("TIMES"), 1, 20),
         body: compileChain(block.getInputTargetBlock("DO")),
+        blockId: block.id,
+      });
+    } else if (block.type === "uiap_if_button") {
+      instructions.push({
+        type: "ifButton",
+        body: compileChain(block.getInputTargetBlock("DO")),
+        elseBody: compileChain(block.getInputTargetBlock("ELSE")),
         blockId: block.id,
       });
     }
