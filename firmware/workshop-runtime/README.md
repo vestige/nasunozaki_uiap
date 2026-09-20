@@ -17,10 +17,10 @@ https://raw.githubusercontent.com/tarosay/board_manager_files/main/package_uiap_
 
 ## 通信方向
 
-- ブラウザ → UIAPduino: EP0 Feature Report、8バイトを使用（コアは最大32バイト）
+- ブラウザ → UIAPduino: EP0 Feature Report、32バイトで転送し、先頭8バイトを命令として使用
 - UIAPduino → ブラウザ: EP1 Input Report、8バイト
 
-両方向とも `UIAP`識別子、version、command、8bit sequence、payload/statusからなる同じ8バイト構造を使います。command `0x01`は内蔵LED、`0x02`はD5（PC3）へ接続した外付けボタンの単発読み取りです。
+プロトコルは両方向とも `UIAP`識別子、version、command、8bit sequence、payload/statusからなる同じ8バイト構造を使います。Windows HIDとの互換性のため、ブラウザから送る32バイトFeature Reportは先頭8バイトに命令を格納し、残り24バイトを0で埋めます。command `0x01`は内蔵LED、`0x02`はD5（PC3）へ接続した外付けボタンの単発読み取りです。
 
 ## 外付けボタン
 
@@ -37,7 +37,7 @@ RAM:    172 / 2048 bytes (8%)
 
 2026-09-11にmacOS上のArduino CLI `1.5.1`と公式`uiapflash`で実機へ書き込み、4224 bytesのverifyとアプリ起動に成功しました。
 
-core `1.2.14`のWebHID Only用USB構成は、実データ34 bytesに対して全長41 bytesと宣言されており、そのままではmacOSがHID interfaceを登録しません。同梱の完成済みbinは、この全長を34 bytesへ補正したcoreでビルドしています。補正後の実機ではHID interface、Input Report 8 bytes、Feature Report 32 bytes、Report ID `0`を確認済みです。
+core `1.2.14`のWebHID Only用USB構成は、実データ34 bytesに対して全長41 bytesと宣言されており、そのままではmacOSがHID interfaceを登録しません。同梱の完成済みbinは、この全長を34 bytesへ補正したcoreでビルドしています。補正後の実機ではHID interface、Input Report 8 bytes、Feature Report 32 bytes、Report ID `0`を確認済みです。Feature Reportはdescriptorどおり32バイトで送るため、Windows HIDでも短いreport bufferになりません。
 
 ## ブラウザから実機へ書き込む
 

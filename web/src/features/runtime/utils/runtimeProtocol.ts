@@ -5,6 +5,7 @@ export const RUNTIME_COMMAND_SET_LED = 0x01;
 export const RUNTIME_COMMAND_READ_BUTTON = 0x02;
 export const RUNTIME_RESPONSE_FLAG = 0x80;
 export const RUNTIME_MESSAGE_SIZE = 8;
+export const RUNTIME_FEATURE_REPORT_SIZE = 32;
 
 const MAGIC = [0x55, 0x49, 0x41, 0x50] as const; // "UIAP"
 const STATUS = [

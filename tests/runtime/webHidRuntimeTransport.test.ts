@@ -42,17 +42,19 @@ function fakeDevice() {
 }
 
 describe("WebHidRuntimeTransport", () => {
-  it("Report ID 0のFeature Reportとして8バイト命令を送る", async () => {
+  it("8バイト命令を32バイトへpaddingしてReport ID 0で送る", async () => {
     const fake = fakeDevice();
     const transport = new WebHidRuntimeTransport(fake.device);
     const message = Uint8Array.from([0x55, 0x49, 0x41, 0x50, 1, 1, 0, 1]);
 
     await transport.send(message);
 
-    expect(fake.sendFeatureReport).toHaveBeenCalledWith(
-      DEFAULT_RUNTIME_REPORT_ID,
-      message,
-    );
+    expect(fake.sendFeatureReport).toHaveBeenCalledOnce();
+    const [reportId, report] = fake.sendFeatureReport.mock.calls[0];
+    expect(reportId).toBe(DEFAULT_RUNTIME_REPORT_ID);
+    expect(report).toHaveLength(32);
+    expect([...report.slice(0, 8)]).toEqual([...message]);
+    expect([...report.slice(8)]).toEqual(new Array(24).fill(0));
   });
 
   it("先に届いたInput Reportをキューから受け取る", async () => {
