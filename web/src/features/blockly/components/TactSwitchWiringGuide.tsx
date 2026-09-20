@@ -67,11 +67,9 @@ function WiringDiagram() {
       <path d="M142 202 H360 V354 H546" className="fill-none stroke-base-content" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
       <rect x="370" y="364" width="62" height="30" rx="7" className="fill-base-100 stroke-base-content" strokeWidth="2" />
       <text x="401" y="384" textAnchor="middle" className="fill-base-content text-[14px] font-black">GND</text>
-      <rect x="530" y="202" width="138" height="160" rx="16" className="fill-base-100 stroke-base-content" strokeWidth="3" />
-      <rect x="570" y="244" width="58" height="76" rx="25" className="fill-error" opacity=".85" />
+      <rect x="558" y="214" width="76" height="172" rx="14" className="fill-base-100 stroke-base-content" strokeWidth="3" />
       <path d="M546 246 H648 M546 246 H530 M648 246 H668" className="fill-none stroke-info" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M546 354 H648 M546 354 H530 M648 354 H668" className="fill-none stroke-base-content" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M599 270 V330" className="fill-none stroke-base-300" strokeWidth="7" strokeLinecap="round" strokeDasharray="9 9" />
       <circle cx="546" cy="246" r="11" className="fill-base-100 stroke-info" strokeWidth="3" /><circle cx="546" cy="354" r="11" className="fill-base-100 stroke-base-content" strokeWidth="3" />
       <circle cx="648" cy="246" r="11" className="fill-base-100 stroke-info" strokeWidth="3" /><circle cx="648" cy="354" r="11" className="fill-base-100 stroke-base-content" strokeWidth="3" />
       <rect x="541" y="241" width="10" height="10" rx="2" className="fill-info-content" /><rect x="541" y="349" width="10" height="10" rx="2" className="fill-base-content" />
