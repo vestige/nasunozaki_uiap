@@ -12,6 +12,8 @@ import { runProgram } from "../utils/execution";
 import { createBoardExecutionSession } from "../utils/executionSession";
 import {
   clearBlocklyWorkspace,
+  hasTactSwitchBlock,
+  loadBlocklySavedState,
   loadBlocklyWorkspace,
   saveBlocklyWorkspace,
 } from "../utils/persistence";
@@ -118,8 +120,11 @@ export function BlocklyStudio() {
         resizeFrame = requestAnimationFrame(() => Blockly.svgResize(workspace));
       });
       resizeObserver.observe(node);
-      const saved = loadBlocklyWorkspace(window.localStorage);
-      Blockly.serialization.workspaces.load(saved ?? starterProgram, workspace);
+      const saved = loadBlocklySavedState(window.localStorage);
+      const tactSwitchEnabled = saved?.tactSwitchEnabled ?? false;
+      Blockly.serialization.workspaces.load(saved?.workspace ?? starterProgram, workspace);
+      client.setQueryData(queryKeys.tactSwitchExtension, tactSwitchEnabled);
+      if (tactSwitchEnabled) workspace.updateToolbox(tactSwitchToolbox);
       client.setQueryData(
         queryKeys.blocklyProgram,
         compileWorkspace(workspace),
@@ -137,6 +142,7 @@ export function BlocklyStudio() {
           saveBlocklyWorkspace(
             window.localStorage,
             Blockly.serialization.workspaces.save(workspace),
+            client.getQueryData<boolean>(queryKeys.tactSwitchExtension) ?? false,
           );
           client.setQueryData<SaveStatus>(queryKeys.blocklySaveStatus, {
             kind: "saved",
@@ -236,6 +242,8 @@ export function BlocklyStudio() {
       if (!workspace) throw new Error("Blocklyを準備中です。");
       const project = createBlocklyProjectFile(
         Blockly.serialization.workspaces.save(workspace),
+        new Date(),
+        tactSwitchExtension.data,
       );
       downloadTextFile(
         createBlocklyProjectFileName(new Date(project.savedAt)),
@@ -259,7 +267,10 @@ export function BlocklyStudio() {
       stop();
       workspace.clear();
       Blockly.serialization.workspaces.load(project.workspace, workspace);
-      saveBlocklyWorkspace(window.localStorage, project.workspace);
+      const tactSwitchEnabled = project.extensions?.tactSwitch === true || hasTactSwitchBlock(project.workspace);
+      client.setQueryData(queryKeys.tactSwitchExtension, tactSwitchEnabled);
+      workspace.updateToolbox(tactSwitchEnabled ? tactSwitchToolbox : uiapToolbox);
+      saveBlocklyWorkspace(window.localStorage, project.workspace, tactSwitchEnabled);
       client.setQueryData(
         queryKeys.blocklyProgram,
         compileWorkspace(workspace),
@@ -369,6 +380,7 @@ export function BlocklyStudio() {
               workspaceRef.current?.updateToolbox(
                 enabled ? tactSwitchToolbox : uiapToolbox,
               );
+              if (workspaceRef.current) saveBlocklyWorkspace(window.localStorage, Blockly.serialization.workspaces.save(workspaceRef.current), enabled);
             }}
           >
             {tactSwitchExtension.data ? "タクトスイッチを外す" : "タクトスイッチを使う"}

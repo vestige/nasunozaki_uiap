@@ -31,7 +31,7 @@ describe("Blockly workspace persistence", () => {
     expect(loadBlocklyWorkspace(storage)).toBeNull();
     storage.setItem(
       BLOCKLY_STORAGE_KEY,
-      JSON.stringify({ version: 2, workspace: {} }),
+      JSON.stringify({ version: 3, workspace: {} }),
     );
     expect(loadBlocklyWorkspace(storage)).toBeNull();
   });
