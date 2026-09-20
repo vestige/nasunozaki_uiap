@@ -35,7 +35,9 @@ void handleMessage(const uint8_t *message, uint8_t length) {
   const uint8_t command = length > 5 ? message[5] : 0;
   const uint8_t sequence = length > 6 ? message[6] : 0;
 
-  if (length != kMessageSize || !hasMagic(message) ||
+  // Windows HID requires the full 32-byte Feature Report declared by the
+  // descriptor. The UIAP protocol remains in the first 8 bytes.
+  if (length < kMessageSize || !hasMagic(message) ||
       message[4] != kVersion || (command & kResponse) != 0) {
     sendResponse(command, sequence, kInvalidPayload);
     return;

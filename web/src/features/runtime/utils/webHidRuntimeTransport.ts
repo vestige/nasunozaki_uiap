@@ -3,7 +3,10 @@ import type {
   RuntimeInputReportEvent,
   RuntimeTransport,
 } from "../types/transport";
-import { RUNTIME_MESSAGE_SIZE } from "./runtimeProtocol";
+import {
+  RUNTIME_FEATURE_REPORT_SIZE,
+  RUNTIME_MESSAGE_SIZE,
+} from "./runtimeProtocol";
 import { RuntimeDiagnosticError } from "./runtimeDiagnostic";
 
 export const DEFAULT_RUNTIME_REPORT_ID = 0;
@@ -33,10 +36,9 @@ export class WebHidRuntimeTransport implements RuntimeTransport {
       );
     }
     try {
-      await this.device.sendFeatureReport(
-        this.reportId,
-        new Uint8Array(message),
-      );
+      const report = new Uint8Array(RUNTIME_FEATURE_REPORT_SIZE);
+      report.set(message);
+      await this.device.sendFeatureReport(this.reportId, report);
     } catch (cause) {
       throw new RuntimeDiagnosticError(
         "SEND_FAILED",
