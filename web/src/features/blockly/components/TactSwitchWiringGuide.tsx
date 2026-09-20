@@ -62,9 +62,11 @@ function WiringDiagram() {
         return <circle key={`${column}-${row}`} cx={x} cy={y} r="9" className={isTopContact ? "fill-info stroke-info-content" : isBottomContact ? "fill-base-content stroke-base-content" : "fill-base-content/55 stroke-base-content/30"} strokeWidth="2" />;
       }))}
       <path d="M142 332 H330 V246 H546" className="fill-none stroke-info" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="326" y="232" className="fill-info text-[14px] font-black">D5</text>
+      <rect x="276" y="210" width="82" height="30" rx="7" className="fill-base-100 stroke-info" strokeWidth="2" />
+      <text x="317" y="230" textAnchor="middle" className="fill-info text-[14px] font-black">D5 / PC3</text>
       <path d="M142 202 H360 V354 H546" className="fill-none stroke-base-content" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="362" y="390" className="fill-base-content text-[14px] font-black">GND</text>
+      <rect x="370" y="364" width="62" height="30" rx="7" className="fill-base-100 stroke-base-content" strokeWidth="2" />
+      <text x="401" y="384" textAnchor="middle" className="fill-base-content text-[14px] font-black">GND</text>
       <rect x="530" y="202" width="138" height="160" rx="16" className="fill-base-100 stroke-base-content" strokeWidth="3" />
       <rect x="570" y="244" width="58" height="76" rx="25" className="fill-error" opacity=".85" />
       <path d="M546 246 H648 M546 246 H530 M648 246 H668" className="fill-none stroke-info" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
@@ -72,9 +74,10 @@ function WiringDiagram() {
       <path d="M599 270 V330" className="fill-none stroke-base-300" strokeWidth="7" strokeLinecap="round" strokeDasharray="9 9" />
       <circle cx="546" cy="246" r="15" className="fill-none stroke-info" strokeWidth="3" /><circle cx="546" cy="354" r="15" className="fill-none stroke-info" strokeWidth="3" />
       <circle cx="648" cy="246" r="15" className="fill-none stroke-base-content" strokeWidth="3" /><circle cx="648" cy="354" r="15" className="fill-none stroke-base-content" strokeWidth="3" />
-      <text x="599" y="414" textAnchor="middle" className="fill-info text-[14px] font-black">上側の左右2本は常時つながる</text>
-      <text x="599" y="438" textAnchor="middle" className="fill-base-content text-[14px] font-black">下側の左右2本は常時つながる</text>
-      <text x="599" y="452" textAnchor="middle" className="fill-base-content text-[15px] font-black">横向きに置き、中央の溝をまたぐ</text>
+      <rect x="432" y="392" width="334" height="96" rx="10" className="fill-base-100 stroke-base-300" strokeWidth="2" />
+      <text x="599" y="420" textAnchor="middle" className="fill-info text-[14px] font-black">上側の左右2本は常時つながる</text>
+      <text x="599" y="446" textAnchor="middle" className="fill-base-content text-[14px] font-black">下側の左右2本は常時つながる</text>
+      <text x="599" y="472" textAnchor="middle" className="fill-base-content text-[15px] font-black">横向きに置き、中央の溝をまたぐ</text>
       <text x="599" y="652" textAnchor="middle" className="fill-base-content/65 text-[14px] font-black">押した時だけ上下が導通し、D5 は GND につながって LOW になる</text>
     </svg>
   );
