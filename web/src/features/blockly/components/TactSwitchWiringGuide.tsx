@@ -14,7 +14,7 @@ export function TactSwitchWiringGuide() {
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_17rem]">
-        <div className="overflow-x-auto rounded-box bg-base-200 p-3 sm:p-5"><WiringDiagram /></div>
+        <div className="rounded-box bg-base-200 p-2 sm:p-3"><WiringDiagram /></div>
         <ol className="grid content-start gap-4" aria-label="配線の手順">
           <GuideStep number="1" title="真ん中の溝をまたぐ">タクトスイッチを横向きにして、ブレッドボード中央の溝をまたぐように置きます。</GuideStep>
           <GuideStep number="2" title="左側に2本つなぐ">青いD5は左上、黒いGNDは左下の足へつなぎます。配線はUIAPduinoに近い片側だけで完結します。</GuideStep>
@@ -28,7 +28,7 @@ export function TactSwitchWiringGuide() {
 
 function WiringDiagram() {
   return (
-    <svg viewBox="0 0 900 680" className="min-w-[46rem] w-full" role="img" aria-labelledby="wiring-diagram-title wiring-diagram-description">
+    <svg viewBox="0 0 900 680" className="w-full" role="img" aria-labelledby="wiring-diagram-title wiring-diagram-description">
       <title id="wiring-diagram-title">中央の溝をまたぐタクトスイッチの固定配線</title>
       <desc id="wiring-diagram-description">UIAPduino左側のD5とGNDから、ブレッドボード中央の溝をまたぐ横向きタクトスイッチの左側の上と下の足へ配線する図。上側の左右2本、下側の左右2本は常時つながり、押した時だけ上下がつながる。</desc>
       <text x="42" y="34" className="fill-base-content text-[19px] font-black">UIAPduino（USB-Cを上にして見る）</text>

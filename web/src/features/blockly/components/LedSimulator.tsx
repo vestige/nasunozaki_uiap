@@ -16,7 +16,7 @@ export function LedSimulator({
   onButtonChange,
 }: Props) {
   return (
-    <aside className="card min-w-0 border-2 border-neutral bg-neutral text-neutral-content shadow-xl">
+    <aside className="card h-[38rem] min-w-0 border-2 border-neutral bg-neutral text-neutral-content shadow-xl lg:h-[44rem]">
       <div className="card-body items-center text-center">
         <p className="text-sm font-black tracking-widest text-neutral-content/60">
           BOARD SIMULATOR

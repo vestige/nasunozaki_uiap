@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Blockly from "blockly/core";
 import {
@@ -45,6 +45,7 @@ export function BlocklyStudio() {
   const client = useQueryClient();
   const abortRef = useRef<AbortController | null>(null);
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
+  const [activeEditorTab, setActiveEditorTab] = useState<"blocks" | "wiring">("blocks");
   const program = useQuery<ProgramInstruction[]>({
     queryKey: queryKeys.blocklyProgram,
     queryFn: async () => [],
@@ -363,48 +364,11 @@ export function BlocklyStudio() {
         </div>
       </div>
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <div className="lg:col-span-2 rounded-box border border-base-300 bg-base-200 p-4 sm:flex sm:items-center sm:justify-between">
-          <div>
-            <p className="font-black">拡張：タクトスイッチ</p>
-            <p className="mt-1 text-sm text-base-content/65">
-              固定配線はD5とGNDです。追加すると条件ブロックと画面上のスイッチが使えます。
-            </p>
-          </div>
-          <button
-            type="button"
-            className={`btn mt-3 sm:mt-0 ${tactSwitchExtension.data ? "btn-outline" : "btn-primary"}`}
-            onClick={() => {
-              const enabled = !tactSwitchExtension.data;
-              client.setQueryData(queryKeys.tactSwitchExtension, enabled);
-              client.setQueryData(queryKeys.simulatorButton, false);
-              workspaceRef.current?.updateToolbox(
-                enabled ? tactSwitchToolbox : uiapToolbox,
-              );
-              if (workspaceRef.current) saveBlocklyWorkspace(window.localStorage, Blockly.serialization.workspaces.save(workspaceRef.current), enabled);
-            }}
-          >
-            {tactSwitchExtension.data ? "タクトスイッチを外す" : "タクトスイッチを使う"}
-          </button>
+        <div className="lg:col-span-2">
+          <div className="tabs tabs-lift after:hidden" role="tablist" aria-label="Blocklyと配線ガイドの表示切り替え"><button type="button" role="tab" aria-selected={activeEditorTab === "blocks"} className={`tab ${activeEditorTab === "blocks" ? "tab-active" : ""}`} onClick={() => setActiveEditorTab("blocks")}>ブロックプログラミング</button>{tactSwitchExtension.data ? <div role="tab" aria-selected={activeEditorTab === "wiring"} className={`tab gap-1 ${activeEditorTab === "wiring" ? "tab-active" : ""}`}><button type="button" className="h-full" onClick={() => setActiveEditorTab("wiring")}>タクトスイッチ</button><button type="button" className="btn btn-circle btn-ghost btn-xs" aria-label="タクトスイッチを外す" onClick={() => { if (!window.confirm("タクトスイッチ拡張を外します。すでに置いたブロックは消えません。続けますか？")) return; client.setQueryData(queryKeys.tactSwitchExtension, false); client.setQueryData(queryKeys.simulatorButton, false); workspaceRef.current?.updateToolbox(uiapToolbox); if (workspaceRef.current) saveBlocklyWorkspace(window.localStorage, Blockly.serialization.workspaces.save(workspaceRef.current), false); setActiveEditorTab("blocks"); }}>×</button></div> : <button type="button" className="tab" onClick={() => { client.setQueryData(queryKeys.tactSwitchExtension, true); workspaceRef.current?.updateToolbox(tactSwitchToolbox); if (workspaceRef.current) saveBlocklyWorkspace(window.localStorage, Blockly.serialization.workspaces.save(workspaceRef.current), true); setActiveEditorTab("wiring"); }}>＋ タクトスイッチを追加</button>}</div>
+          {tactSwitchExtension.data && activeEditorTab === "wiring" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><p className="mb-3 font-black">タクトスイッチの配線</p><TactSwitchWiringGuide /></div>}
+          <div className={`rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem] ${tactSwitchExtension.data && activeEditorTab === "wiring" ? "hidden" : ""}`}><div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]"><div ref={mountWorkspace} className="blockly-workspace h-[38rem] w-full min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl lg:h-[44rem]" aria-label="ブロックプログラミング編集エリア" /><LedSimulator ledOn={led.data} buttonPressed={button.data} extensionEnabled={tactSwitchExtension.data} instructions={program.data} onButtonChange={(pressed) => client.setQueryData(queryKeys.simulatorButton, pressed)} /></div></div>
         </div>
-        {tactSwitchExtension.data && (
-          <div className="lg:col-span-2">
-            <TactSwitchWiringGuide />
-          </div>
-        )}
-        <div
-          ref={mountWorkspace}
-          className="blockly-workspace h-[34rem] w-full min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl"
-          aria-label="ブロックプログラミング編集エリア"
-        />
-        <LedSimulator
-          ledOn={led.data}
-          buttonPressed={button.data}
-          extensionEnabled={tactSwitchExtension.data}
-          instructions={program.data}
-          onButtonChange={(pressed) =>
-            client.setQueryData(queryKeys.simulatorButton, pressed)
-          }
-        />
       </div>
     </section>
   );
