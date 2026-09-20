@@ -1,5 +1,6 @@
 const LEFT_PINS = ["TX / 15", "RX / 16", "GND", "GND", "SDA / 3", "SCL / 4", "PC0 / 2", "PC3 / D5", "PD1 / 11", "PC5 / 7", "PC6 / 8", "PC7 / 9"];
 const HOLE_ROWS = Array.from({ length: 12 }, (_, index) => index + 1);
+const BREADBOARD_COLUMNS = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
 
 export function TactSwitchWiringGuide() {
   return (
@@ -13,73 +14,67 @@ export function TactSwitchWiringGuide() {
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_17rem]">
-        <div className="overflow-x-auto rounded-box bg-base-200 p-3 sm:p-5">
-          <WiringDiagram />
-        </div>
+        <div className="overflow-x-auto rounded-box bg-base-200 p-3 sm:p-5"><WiringDiagram /></div>
         <ol className="grid content-start gap-4" aria-label="配線の手順">
-          <GuideStep number="1" title="足をH字に広げる">4本の足を少し広げ、タクトスイッチを縦向きに置きます。横方向に3列の穴を使います。</GuideStep>
-          <GuideStep number="2" title="上と下に1本ずつつなぐ">青いD5は上側の接点へ、黒いGNDは下側の接点へつなぎます。</GuideStep>
-          <GuideStep number="3" title="押すと上下がつながる">上側の2本どうし、下側の2本どうしは常につながっています。押している間だけ上下がつながります。</GuideStep>
+          <GuideStep number="1" title="真ん中の溝をまたぐ">タクトスイッチを横向きにして、ブレッドボード中央の溝をまたぐように置きます。</GuideStep>
+          <GuideStep number="2" title="左右に1本ずつつなぐ">青いD5は左側の接点へ、黒いGNDは右側の接点へつなぎます。上・下のどちらの足でも大丈夫です。</GuideStep>
+          <GuideStep number="3" title="押すとD5がLOWになる">左右それぞれの上下2本は常時つながっています。押している間だけ左右がつながり、D5がGNDへつながります。</GuideStep>
         </ol>
       </div>
-      <p className="mt-4 text-sm text-base-content/65">D5・GNDの位置は、USB-Cを上にして見たUIAPduino左側ピン列を基準にしています。</p>
+      <p className="mt-4 text-sm text-base-content/65">スイッチの中を読みやすくするため、ブレッドボードの穴の縦間隔は説明用に広げて表示しています。</p>
     </section>
   );
 }
 
 function WiringDiagram() {
   return (
-    <svg viewBox="0 0 820 510" className="min-w-[42rem] w-full" role="img" aria-labelledby="wiring-diagram-title wiring-diagram-description">
-      <title id="wiring-diagram-title">UIAPduinoとH字に置くタクトスイッチの固定配線</title>
-      <desc id="wiring-diagram-description">UIAPduino左側のD5とGNDの穴から、ブレッドボード上で縦向きに置いたタクトスイッチの上側と下側の接点へ配線する図。</desc>
-      <text x="40" y="28" className="fill-base-content text-[19px] font-black">UIAPduino（USB-Cを上にして見る）</text>
-      <rect x="120" y="48" width="154" height="394" rx="14" className="fill-neutral stroke-base-300" strokeWidth="2" />
-      <rect x="157" y="58" width="80" height="40" rx="10" className="fill-base-100 stroke-base-300" />
-      <text x="197" y="84" textAnchor="middle" className="fill-base-content text-[14px] font-black">USB-C</text>
-      <text x="197" y="124" textAnchor="middle" className="fill-neutral-content/65 text-[14px]">左側ピン列</text>
+    <svg viewBox="0 0 900 680" className="min-w-[46rem] w-full" role="img" aria-labelledby="wiring-diagram-title wiring-diagram-description">
+      <title id="wiring-diagram-title">中央の溝をまたぐタクトスイッチの固定配線</title>
+      <desc id="wiring-diagram-description">UIAPduino左側のD5とGNDから、ブレッドボード中央の溝をまたぐ横向きタクトスイッチの左右別々の接点へ配線する図。左右それぞれの上下2本は常時つながり、押した時だけ左右がつながる。</desc>
+      <text x="42" y="34" className="fill-base-content text-[19px] font-black">UIAPduino（USB-Cを上にして見る）</text>
+      <rect x="112" y="54" width="172" height="430" rx="14" className="fill-neutral stroke-base-300" strokeWidth="2" />
+      <rect x="158" y="64" width="80" height="40" rx="10" className="fill-base-100 stroke-base-300" />
+      <text x="198" y="90" textAnchor="middle" className="fill-base-content text-[14px] font-black">USB-C</text>
+      <text x="198" y="126" textAnchor="middle" className="fill-neutral-content/65 text-[14px]">左側ピン列</text>
       {LEFT_PINS.map((pin, index) => {
-        const y = 148 + index * 24;
+        const y = 150 + index * 26;
         const isGround = index === 2;
         const isD5 = index === 7;
-        return (
-          <g key={pin}>
-            <circle cx="150" cy={y} r="10" className={isD5 ? "fill-info stroke-info-content" : isGround ? "fill-base-100 stroke-base-content" : "fill-neutral-content/75 stroke-neutral-content"} strokeWidth="2" />
-            {(isGround || isD5) && <circle cx="150" cy={y} r="15" className={isD5 ? "fill-none stroke-info" : "fill-none stroke-base-content"} strokeWidth="3" />}
-            <text x="170" y={y + 5} className={isD5 ? "fill-info text-[13px] font-black" : isGround ? "fill-base-100 text-[13px] font-black" : "fill-neutral-content text-[13px]"}>{pin}</text>
-          </g>
-        );
+        return <g key={pin}><circle cx="142" cy={y} r="10" className={isD5 ? "fill-info stroke-info-content" : isGround ? "fill-base-100 stroke-base-content" : "fill-neutral-content/75 stroke-neutral-content"} strokeWidth="2" />{(isGround || isD5) && <circle cx="142" cy={y} r="15" className={isD5 ? "fill-none stroke-info" : "fill-none stroke-base-content"} strokeWidth="3" />}<text x="162" y={y + 5} className={isD5 ? "fill-info text-[13px] font-black" : isGround ? "fill-base-100 text-[13px] font-black" : "fill-neutral-content text-[13px]"}>{pin}</text></g>;
       })}
-      {HOLE_ROWS.map((row) => <circle key={`right-${row}`} cx="244" cy={148 + (row - 1) * 24} r="10" className="fill-neutral-content/75 stroke-neutral-content" strokeWidth="2" />)}
-      <text x="120" y="468" className="fill-neutral-content/65 text-[14px]">丸印が使う実際の穴</text>
+      {HOLE_ROWS.map((row) => <circle key={`right-${row}`} cx="254" cy={150 + (row - 1) * 26} r="10" className="fill-neutral-content/75 stroke-neutral-content" strokeWidth="2" />)}
+      <text x="112" y="512" className="fill-neutral-content/65 text-[14px]">丸印が使う実際の穴</text>
 
-      <text x="408" y="28" className="fill-base-content text-[19px] font-black">ブレッドボード（電源レールなし）</text>
-      <rect x="420" y="48" width="330" height="394" rx="14" className="fill-base-100 stroke-base-300" strokeWidth="2" />
-      {["a", "b", "c", "d", "e"].map((column, index) => <text key={column} x={505 + index * 30} y="104" textAnchor="middle" className="fill-base-content text-[12px] font-black">{column}</text>)}
-      {HOLE_ROWS.flatMap((row) => [0, 1, 2, 3, 4].map((column) => {
-        const x = 505 + column * 30;
-        const y = 142 + (row - 1) * 24;
-        const isTopContact = row === 3 && (column === 1 || column === 2);
-        const isBottomContact = row === 7 && (column === 1 || column === 2);
-        return <circle key={`${row}-${column}`} cx={x} cy={y} r="8" className={isTopContact ? "fill-info stroke-info-content" : isBottomContact ? "fill-base-content stroke-base-content" : "fill-base-content/55 stroke-base-content/30"} strokeWidth="2" />;
+      <text x="372" y="34" className="fill-base-content text-[19px] font-black">ブレッドボード（電源レールなし）</text>
+      <text x="372" y="58" className="fill-base-content/65 text-[14px]">穴の縦間隔を広げた説明用の図</text>
+      <rect x="360" y="76" width="478" height="548" rx="16" className="fill-base-100 stroke-base-300" strokeWidth="2" />
+      <rect x="574" y="96" width="50" height="508" rx="8" className="fill-base-200 stroke-base-300" strokeWidth="2" />
+      <text x="599" y="120" textAnchor="middle" className="fill-base-content/65 text-[12px] font-black">中央の溝</text>
+      {BREADBOARD_COLUMNS.map((column, index) => {
+        const x = index < 5 ? 410 + index * 34 : 648 + (index - 5) * 34;
+        return <text key={column} x={x} y="146" textAnchor="middle" className="fill-base-content text-[12px] font-black">{column}</text>;
+      })}
+      {HOLE_ROWS.flatMap((row) => BREADBOARD_COLUMNS.map((column, index) => {
+        const x = index < 5 ? 410 + index * 34 : 648 + (index - 5) * 34;
+        const y = 174 + (row - 1) * 36;
+        const isLeftContact = (row === 3 || row === 6) && column === "e";
+        const isRightContact = (row === 3 || row === 6) && column === "f";
+        return <circle key={`${column}-${row}`} cx={x} cy={y} r="9" className={isLeftContact ? "fill-info stroke-info-content" : isRightContact ? "fill-base-content stroke-base-content" : "fill-base-content/55 stroke-base-content/30"} strokeWidth="2" />;
       }))}
-      <path d="M150 316 H365 V190 H535" className="fill-none stroke-info" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="362" y="178" className="fill-info text-[14px] font-black">D5</text>
-      <path d="M150 196 H335 V286 H535" className="fill-none stroke-base-content" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="336" y="274" className="fill-base-content text-[14px] font-black">GND</text>
-
-      <rect x="518" y="162" width="94" height="152" rx="10" className="fill-base-100 stroke-base-content" strokeWidth="3" />
-      <rect x="539" y="213" width="52" height="50" rx="19" className="fill-error" opacity=".85" />
-      <path d="M535 190 H565 M535 286 H565" className="fill-none stroke-base-content" strokeWidth="5" strokeLinecap="round" />
-      <path d="M565 190 V220 M565 256 V286" className="fill-none stroke-base-content" strokeWidth="4" strokeLinecap="round" />
-      <path d="M565 220 V256" className="fill-none stroke-base-300" strokeWidth="4" strokeLinecap="round" strokeDasharray="6 6" />
-      <circle cx="535" cy="190" r="13" className="fill-none stroke-info" strokeWidth="3" /><circle cx="565" cy="190" r="11" className="fill-none stroke-info" strokeWidth="2" />
-      <circle cx="535" cy="286" r="13" className="fill-none stroke-base-content" strokeWidth="3" /><circle cx="565" cy="286" r="11" className="fill-none stroke-base-content" strokeWidth="2" />
-      <text x="628" y="190" className="fill-info text-[14px] font-black">上側の2本は常時つながる</text>
-      <text x="628" y="286" className="fill-base-content text-[14px] font-black">下側の2本は常時つながる</text>
-      <text x="565" y="344" textAnchor="middle" className="fill-base-content text-[14px] font-black">H字に足を広げて縦置き</text>
-      <path d="M535 368 H595" className="fill-none stroke-warning" strokeWidth="2" />
-      <text x="565" y="392" textAnchor="middle" className="fill-warning text-[13px] font-black">3列を使用</text>
-      <text x="585" y="468" textAnchor="middle" className="fill-base-content/65 text-[14px] font-black">D5 は上側、GND は下側の接点に1本ずつつなぐ</text>
+      <path d="M142 332 H330 V246 H546" className="fill-none stroke-info" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+      <text x="326" y="232" className="fill-info text-[14px] font-black">D5</text>
+      <path d="M142 202 H316 V246 H648" className="fill-none stroke-base-content" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+      <text x="318" y="284" className="fill-base-content text-[14px] font-black">GND</text>
+      <rect x="530" y="202" width="138" height="160" rx="16" className="fill-base-100 stroke-base-content" strokeWidth="3" />
+      <rect x="570" y="244" width="58" height="76" rx="25" className="fill-error" opacity=".85" />
+      <path d="M546 246 V354 M546 246 H530 M546 354 H530 M648 246 V354 M648 246 H668 M648 354 H668" className="fill-none stroke-base-content" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M572 300 H622" className="fill-none stroke-base-300" strokeWidth="7" strokeLinecap="round" strokeDasharray="9 9" />
+      <circle cx="546" cy="246" r="15" className="fill-none stroke-info" strokeWidth="3" /><circle cx="546" cy="354" r="15" className="fill-none stroke-info" strokeWidth="3" />
+      <circle cx="648" cy="246" r="15" className="fill-none stroke-base-content" strokeWidth="3" /><circle cx="648" cy="354" r="15" className="fill-none stroke-base-content" strokeWidth="3" />
+      <text x="476" y="414" textAnchor="middle" className="fill-info text-[14px] font-black">左側の上下2本は常時つながる</text>
+      <text x="720" y="414" textAnchor="middle" className="fill-base-content text-[14px] font-black">右側の上下2本は常時つながる</text>
+      <text x="599" y="452" textAnchor="middle" className="fill-base-content text-[15px] font-black">横向きに置き、中央の溝をまたぐ</text>
+      <text x="599" y="652" textAnchor="middle" className="fill-base-content/65 text-[14px] font-black">押した時だけ左右が導通し、D5 は GND につながって LOW になる</text>
     </svg>
   );
 }
