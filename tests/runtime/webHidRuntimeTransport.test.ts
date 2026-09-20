@@ -42,15 +42,31 @@ function fakeDevice() {
 }
 
 describe("WebHidRuntimeTransport", () => {
-  it("8バイト命令を32バイトへpaddingしてReport ID 0で送る", async () => {
+  it("既存ランタイムとの互換性を保つため最初は8バイトで送る", async () => {
     const fake = fakeDevice();
     const transport = new WebHidRuntimeTransport(fake.device);
     const message = Uint8Array.from([0x55, 0x49, 0x41, 0x50, 1, 1, 0, 1]);
 
     await transport.send(message);
 
-    expect(fake.sendFeatureReport).toHaveBeenCalledOnce();
-    const [reportId, report] = fake.sendFeatureReport.mock.calls[0];
+    expect(fake.sendFeatureReport).toHaveBeenCalledWith(
+      DEFAULT_RUNTIME_REPORT_ID,
+      message,
+    );
+  });
+
+  it("Windowsが短いFeature Reportを拒否した場合だけ32バイトで再送する", async () => {
+    const fake = fakeDevice();
+    fake.sendFeatureReport.mockRejectedValueOnce(
+      new DOMException("Failed to write the feature report.", "NotAllowedError"),
+    );
+    const transport = new WebHidRuntimeTransport(fake.device);
+    const message = Uint8Array.from([0x55, 0x49, 0x41, 0x50, 1, 1, 0, 1]);
+
+    await transport.send(message);
+
+    expect(fake.sendFeatureReport).toHaveBeenCalledTimes(2);
+    const [reportId, report] = fake.sendFeatureReport.mock.calls[1];
     expect(reportId).toBe(DEFAULT_RUNTIME_REPORT_ID);
     expect(report).toHaveLength(32);
     expect([...report.slice(0, 8)]).toEqual([...message]);

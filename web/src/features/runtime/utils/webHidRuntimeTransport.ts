@@ -36,9 +36,18 @@ export class WebHidRuntimeTransport implements RuntimeTransport {
       );
     }
     try {
-      const report = new Uint8Array(RUNTIME_FEATURE_REPORT_SIZE);
-      report.set(message);
-      await this.device.sendFeatureReport(this.reportId, report);
+      try {
+        // Keep the original 8-byte transfer for already-installed runtimes.
+        await this.device.sendFeatureReport(this.reportId, new Uint8Array(message));
+      } catch (cause) {
+        if (!(cause instanceof Error) || cause.name !== "NotAllowedError") {
+          throw cause;
+        }
+        // Windows HID requires the descriptor's full 32-byte report length.
+        const report = new Uint8Array(RUNTIME_FEATURE_REPORT_SIZE);
+        report.set(message);
+        await this.device.sendFeatureReport(this.reportId, report);
+      }
     } catch (cause) {
       throw new RuntimeDiagnosticError(
         "SEND_FAILED",

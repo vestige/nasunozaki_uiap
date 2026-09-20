@@ -20,7 +20,7 @@ https://raw.githubusercontent.com/tarosay/board_manager_files/main/package_uiap_
 - ブラウザ → UIAPduino: EP0 Feature Report、32バイトで転送し、先頭8バイトを命令として使用
 - UIAPduino → ブラウザ: EP1 Input Report、8バイト
 
-プロトコルは両方向とも `UIAP`識別子、version、command、8bit sequence、payload/statusからなる同じ8バイト構造を使います。Windows HIDとの互換性のため、ブラウザから送る32バイトFeature Reportは先頭8バイトに命令を格納し、残り24バイトを0で埋めます。command `0x01`は内蔵LED、`0x02`はD5（PC3）へ接続した外付けボタンの単発読み取りです。
+プロトコルは両方向とも `UIAP`識別子、version、command、8bit sequence、payload/statusからなる同じ8バイト構造を使います。ブラウザは既存ランタイムとの互換性のため最初に8バイトで送り、Windows HIDが短いreport bufferを拒否した場合だけ、先頭8バイトに命令を格納して残り24バイトを0で埋めた32バイトFeature Reportで再送します。command `0x01`は内蔵LED、`0x02`はD5（PC3）へ接続した外付けボタンの単発読み取りです。
 
 ## 外付けボタン
 
