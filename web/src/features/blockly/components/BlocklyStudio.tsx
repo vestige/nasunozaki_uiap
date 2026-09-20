@@ -364,31 +364,7 @@ export function BlocklyStudio() {
         </div>
       </div>
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <div className="lg:col-span-2 rounded-box border border-base-300 bg-base-200 p-4 sm:flex sm:items-center sm:justify-between">
-          <div>
-            <p className="font-black">拡張：タクトスイッチ</p>
-            <p className="mt-1 text-sm text-base-content/65">
-              固定配線はD5とGNDです。追加すると条件ブロックと画面上のスイッチが使えます。
-            </p>
-          </div>
-          <button
-            type="button"
-            className={`btn mt-3 sm:mt-0 ${tactSwitchExtension.data ? "btn-outline" : "btn-primary"}`}
-            onClick={() => {
-              const enabled = !tactSwitchExtension.data;
-              client.setQueryData(queryKeys.tactSwitchExtension, enabled);
-              client.setQueryData(queryKeys.simulatorButton, false);
-              if (!enabled) setActiveEditorTab("blocks");
-              workspaceRef.current?.updateToolbox(
-                enabled ? tactSwitchToolbox : uiapToolbox,
-              );
-              if (workspaceRef.current) saveBlocklyWorkspace(window.localStorage, Blockly.serialization.workspaces.save(workspaceRef.current), enabled);
-            }}
-          >
-            {tactSwitchExtension.data ? "タクトスイッチを外す" : "タクトスイッチを使う"}
-          </button>
-        </div>
-        {tactSwitchExtension.data && <div className="lg:col-span-2 tabs tabs-boxed" role="tablist" aria-label="Blocklyと配線ガイドの表示切り替え"><button type="button" role="tab" aria-selected={activeEditorTab === "blocks"} className={`tab ${activeEditorTab === "blocks" ? "tab-active" : ""}`} onClick={() => setActiveEditorTab("blocks")}>ブロックプログラミング</button><button type="button" role="tab" aria-selected={activeEditorTab === "wiring"} className={`tab ${activeEditorTab === "wiring" ? "tab-active" : ""}`} onClick={() => setActiveEditorTab("wiring")}>タクトスイッチ配線</button></div>}
+        <div className="lg:col-span-2 tabs tabs-boxed" role="tablist" aria-label="Blocklyと配線ガイドの表示切り替え"><button type="button" role="tab" aria-selected={activeEditorTab === "blocks"} className={`tab ${activeEditorTab === "blocks" ? "tab-active" : ""}`} onClick={() => setActiveEditorTab("blocks")}>ブロックプログラミング</button>{tactSwitchExtension.data ? <button type="button" role="tab" aria-selected={activeEditorTab === "wiring"} className={`tab ${activeEditorTab === "wiring" ? "tab-active" : ""}`} onClick={() => setActiveEditorTab("wiring")}>タクトスイッチ配線</button> : <button type="button" className="tab" onClick={() => { client.setQueryData(queryKeys.tactSwitchExtension, true); workspaceRef.current?.updateToolbox(tactSwitchToolbox); if (workspaceRef.current) saveBlocklyWorkspace(window.localStorage, Blockly.serialization.workspaces.save(workspaceRef.current), true); setActiveEditorTab("wiring"); }}>＋ タクトスイッチを追加</button>}</div>
         {tactSwitchExtension.data && activeEditorTab === "wiring" && <div className="lg:col-span-2" role="tabpanel"><TactSwitchWiringGuide /></div>}
         <div className={tactSwitchExtension.data && activeEditorTab === "wiring" ? "hidden" : "contents"}><div ref={mountWorkspace} className="blockly-workspace h-[34rem] w-full min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl" aria-label="ブロックプログラミング編集エリア" /><LedSimulator ledOn={led.data} buttonPressed={button.data} extensionEnabled={tactSwitchExtension.data} instructions={program.data} onButtonChange={(pressed) => client.setQueryData(queryKeys.simulatorButton, pressed)} /></div>
       </div>
