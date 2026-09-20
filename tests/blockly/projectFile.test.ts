@@ -26,7 +26,7 @@ describe("Blockly project file", () => {
       parseBlocklyProjectFile(
         JSON.stringify({
           format: "uiapduino-blockly-project",
-          version: 2,
+          version: 3,
           savedAt: savedAt.toISOString(),
           workspace,
         }),

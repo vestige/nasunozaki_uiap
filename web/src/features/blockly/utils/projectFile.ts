@@ -5,12 +5,14 @@ export const BLOCKLY_PROJECT_EXTENSION = ".uiap.json";
 export function createBlocklyProjectFile(
   workspace: Record<string, unknown>,
   savedAt = new Date(),
+  tactSwitchEnabled = false,
 ): BlocklyProjectFile {
   return {
     format: "uiapduino-blockly-project",
-    version: 1,
+    version: 2,
     savedAt: savedAt.toISOString(),
     workspace,
+    extensions: { tactSwitch: tactSwitchEnabled },
   };
 }
 
@@ -29,7 +31,7 @@ export function parseBlocklyProjectFile(raw: string): BlocklyProjectFile {
   if (!isRecord(value) || value.format !== "uiapduino-blockly-project") {
     throw new Error("UIAPduinoのブロック作品ファイルではありません。");
   }
-  if (value.version !== 1) {
+  if (value.version !== 1 && value.version !== 2) {
     throw new Error("このバージョンの作品ファイルにはまだ対応していません。");
   }
   if (!("workspace" in value) || !isRecord(value.workspace)) {
