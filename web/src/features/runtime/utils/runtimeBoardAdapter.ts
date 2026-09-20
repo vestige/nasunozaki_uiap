@@ -12,6 +12,7 @@ import {
   RUNTIME_COMMAND_SET_LED,
 } from "./runtimeProtocol";
 import { abortableDelay, withRuntimeResponseTimeout } from "./runtimeTiming";
+import { RuntimeDiagnosticError } from "./runtimeDiagnostic";
 
 const DEFAULT_TIMEOUT_MS = 1_000;
 const DEFAULT_MAX_IGNORED_RESPONSES = 8;
@@ -39,7 +40,17 @@ export class RuntimeBoardAdapter implements BoardAdapter {
         this.transport.receive(),
         this.responseTimeoutMs,
       );
-      const response = parseRuntimeResponse(bytes);
+      let response;
+      try {
+        response = parseRuntimeResponse(bytes);
+      } catch (error) {
+        throw new RuntimeDiagnosticError(
+          "INVALID_RESPONSE",
+          "led-receive",
+          "UIAPduinoから解析できない応答を受信しました。",
+          error,
+        );
+      }
       if (
         response.command !== RUNTIME_COMMAND_SET_LED ||
         response.sequence !== sequence

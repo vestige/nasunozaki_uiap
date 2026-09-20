@@ -57,12 +57,18 @@ function createRespondingDevice() {
 describe("runtime LED diagnostic", () => {
   it("LEDを点灯してから消灯し、2つの応答を記録する", async () => {
     const fake = createRespondingDevice();
+    const events: string[] = [];
 
-    const result = await runRuntimeLedDiagnostic(fake.device, 0);
+    const result = await runRuntimeLedDiagnostic(fake.device, 0, (event) =>
+      events.push(event.action),
+    );
 
     expect(fake.sent.map((message) => message[7])).toEqual([1, 0]);
     expect(result.received).toHaveLength(2);
     expect(result.received.map((message) => message[6])).toEqual([0, 1]);
+    expect(events).toContain("RUNTIME_LED_SEND_START");
+    expect(events).toContain("RUNTIME_LED_SEND_SUCCESS");
+    expect(events).toContain("RUNTIME_LED_RESPONSE_RECEIVED");
     expect(fake.hasListener()).toBe(false);
   });
 

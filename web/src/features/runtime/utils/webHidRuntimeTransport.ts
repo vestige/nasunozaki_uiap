@@ -4,6 +4,7 @@ import type {
   RuntimeTransport,
 } from "../types/transport";
 import { RUNTIME_MESSAGE_SIZE } from "./runtimeProtocol";
+import { RuntimeDiagnosticError } from "./runtimeDiagnostic";
 
 export const DEFAULT_RUNTIME_REPORT_ID = 0;
 
@@ -37,9 +38,11 @@ export class WebHidRuntimeTransport implements RuntimeTransport {
         new Uint8Array(message),
       );
     } catch (cause) {
-      throw new Error(
+      throw new RuntimeDiagnosticError(
+        "SEND_FAILED",
+        "led-send",
         "UIAPduinoへ命令を送信できませんでした。USB接続を確認し、通常動作モードへ再接続してください。",
-        { cause },
+        cause,
       );
     }
   }
@@ -87,7 +90,11 @@ export class WebHidRuntimeTransport implements RuntimeTransport {
       throw new Error("通常動作モードの通信は終了しています。");
     }
     if (!this.device.opened) {
-      throw new Error("通常動作モードのUIAPduinoが接続されていません。");
+      throw new RuntimeDiagnosticError(
+        "DEVICE_DISCONNECTED",
+        "led-send",
+        "通常動作モードのUIAPduinoが接続されていません。",
+      );
     }
   }
 }
