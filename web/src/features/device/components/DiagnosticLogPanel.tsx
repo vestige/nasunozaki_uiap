@@ -95,14 +95,21 @@ export function DiagnosticLogPanel({ diagnostics }: Props) {
                       </time>
                     </div>
                     <p className="mt-2 text-sm">{entry.message}</p>
+                    {entry.level === "error" && entry.details?.nextAction && (
+                      <p className="mt-2 rounded-lg bg-error/15 px-3 py-2 text-sm font-bold text-error-content">
+                        次に試すこと：{String(entry.details.nextAction)}
+                      </p>
+                    )}
                     {entry.details && (
                       <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-content/70">
-                        {Object.entries(entry.details).map(([key, value]) => (
+                        {Object.entries(entry.details)
+                          .filter(([key]) => key !== "nextAction")
+                          .map(([key, value]) => (
                           <div key={key} className="flex gap-1">
                             <dt>{key}=</dt>
                             <dd className="font-mono">{String(value)}</dd>
                           </div>
-                        ))}
+                          ))}
                       </dl>
                     )}
                   </li>

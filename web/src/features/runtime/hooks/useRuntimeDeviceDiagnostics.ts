@@ -14,6 +14,11 @@ import {
   runRuntimeLedDiagnostic,
 } from "../utils/runtimeLedDiagnostic";
 import { readRuntimeButton } from "../utils/runtimeButtonDiagnostic";
+import {
+  browserDiagnosticDetails,
+  formatVidPid,
+  runtimeErrorDetails,
+} from "../utils/runtimeDiagnostic";
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
@@ -50,6 +55,11 @@ export function useRuntimeDeviceDiagnostics() {
   const connect = useMutation({
     mutationFn: requestUiapRuntimeDevice,
     onMutate: () => {
+      appendLog("info", "RUNTIME_ENVIRONMENT", "ブラウザの接続環境を確認しました。", {
+        ...browserDiagnosticDetails(),
+        expectedMode: "runtime",
+        expectedVidPid: "1209:D004",
+      });
       appendLog("info", "RUNTIME_CONNECT", "通常動作モードのデバイス選択を開始しました。");
       client.setQueryData(
         queryKeys.runtimeConnectionMessage,
@@ -64,8 +74,9 @@ export function useRuntimeDeviceDiagnostics() {
       );
       appendLog("success", "RUNTIME_CONNECT", "教育用ランタイムへ接続しました。", {
         product: device.productName ?? "",
-        vendorId: "0x1209",
-        productId: "0xD004",
+        vidPid: formatVidPid(device.vendorId, device.productId),
+        opened: device.opened,
+        collections: device.collections.length,
       });
       watchRuntimeDisconnect(device, () => {
         client.setQueryData(queryKeys.runtimeDevice, null);
@@ -82,13 +93,16 @@ export function useRuntimeDeviceDiagnostics() {
         `確認できませんでした：${errorMessage(error)}`,
       );
       appendLog("error", "RUNTIME_CONNECT", "教育用ランタイムへ接続できませんでした。", {
-        error: errorMessage(error),
+        ...runtimeErrorDetails(error),
       });
     },
   });
 
   const ledCheck = useMutation({
-    mutationFn: () => runRuntimeLedDiagnostic(deviceQuery.data!),
+    mutationFn: () =>
+      runRuntimeLedDiagnostic(deviceQuery.data!, 400, (event) =>
+        appendLog(event.level, event.action, event.message, event.details),
+      ),
     onMutate: () => {
       client.setQueryData(
         queryKeys.runtimeConnectionMessage,
@@ -115,7 +129,7 @@ export function useRuntimeDeviceDiagnostics() {
         `LED往復確認に失敗しました：${errorMessage(error)}`,
       );
       appendLog("error", "RUNTIME_LED_CHECK", "LED往復確認に失敗しました。", {
-        error: errorMessage(error),
+        ...runtimeErrorDetails(error),
       });
     },
   });

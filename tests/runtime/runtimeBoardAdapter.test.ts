@@ -41,6 +41,17 @@ describe("RuntimeBoardAdapter", () => {
     await expect(adapter.setLed(true)).rejects.toThrow("invalid-payload");
   });
 
+  it("不正な応答を構造化エラーとして区別する", async () => {
+    const adapter = new RuntimeBoardAdapter(
+      fakeTransport([Uint8Array.from([0, 1, 2])]),
+    );
+
+    await expect(adapter.setLed(true)).rejects.toMatchObject({
+      code: "INVALID_RESPONSE",
+      phase: "led-receive",
+    });
+  });
+
   it("応答がなければtimeoutする", async () => {
     vi.useFakeTimers();
     const adapter = new RuntimeBoardAdapter(fakeTransport([]), {

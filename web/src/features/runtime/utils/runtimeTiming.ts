@@ -1,3 +1,5 @@
+import { RuntimeDiagnosticError } from "./runtimeDiagnostic";
+
 export function withRuntimeResponseTimeout<T>(
   promise: Promise<T>,
   milliseconds: number,
@@ -7,10 +9,15 @@ export function withRuntimeResponseTimeout<T>(
   }
 
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new Error("UIAPduinoからの応答がtimeoutしました。")),
-      milliseconds,
-    );
+    const timer = setTimeout(() => {
+      reject(
+        new RuntimeDiagnosticError(
+          "RESPONSE_TIMEOUT",
+          "led-receive",
+          `UIAPduinoからの応答がtimeoutしました（${milliseconds}ms）。`,
+        ),
+      );
+    }, milliseconds);
     promise.then(
       (value) => {
         clearTimeout(timer);
