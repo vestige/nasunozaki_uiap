@@ -6,6 +6,7 @@ import type {
   BoardExecutionSession,
   ExecutionTarget,
 } from "../types/execution";
+import { DebouncedButton } from "./buttonDebounce";
 
 type Options = {
   target: ExecutionTarget;
@@ -20,11 +21,12 @@ export function createBoardExecutionSession({
   setSimulatorLed,
   getSimulatorButton,
 }: Options): BoardExecutionSession {
+  const button = new DebouncedButton();
   if (target === "simulator") {
     return {
       board: {
         setLed: setSimulatorLed,
-        isButtonPressed: getSimulatorButton,
+        isButtonPressed: () => button.update(getSimulatorButton(), Date.now()),
         wait: abortableDelay,
       },
       async close(turnOff) {
@@ -40,7 +42,12 @@ export function createBoardExecutionSession({
   }
 
   const transport = new WebHidRuntimeTransport(runtimeDevice);
-  const board = new RuntimeBoardAdapter(transport);
+  const runtimeBoard = new RuntimeBoardAdapter(transport);
+  const board = {
+    setLed: (on: boolean) => runtimeBoard.setLed(on),
+    isButtonPressed: async () => button.update(await runtimeBoard.isButtonPressed(), Date.now()),
+    wait: (milliseconds: number, signal: AbortSignal) => runtimeBoard.wait(milliseconds, signal),
+  };
   let disconnected = false;
   const stopWatchingDisconnect = subscribeRuntimeDisconnect(
     runtimeDevice,
