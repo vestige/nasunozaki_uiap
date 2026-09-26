@@ -9,6 +9,7 @@ import {
 } from "../utils/blocks";
 import { compileWorkspace, type ProgramInstruction } from "../utils/program";
 import { runProgram } from "../utils/execution";
+import { createStepDisplayObserver } from "../utils/stepDisplay";
 import { createBoardExecutionSession } from "../utils/executionSession";
 import {
   clearBlocklyWorkspace,
@@ -45,7 +46,10 @@ export function BlocklyStudio() {
   const client = useQueryClient();
   const abortRef = useRef<AbortController | null>(null);
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
-  const [activeEditorTab, setActiveEditorTab] = useState<"blocks" | "wiring">("blocks");
+  const [activeEditorTab, setActiveEditorTab] = useState<"blocks" | "wiring">(
+    "blocks",
+  );
+  const [stepDisplay, setStepDisplay] = useState(false);
   const program = useQuery<ProgramInstruction[]>({
     queryKey: queryKeys.blocklyProgram,
     queryFn: async () => [],
@@ -193,12 +197,10 @@ export function BlocklyStudio() {
           program.data,
           session.board,
           controller.signal,
-          {
-            onInstruction: (blockId) => {
-              client.setQueryData(queryKeys.simulatorBlock, blockId);
-              workspace.highlightBlock(blockId);
-            },
-          },
+          createStepDisplayObserver(stepDisplay, (blockId) => {
+            client.setQueryData(queryKeys.simulatorBlock, blockId);
+            workspace.highlightBlock(blockId);
+          }),
         );
       } catch (error) {
         turnOff = true;
@@ -330,6 +332,7 @@ export function BlocklyStudio() {
           />
           <BlocklyToolbar
             isRunning={run.isPending}
+            stepDisplay={stepDisplay}
             canRun={
               program.data.length > 0 &&
               (executionTarget.data === "simulator" ||
@@ -341,6 +344,13 @@ export function BlocklyStudio() {
                 ? "UIAPduinoで実行"
                 : "画面で実行"
             }
+            onStepDisplayChange={(enabled) => {
+              setStepDisplay(enabled);
+              if (!enabled) {
+                client.setQueryData(queryKeys.simulatorBlock, null);
+                workspaceRef.current?.highlightBlock(null);
+              }
+            }}
             onRun={() => run.mutate()}
             onStop={stop}
             onReset={resetWorkspace}
