@@ -1,5 +1,8 @@
 export type BoardAdapter = {
   setLed(on: boolean): void | Promise<void>;
+  setNeoPixel?(index: number, color: string, brightness: number): void | Promise<void>;
+  fillNeoPixels?(color: string, brightness: number): void | Promise<void>;
+  clearNeoPixels?(): void | Promise<void>;
   isButtonPressed?(): boolean | Promise<boolean>;
   wait(milliseconds: number, signal: AbortSignal): Promise<void>;
 };

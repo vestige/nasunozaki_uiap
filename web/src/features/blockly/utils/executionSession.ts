@@ -12,6 +12,9 @@ type Options = {
   target: ExecutionTarget;
   runtimeDevice: RuntimeHidDevice | null;
   setSimulatorLed(on: boolean): void;
+  setSimulatorNeoPixel(index: number, color: string, brightness: number): void;
+  fillSimulatorNeoPixels(color: string, brightness: number): void;
+  clearSimulatorNeoPixels(): void;
   getSimulatorButton(): boolean;
 };
 
@@ -19,6 +22,9 @@ export function createBoardExecutionSession({
   target,
   runtimeDevice,
   setSimulatorLed,
+  setSimulatorNeoPixel,
+  fillSimulatorNeoPixels,
+  clearSimulatorNeoPixels,
   getSimulatorButton,
 }: Options): BoardExecutionSession {
   const button = new DebouncedButton();
@@ -26,11 +32,17 @@ export function createBoardExecutionSession({
     return {
       board: {
         setLed: setSimulatorLed,
+        setNeoPixel: setSimulatorNeoPixel,
+        fillNeoPixels: fillSimulatorNeoPixels,
+        clearNeoPixels: clearSimulatorNeoPixels,
         isButtonPressed: () => button.update(getSimulatorButton(), Date.now()),
         wait: abortableDelay,
       },
       async close(turnOff) {
-        if (turnOff) setSimulatorLed(false);
+        if (turnOff) {
+          setSimulatorLed(false);
+          clearSimulatorNeoPixels();
+        }
       },
     };
   }

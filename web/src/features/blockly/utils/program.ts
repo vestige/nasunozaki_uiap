@@ -2,6 +2,9 @@ import * as Blockly from "blockly/core";
 
 export type ProgramInstruction =
   | { type: "led"; on: boolean; blockId: string }
+  | { type: "neoPixelFill"; color: string; brightness: number; blockId: string }
+  | { type: "neoPixelSet"; index: number; color: string; brightness: number; blockId: string }
+  | { type: "neoPixelClear"; blockId: string }
   | { type: "wait"; milliseconds: number; blockId: string }
   | {
       type: "repeat";
@@ -37,6 +40,23 @@ function compileChain(first: Blockly.Block | null): ProgramInstruction[] {
         on: block.getFieldValue("STATE") === "ON",
         blockId: block.id,
       });
+    } else if (block.type === "uiap_neopixel_fill") {
+      instructions.push({
+        type: "neoPixelFill",
+        color: normalizeColor(block.getFieldValue("COLOR")),
+        brightness: clampNumber(block.getFieldValue("BRIGHTNESS"), 1, 40),
+        blockId: block.id,
+      });
+    } else if (block.type === "uiap_neopixel_set") {
+      instructions.push({
+        type: "neoPixelSet",
+        index: clampNumber(block.getFieldValue("PIXEL"), 1, 8) - 1,
+        color: normalizeColor(block.getFieldValue("COLOR")),
+        brightness: clampNumber(block.getFieldValue("BRIGHTNESS"), 1, 40),
+        blockId: block.id,
+      });
+    } else if (block.type === "uiap_neopixel_clear") {
+      instructions.push({ type: "neoPixelClear", blockId: block.id });
     } else if (block.type === "uiap_wait") {
       instructions.push({
         type: "wait",
@@ -66,6 +86,11 @@ function compileChain(first: Blockly.Block | null): ProgramInstruction[] {
     }
   }
   return instructions;
+}
+
+function normalizeColor(value: unknown) {
+  const color = String(value).toLowerCase();
+  return /^#[0-9a-f]{6}$/.test(color) ? color : "#ff0000";
 }
 
 function clampNumber(value: unknown, minimum: number, maximum: number) {

@@ -16,6 +16,18 @@ export async function runProgram(
     if (instruction.type === "led") {
       await board.setLed(instruction.on);
       await board.wait(180, signal);
+    } else if (instruction.type === "neoPixelFill") {
+      if (!board.fillNeoPixels) throw new Error("この実行先ではNeoPixelを使えません。");
+      await board.fillNeoPixels(instruction.color, instruction.brightness);
+      await board.wait(180, signal);
+    } else if (instruction.type === "neoPixelSet") {
+      if (!board.setNeoPixel) throw new Error("この実行先ではNeoPixelを使えません。");
+      await board.setNeoPixel(instruction.index, instruction.color, instruction.brightness);
+      await board.wait(180, signal);
+    } else if (instruction.type === "neoPixelClear") {
+      if (!board.clearNeoPixels) throw new Error("この実行先ではNeoPixelを使えません。");
+      await board.clearNeoPixels();
+      await board.wait(180, signal);
     } else if (instruction.type === "wait") {
       await board.wait(instruction.milliseconds, signal);
     } else if (instruction.type === "repeat") {

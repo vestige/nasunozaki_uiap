@@ -4,6 +4,8 @@ type Props = {
   ledOn: boolean;
   buttonPressed: boolean;
   extensionEnabled: boolean;
+  neoPixelEnabled: boolean;
+  neoPixels: string[];
   instructions: ProgramInstruction[];
   onButtonChange(pressed: boolean): void;
 };
@@ -12,6 +14,8 @@ export function LedSimulator({
   ledOn,
   buttonPressed,
   extensionEnabled,
+  neoPixelEnabled,
+  neoPixels,
   instructions,
   onButtonChange,
 }: Props) {
@@ -59,6 +63,19 @@ export function LedSimulator({
             <p className="text-sm font-bold">
               {buttonPressed ? "スイッチ：押されている" : "スイッチ：押されていない"}
             </p>
+          </div>
+        )}
+        {neoPixelEnabled && (
+          <div className="mt-5 w-full rounded-box border border-neutral-content/20 bg-black/20 p-4">
+            <p className="text-xs font-black tracking-widest text-neutral-content/60">NEOPIXEL · D8 / PC6</p>
+            <div className="my-4 grid grid-cols-4 gap-3" role="img" aria-label="8個のNeoPixelシミュレーター">
+              {neoPixels.map((color, index) => (
+                <div key={index} className="grid justify-items-center gap-1">
+                  <span className="h-10 w-10 rounded-lg border-2 border-white/25 transition" style={{ backgroundColor: color, boxShadow: color === "#000000" ? "none" : `0 0 16px ${color}` }} aria-label={`${index + 1}番 ${color === "#000000" ? "消灯" : color}`} />
+                  <span className="text-xs font-bold">{index + 1}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
         <div className="divider divider-neutral" />

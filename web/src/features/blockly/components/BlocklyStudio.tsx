@@ -2,9 +2,9 @@ import { useCallback, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Blockly from "blockly/core";
 import {
+  createUiapToolbox,
   registerUiapBlocks,
   starterProgram,
-  tactSwitchToolbox,
   uiapToolbox,
 } from "../utils/blocks";
 import { compileWorkspace, type ProgramInstruction } from "../utils/program";
@@ -28,6 +28,7 @@ import { queryKeys } from "../../../query";
 import { BlocklyToolbar } from "./BlocklyToolbar";
 import { LedSimulator } from "./LedSimulator";
 import { TactSwitchWiringGuide } from "./TactSwitchWiringGuide";
+import { NeoPixelWiringGuide } from "./NeoPixelWiringGuide";
 import { ProjectFileActions } from "./ProjectFileActions";
 import { ExecutionTargetSelector } from "./ExecutionTargetSelector";
 import type { ExecutionTarget } from "../types/execution";
@@ -46,7 +47,7 @@ export function BlocklyStudio() {
   const client = useQueryClient();
   const abortRef = useRef<AbortController | null>(null);
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
-  const [activeEditorTab, setActiveEditorTab] = useState<"blocks" | "wiring">(
+  const [activeEditorTab, setActiveEditorTab] = useState<"blocks" | "tactSwitch" | "neoPixel">(
     "blocks",
   );
   const [stepDisplay, setStepDisplay] = useState(false);
@@ -72,6 +73,18 @@ export function BlocklyStudio() {
     queryKey: queryKeys.tactSwitchExtension,
     queryFn: async () => false,
     initialData: false,
+    enabled: false,
+  });
+  const neoPixelExtension = useQuery<boolean>({
+    queryKey: queryKeys.neoPixelExtension,
+    queryFn: async () => false,
+    initialData: false,
+    enabled: false,
+  });
+  const neoPixels = useQuery<string[]>({
+    queryKey: queryKeys.simulatorNeoPixels,
+    queryFn: async () => createClearedNeoPixels(),
+    initialData: createClearedNeoPixels(),
     enabled: false,
   });
   const saveStatus = useQuery<SaveStatus>({
@@ -129,7 +142,7 @@ export function BlocklyStudio() {
       const tactSwitchEnabled = saved?.tactSwitchEnabled ?? false;
       Blockly.serialization.workspaces.load(saved?.workspace ?? starterProgram, workspace);
       client.setQueryData(queryKeys.tactSwitchExtension, tactSwitchEnabled);
-      if (tactSwitchEnabled) workspace.updateToolbox(tactSwitchToolbox);
+      if (tactSwitchEnabled) workspace.updateToolbox(createUiapToolbox({ tactSwitch: true, neoPixel: false }));
       client.setQueryData(
         queryKeys.blocklyProgram,
         compileWorkspace(workspace),
@@ -187,6 +200,15 @@ export function BlocklyStudio() {
         runtimeDevice: runtimeDevice.data,
         setSimulatorLed: (on) => {
           client.setQueryData(queryKeys.simulatorLed, on);
+        },
+        setSimulatorNeoPixel: (index, color, brightness) => {
+          client.setQueryData<string[]>(queryKeys.simulatorNeoPixels, (current = createClearedNeoPixels()) => current.map((value, pixel) => pixel === index ? applyBrightness(color, brightness) : value));
+        },
+        fillSimulatorNeoPixels: (color, brightness) => {
+          client.setQueryData(queryKeys.simulatorNeoPixels, Array(8).fill(applyBrightness(color, brightness)));
+        },
+        clearSimulatorNeoPixels: () => {
+          client.setQueryData(queryKeys.simulatorNeoPixels, createClearedNeoPixels());
         },
         getSimulatorButton: () =>
           client.getQueryData<boolean>(queryKeys.simulatorButton) ?? false,
@@ -272,7 +294,7 @@ export function BlocklyStudio() {
       Blockly.serialization.workspaces.load(project.workspace, workspace);
       const tactSwitchEnabled = project.extensions?.tactSwitch === true || hasTactSwitchBlock(project.workspace);
       client.setQueryData(queryKeys.tactSwitchExtension, tactSwitchEnabled);
-      workspace.updateToolbox(tactSwitchEnabled ? tactSwitchToolbox : uiapToolbox);
+      workspace.updateToolbox(createUiapToolbox({ tactSwitch: tactSwitchEnabled, neoPixel: neoPixelExtension.data }));
       saveBlocklyWorkspace(window.localStorage, project.workspace, tactSwitchEnabled);
       client.setQueryData(
         queryKeys.blocklyProgram,
@@ -375,9 +397,24 @@ export function BlocklyStudio() {
       </div>
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="lg:col-span-2">
-          <div className="tabs tabs-lift after:hidden" role="tablist" aria-label="Blocklyと配線ガイドの表示切り替え"><button type="button" role="tab" aria-selected={activeEditorTab === "blocks"} className={`tab ${activeEditorTab === "blocks" ? "tab-active" : ""}`} onClick={() => setActiveEditorTab("blocks")}>ブロックプログラミング</button>{tactSwitchExtension.data ? <div role="tab" aria-selected={activeEditorTab === "wiring"} className={`tab gap-1 ${activeEditorTab === "wiring" ? "tab-active" : ""}`}><button type="button" className="h-full" onClick={() => setActiveEditorTab("wiring")}>タクトスイッチ</button><button type="button" className="btn btn-circle btn-ghost btn-xs" aria-label="タクトスイッチを外す" onClick={() => { if (!window.confirm("タクトスイッチ拡張を外します。すでに置いたブロックは消えません。続けますか？")) return; client.setQueryData(queryKeys.tactSwitchExtension, false); client.setQueryData(queryKeys.simulatorButton, false); workspaceRef.current?.updateToolbox(uiapToolbox); if (workspaceRef.current) saveBlocklyWorkspace(window.localStorage, Blockly.serialization.workspaces.save(workspaceRef.current), false); setActiveEditorTab("blocks"); }}>×</button></div> : <button type="button" className="tab" onClick={() => { client.setQueryData(queryKeys.tactSwitchExtension, true); workspaceRef.current?.updateToolbox(tactSwitchToolbox); if (workspaceRef.current) saveBlocklyWorkspace(window.localStorage, Blockly.serialization.workspaces.save(workspaceRef.current), true); setActiveEditorTab("wiring"); }}>＋ タクトスイッチを追加</button>}</div>
-          {tactSwitchExtension.data && activeEditorTab === "wiring" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><p className="mb-3 font-black">タクトスイッチの配線</p><TactSwitchWiringGuide /></div>}
-          <div className={`rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem] ${tactSwitchExtension.data && activeEditorTab === "wiring" ? "hidden" : ""}`}><div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]"><div ref={mountWorkspace} className="blockly-workspace h-[38rem] w-full min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl lg:h-[44rem]" aria-label="ブロックプログラミング編集エリア" /><LedSimulator ledOn={led.data} buttonPressed={button.data} extensionEnabled={tactSwitchExtension.data} instructions={program.data} onButtonChange={(pressed) => client.setQueryData(queryKeys.simulatorButton, pressed)} /></div></div>
+          <div className="tabs tabs-lift after:hidden" role="tablist" aria-label="Blocklyと配線ガイドの表示切り替え">
+            <button type="button" role="tab" aria-selected={activeEditorTab === "blocks"} className={`tab ${activeEditorTab === "blocks" ? "tab-active" : ""}`} onClick={() => setActiveEditorTab("blocks")}>ブロックプログラミング</button>
+            {tactSwitchExtension.data ? (
+              <div role="tab" aria-selected={activeEditorTab === "tactSwitch"} className={`tab gap-1 ${activeEditorTab === "tactSwitch" ? "tab-active" : ""}`}>
+                <button type="button" className="h-full" onClick={() => setActiveEditorTab("tactSwitch")}>タクトスイッチ</button>
+                <button type="button" className="btn btn-circle btn-ghost btn-xs" aria-label="タクトスイッチを外す" onClick={() => { if (!window.confirm("タクトスイッチ拡張を外します。すでに置いたブロックは消えません。続けますか？")) return; client.setQueryData(queryKeys.tactSwitchExtension, false); client.setQueryData(queryKeys.simulatorButton, false); workspaceRef.current?.updateToolbox(createUiapToolbox({ tactSwitch: false, neoPixel: neoPixelExtension.data })); if (workspaceRef.current) saveBlocklyWorkspace(window.localStorage, Blockly.serialization.workspaces.save(workspaceRef.current), false); setActiveEditorTab("blocks"); }}>×</button>
+              </div>
+            ) : <button type="button" className="tab" onClick={() => { client.setQueryData(queryKeys.tactSwitchExtension, true); workspaceRef.current?.updateToolbox(createUiapToolbox({ tactSwitch: true, neoPixel: neoPixelExtension.data })); if (workspaceRef.current) saveBlocklyWorkspace(window.localStorage, Blockly.serialization.workspaces.save(workspaceRef.current), true); setActiveEditorTab("tactSwitch"); }}>＋ タクトスイッチを追加</button>}
+            {neoPixelExtension.data ? (
+              <div role="tab" aria-selected={activeEditorTab === "neoPixel"} className={`tab gap-1 ${activeEditorTab === "neoPixel" ? "tab-active" : ""}`}>
+                <button type="button" className="h-full" onClick={() => setActiveEditorTab("neoPixel")}>NeoPixel</button>
+                <button type="button" className="btn btn-circle btn-ghost btn-xs" aria-label="NeoPixelを外す" onClick={() => { if (!window.confirm("NeoPixel拡張を外します。すでに置いたブロックは消えません。続けますか？")) return; client.setQueryData(queryKeys.neoPixelExtension, false); client.setQueryData(queryKeys.simulatorNeoPixels, createClearedNeoPixels()); workspaceRef.current?.updateToolbox(createUiapToolbox({ tactSwitch: tactSwitchExtension.data, neoPixel: false })); setActiveEditorTab("blocks"); }}>×</button>
+              </div>
+            ) : <button type="button" className="tab" onClick={() => { client.setQueryData(queryKeys.neoPixelExtension, true); workspaceRef.current?.updateToolbox(createUiapToolbox({ tactSwitch: tactSwitchExtension.data, neoPixel: true })); setActiveEditorTab("neoPixel"); }}>＋ NeoPixelを追加</button>}
+          </div>
+          {tactSwitchExtension.data && activeEditorTab === "tactSwitch" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><p className="mb-3 font-black">タクトスイッチの配線</p><TactSwitchWiringGuide /></div>}
+          {neoPixelExtension.data && activeEditorTab === "neoPixel" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><p className="mb-3 font-black">NeoPixelの配線</p><NeoPixelWiringGuide /></div>}
+          <div className={`rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem] ${activeEditorTab !== "blocks" ? "hidden" : ""}`}><div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]"><div ref={mountWorkspace} className="blockly-workspace h-[38rem] w-full min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl lg:h-[44rem]" aria-label="ブロックプログラミング編集エリア" /><LedSimulator ledOn={led.data} buttonPressed={button.data} extensionEnabled={tactSwitchExtension.data} neoPixelEnabled={neoPixelExtension.data} neoPixels={neoPixels.data} instructions={program.data} onButtonChange={(pressed) => client.setQueryData(queryKeys.simulatorButton, pressed)} /></div></div>
         </div>
       </div>
     </section>
@@ -410,4 +447,14 @@ function downloadTextFile(fileName: string, contents: string) {
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
+}
+
+function createClearedNeoPixels() {
+  return Array<string>(8).fill("#000000");
+}
+
+function applyBrightness(color: string, brightness: number) {
+  const scale = Math.min(40, Math.max(1, brightness)) / 100;
+  const channels = [1, 3, 5].map((offset) => Math.round(Number.parseInt(color.slice(offset, offset + 2), 16) * scale));
+  return `#${channels.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
 }

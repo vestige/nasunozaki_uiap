@@ -5,6 +5,12 @@ import type {
 } from "../../web/src/features/runtime/types/transport";
 import { createBoardExecutionSession } from "../../web/src/features/blockly/utils/executionSession";
 
+const neoPixelSimulator = {
+  setSimulatorNeoPixel: () => undefined,
+  fillSimulatorNeoPixels: () => undefined,
+  clearSimulatorNeoPixels: () => undefined,
+};
+
 function respondingRuntimeDevice() {
   let listener: ((event: RuntimeInputReportEvent) => void) | undefined;
   const payloads: number[] = [];
@@ -54,6 +60,7 @@ describe("board execution session", () => {
       target: "simulator",
       runtimeDevice: null,
       setSimulatorLed: (on) => states.push(on),
+      ...neoPixelSimulator,
       getSimulatorButton: () => true,
     });
 
@@ -69,6 +76,7 @@ describe("board execution session", () => {
       target: "uiapduino",
       runtimeDevice: fake.device,
       setSimulatorLed: () => undefined,
+      ...neoPixelSimulator,
       getSimulatorButton: () => false,
     });
 
@@ -85,6 +93,7 @@ describe("board execution session", () => {
         target: "uiapduino",
         runtimeDevice: null,
         setSimulatorLed: () => undefined,
+        ...neoPixelSimulator,
         getSimulatorButton: () => false,
       }),
     ).toThrow("接続されていません");
@@ -96,6 +105,7 @@ describe("board execution session", () => {
       target: "uiapduino",
       runtimeDevice: fake.device,
       setSimulatorLed: () => undefined,
+      ...neoPixelSimulator,
       getSimulatorButton: () => false,
     });
 

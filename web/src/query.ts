@@ -32,6 +32,8 @@ export const queryKeys = {
   simulatorLed: ["blockly", "simulator-led"] as const,
   simulatorButton: ["blockly", "simulator-button"] as const,
   tactSwitchExtension: ["blockly", "tact-switch-extension"] as const,
+  neoPixelExtension: ["blockly", "neopixel-extension"] as const,
+  simulatorNeoPixels: ["blockly", "simulator-neopixels"] as const,
   simulatorBlock: ["blockly", "simulator-block"] as const,
   blocklySaveStatus: ["blockly", "save-status"] as const,
   blocklyExecutionTarget: ["blockly", "execution-target"] as const,
