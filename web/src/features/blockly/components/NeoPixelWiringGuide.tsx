@@ -1,4 +1,4 @@
-const PINS = ["TX / 15", "RX / 16", "GND", "GND", "SDA / 3", "SCL / 4", "PC0 / 2", "PC3 / D5", "PD1 / 11", "PC5 / 7", "PC6 / D8", "PC7 / 9"];
+const RIGHT_PINS = ["5V", "GND", "RESET", "3V3", "PD2 / 12", "PC4 / 6", "PA1 / 0", "PA2 / 1", "PC5 / 7", "PC7 / 9", "PC6 / D8", "PD0 / 10"];
 
 export function NeoPixelWiringGuide() {
   return (
@@ -15,13 +15,13 @@ export function NeoPixelWiringGuide() {
         <div className="rounded-box bg-base-200 p-3"><WiringDiagram /></div>
         <ol className="grid content-start gap-4" aria-label="配線の手順">
           <Step number="1" title="矢印の入口を探す">LED基板の矢印が、1番から8番へ進む向きになる側へ3本をつなぎます。</Step>
-          <Step number="2" title="緑をD8へつなぐ">緑のデータ線をD8（PC6）へつなぎます。タクトスイッチのD5とは別のピンです。</Step>
-          <Step number="3" title="黒をGNDへつなぐ">黒の線をGNDへつなぎます。別電源を使う場合もGNDはUIAPduinoと共通にします。</Step>
-          <Step number="4" title="赤は確認してから">赤のVCCは電源条件の確認が終わるまで接続しません。D8やGNDへはつながないでください。</Step>
+          <Step number="2" title="右側のD8へつなぐ">緑のデータ線を右側のD8（PC6）へつなぎます。タクトスイッチのD5とは別のピンです。</Step>
+          <Step number="3" title="右上のGNDへつなぐ">黒の線を右側上から2番目のGNDへつなぎます。</Step>
+          <Step number="4" title="右上の5Vへつなぐ">赤のVCC線を右側一番上の5Vへつなぎます。USBを抜いた状態で配線してください。</Step>
         </ol>
       </div>
       <div role="note" className="alert alert-warning mt-5 text-sm">
-        <span>実機の電源電圧と給電方法は検証中です。この段階では画面シミュレーターで試してください。</span>
+        <span>配線中はUSBを外してください。明るさは初期値20%、最大40%に制限しています。</span>
       </div>
     </section>
   );
@@ -29,34 +29,46 @@ export function NeoPixelWiringGuide() {
 
 function WiringDiagram() {
   return (
-    <svg viewBox="0 0 860 540" className="w-full" role="img" aria-labelledby="neopixel-diagram-title neopixel-diagram-description">
+    <svg viewBox="0 0 960 560" className="w-full" role="img" aria-labelledby="neopixel-diagram-title neopixel-diagram-description">
       <title id="neopixel-diagram-title">UIAPduinoと8灯NeoPixelの信号配線</title>
-      <desc id="neopixel-diagram-description">NeoPixelの緑のデータ入力線をUIAPduinoのD8へ、黒線をGNDへ接続する。赤の電源線は未接続で、電源条件の確認待ち。</desc>
-      <text x="32" y="30" className="fill-base-content text-[18px] font-black">UIAPduino（USB-Cを上にして見る）</text>
-      <rect x="72" y="48" width="190" height="414" rx="16" className="fill-neutral stroke-base-300" strokeWidth="2" />
-      <rect x="127" y="60" width="80" height="38" rx="9" className="fill-base-100 stroke-base-300" />
-      <text x="167" y="84" textAnchor="middle" className="fill-base-content text-[13px] font-black">USB-C</text>
-      {PINS.map((pin, index) => {
-        const y = 124 + index * 27;
-        const isGround = index === 2;
-        const isD8 = index === 10;
-        return <g key={`${pin}-${index}`}><circle cx="102" cy={y} r="10" className={isD8 ? "fill-secondary stroke-secondary-content" : isGround ? "fill-base-100 stroke-base-content" : "fill-neutral-content/70 stroke-neutral-content"} strokeWidth="2" /><text x="122" y={y + 5} className={isD8 ? "fill-secondary text-[13px] font-black" : isGround ? "fill-base-100 text-[13px] font-black" : "fill-neutral-content text-[12px]"}>{pin}</text></g>;
+      <desc id="neopixel-diagram-description">UIAPduino右側のD8へ緑のデータ入力線、右上のGNDへ黒線、一番上の5Vへ赤線を接続する。</desc>
+      <text x="28" y="30" className="fill-base-content text-[18px] font-black">UIAPduino（USB-Cを上にして見る）</text>
+      <rect x="110" y="48" width="290" height="432" rx="16" className="fill-neutral stroke-base-300" strokeWidth="2" />
+      <rect x="215" y="60" width="80" height="38" rx="9" className="fill-base-100 stroke-base-300" />
+      <text x="255" y="84" textAnchor="middle" className="fill-base-content text-[13px] font-black">USB-C</text>
+      <text x="374" y="112" textAnchor="end" className="fill-white text-[13px] font-black">右側ピン列</text>
+      {RIGHT_PINS.map((pin, index) => {
+        const y = 134 + index * 28;
+        const selected = index === 0 || index === 1 || index === 10;
+        const pinClass = index === 0 ? "fill-error stroke-white" : index === 1 ? "fill-base-content stroke-white" : "fill-success stroke-white";
+        const labelClass = index === 0 ? "fill-base-100 stroke-error" : index === 1 ? "fill-base-100 stroke-base-content" : "fill-base-100 stroke-success";
+        const textClass = index === 0 ? "fill-error" : index === 1 ? "fill-base-content" : "fill-success";
+        return (
+          <g key={`${pin}-${index}`}>
+            <circle cx="370" cy={y} r="10" className={selected ? pinClass : "fill-neutral-content/70 stroke-white/40"} strokeWidth="2" />
+            <rect x="405" y={y - 13} width="112" height="26" rx="6" className={selected ? labelClass : "fill-base-100 stroke-base-300"} strokeWidth={selected ? 2 : 1} />
+            <text x="461" y={y + 5} textAnchor="middle" className={selected ? `${textClass} text-[13px] font-black` : "fill-base-content text-[12px] font-bold"}>{pin}</text>
+          </g>
+        );
       })}
 
-      <text x="374" y="30" className="fill-base-content text-[18px] font-black">NeoPixel（8灯）</text>
-      <rect x="430" y="102" width="120" height="366" rx="10" className="fill-neutral stroke-base-300" strokeWidth="2" />
-      {Array.from({ length: 8 }, (_, index) => <g key={index}><rect x="458" y={124 + index * 40} width="64" height="30" rx="6" className="fill-base-100 stroke-base-300" /><circle cx="490" cy={139 + index * 40} r="10" className="fill-secondary/40 stroke-secondary" /><text x="535" y={144 + index * 40} className="fill-neutral-content text-[12px] font-black">{index + 1}</text></g>)}
-      <path d="M570 132 V418" className="fill-none stroke-secondary" strokeWidth="4" />
-      <path d="M560 402 L570 420 L580 402" className="fill-none stroke-secondary" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="592" y="280" className="fill-secondary text-[13px] font-black">信号の向き</text>
+      <text x="666" y="30" className="fill-base-content text-[18px] font-black">NeoPixel（8灯）</text>
+      <rect x="700" y="104" width="120" height="366" rx="10" className="fill-neutral stroke-base-300" strokeWidth="2" />
+      {Array.from({ length: 8 }, (_, index) => <g key={index}><rect x="728" y={126 + index * 40} width="64" height="30" rx="6" className="fill-base-100 stroke-base-300" /><circle cx="760" cy={141 + index * 40} r="10" className="fill-secondary/40 stroke-secondary" /><text x="805" y={146 + index * 40} className="fill-white text-[12px] font-black">{index + 1}</text></g>)}
+      <path d="M840 134 V420" className="fill-none stroke-secondary" strokeWidth="4" />
+      <path d="M830 404 L840 422 L850 404" className="fill-none stroke-secondary" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      <text x="858" y="282" className="fill-secondary text-[13px] font-black">信号の向き</text>
 
-      <path d="M102 394 H354 V126 H430" className="fill-none stroke-success" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="286" y="112" className="fill-success text-[14px] font-black">緑 DIN → D8 / PC6</text>
-      <path d="M102 178 H330 V164 H430" className="fill-none stroke-base-content" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="286" y="188" className="fill-base-content text-[14px] font-black">黒 GND</text>
-      <path d="M430 202 H366" className="fill-none stroke-error stroke-dashed" strokeWidth="6" strokeLinecap="round" />
-      <text x="276" y="208" className="fill-error text-[14px] font-black">赤 VCC：まだ接続しない</text>
-      <text x="344" y="510" textAnchor="middle" className="fill-base-content/65 text-[14px] font-bold">D5はタクトスイッチ用として空けておきます</text>
+      <path d="M517 134 H650 V142 H700" className="fill-none stroke-error" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="548" y="106" width="110" height="26" rx="6" className="fill-base-100 stroke-error" strokeWidth="2" />
+      <text x="603" y="124" textAnchor="middle" className="fill-error text-[13px] font-black">赤 VCC → 5V</text>
+      <path d="M517 162 H636 V182 H700" className="fill-none stroke-base-content" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="548" y="166" width="96" height="26" rx="6" className="fill-base-100 stroke-base-content" strokeWidth="2" />
+      <text x="596" y="184" textAnchor="middle" className="fill-base-content text-[13px] font-black">黒 GND</text>
+      <path d="M517 414 H650 V222 H700" className="fill-none stroke-success" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="548" y="386" width="136" height="26" rx="6" className="fill-base-100 stroke-success" strokeWidth="2" />
+      <text x="616" y="404" textAnchor="middle" className="fill-success text-[13px] font-black">緑 DIN → D8</text>
+      <text x="480" y="520" textAnchor="middle" className="fill-base-content text-[15px] font-black">右側の5V・GND・D8だけを使います。D5はタクトスイッチ用です。</text>
     </svg>
   );
 }
