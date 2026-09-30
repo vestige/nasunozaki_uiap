@@ -6,13 +6,14 @@ export function createBlocklyProjectFile(
   workspace: Record<string, unknown>,
   savedAt = new Date(),
   tactSwitchEnabled = false,
+  neoPixelEnabled = false,
 ): BlocklyProjectFile {
   return {
     format: "uiapduino-blockly-project",
-    version: 2,
+    version: 3,
     savedAt: savedAt.toISOString(),
     workspace,
-    extensions: { tactSwitch: tactSwitchEnabled },
+    extensions: { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled },
   };
 }
 
@@ -31,7 +32,7 @@ export function parseBlocklyProjectFile(raw: string): BlocklyProjectFile {
   if (!isRecord(value) || value.format !== "uiapduino-blockly-project") {
     throw new Error("UIAPduinoのブロック作品ファイルではありません。");
   }
-  if (value.version !== 1 && value.version !== 2) {
+  if (value.version !== 1 && value.version !== 2 && value.version !== 3) {
     throw new Error("このバージョンの作品ファイルにはまだ対応していません。");
   }
   if (!("workspace" in value) || !isRecord(value.workspace)) {

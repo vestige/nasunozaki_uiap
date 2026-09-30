@@ -11,11 +11,15 @@ describe("Blockly project file", () => {
   const workspace = { blocks: { languageVersion: 0, blocks: [] } };
 
   it("version付き作品ファイルを作って読み戻せる", () => {
-    const project = createBlocklyProjectFile(workspace, savedAt);
+    const project = createBlocklyProjectFile(workspace, savedAt, true, true);
 
     expect(
       parseBlocklyProjectFile(stringifyBlocklyProjectFile(project)),
     ).toEqual(project);
+    expect(project).toMatchObject({
+      version: 3,
+      extensions: { tactSwitch: true, neoPixel: true },
+    });
   });
 
   it("作品ファイルではないJSONと未知のversionを拒否する", () => {
@@ -26,7 +30,7 @@ describe("Blockly project file", () => {
       parseBlocklyProjectFile(
         JSON.stringify({
           format: "uiapduino-blockly-project",
-          version: 3,
+          version: 4,
           savedAt: savedAt.toISOString(),
           workspace,
         }),
