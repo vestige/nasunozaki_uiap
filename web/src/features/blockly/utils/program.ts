@@ -44,7 +44,7 @@ function compileChain(first: Blockly.Block | null): ProgramInstruction[] {
       instructions.push({
         type: "neoPixelFill",
         color: normalizeColor(block.getFieldValue("COLOR")),
-        brightness: clampNumber(block.getFieldValue("BRIGHTNESS"), 1, 40),
+        brightness: clampNumber(block.getFieldValue("BRIGHTNESS"), 1, 100),
         blockId: block.id,
       });
     } else if (block.type === "uiap_neopixel_set") {
@@ -52,7 +52,7 @@ function compileChain(first: Blockly.Block | null): ProgramInstruction[] {
         type: "neoPixelSet",
         index: clampNumber(block.getFieldValue("PIXEL"), 1, 8) - 1,
         color: normalizeColor(block.getFieldValue("COLOR")),
-        brightness: clampNumber(block.getFieldValue("BRIGHTNESS"), 1, 40),
+        brightness: clampNumber(block.getFieldValue("BRIGHTNESS"), 1, 100),
         blockId: block.id,
       });
     } else if (block.type === "uiap_neopixel_clear") {

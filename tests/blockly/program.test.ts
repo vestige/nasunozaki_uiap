@@ -98,7 +98,7 @@ describe("compileWorkspace", () => {
             fields: { COLOR: "#00ff00", BRIGHTNESS: 20 },
             next: { block: {
               type: "uiap_neopixel_set",
-              fields: { PIXEL: 8, COLOR: "#ff0000", BRIGHTNESS: 40 },
+              fields: { PIXEL: 8, COLOR: "#ff0000", BRIGHTNESS: 100 },
               next: { block: { type: "uiap_neopixel_clear" } },
             } },
           }],
@@ -109,7 +109,7 @@ describe("compileWorkspace", () => {
 
     expect(compileWorkspace(workspace)).toMatchObject([
       { type: "neoPixelFill", color: "#00ff00", brightness: 20 },
-      { type: "neoPixelSet", index: 7, color: "#ff0000", brightness: 40 },
+      { type: "neoPixelSet", index: 7, color: "#ff0000", brightness: 100 },
       { type: "neoPixelClear" },
     ]);
   });

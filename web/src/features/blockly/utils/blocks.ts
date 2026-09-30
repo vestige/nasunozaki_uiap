@@ -90,7 +90,7 @@ export function registerUiapBlocks() {
       message0: "NeoPixelを全部 %1 で 明るさ %2 % で光らせる",
       args0: [
         { type: "field_dropdown", name: "COLOR", options: neoPixelColorOptions() },
-        { type: "field_number", name: "BRIGHTNESS", value: 20, min: 1, max: 40, precision: 1 },
+        { type: "field_number", name: "BRIGHTNESS", value: 20, min: 1, max: 100, precision: 1 },
       ],
       previousStatement: null,
       nextStatement: null,
@@ -103,7 +103,7 @@ export function registerUiapBlocks() {
       args0: [
         { type: "field_number", name: "PIXEL", value: 1, min: 1, max: 8, precision: 1 },
         { type: "field_dropdown", name: "COLOR", options: neoPixelColorOptions() },
-        { type: "field_number", name: "BRIGHTNESS", value: 20, min: 1, max: 40, precision: 1 },
+        { type: "field_number", name: "BRIGHTNESS", value: 20, min: 1, max: 100, precision: 1 },
       ],
       previousStatement: null,
       nextStatement: null,

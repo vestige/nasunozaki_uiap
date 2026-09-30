@@ -21,7 +21,7 @@ export function NeoPixelWiringGuide() {
         </ol>
       </div>
       <div role="note" className="alert alert-warning mt-5 text-sm">
-        <span>配線中はUSBを外してください。明るさは初期値20%、最大40%に制限しています。</span>
+        <span>配線中はUSBを外してください。明るさの初期値は20%です。実機の安全上限は電流測定後に決定します。</span>
       </div>
     </section>
   );
