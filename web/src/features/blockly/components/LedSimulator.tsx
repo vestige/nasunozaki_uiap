@@ -1,12 +1,9 @@
-import type { ProgramInstruction } from "../utils/program";
-
 type Props = {
   ledOn: boolean;
   buttonPressed: boolean;
   extensionEnabled: boolean;
   neoPixelEnabled: boolean;
   neoPixels: string[];
-  instructions: ProgramInstruction[];
   onButtonChange(pressed: boolean): void;
 };
 
@@ -16,7 +13,6 @@ export function LedSimulator({
   extensionEnabled,
   neoPixelEnabled,
   neoPixels,
-  instructions,
   onButtonChange,
 }: Props) {
   return (
@@ -84,32 +80,7 @@ export function LedSimulator({
             </p>
           </div>
         )}
-        <div className="divider divider-neutral" />
-        <p className="text-sm leading-6 text-neutral-content/65">
-          ブロックは安全な命令へ変換してから順番に実行します。
-        </p>
-        <div className="badge badge-outline mt-2">
-          命令 {countInstructions(instructions)}個
-        </div>
       </div>
     </aside>
-  );
-}
-
-function countInstructions(instructions: ProgramInstruction[]): number {
-  return instructions.reduce(
-    (total, instruction) =>
-      total +
-      (instruction.type === "repeat"
-        ? instruction.times * countInstructions(instruction.body)
-        : instruction.type === "forever"
-          ? 1 + countInstructions(instruction.body)
-        : instruction.type === "ifButton"
-          ? 1 + Math.max(
-              countInstructions(instruction.body),
-              countInstructions(instruction.elseBody),
-            )
-        : 1),
-    0,
   );
 }
