@@ -21,7 +21,7 @@ export function LedSimulator({
         <p className="text-sm font-black tracking-widest text-neutral-content/60">
           BOARD SIMULATOR
         </p>
-        <div className={`mt-5 grid w-full items-center gap-4 ${neoPixelEnabled ? "grid-cols-[minmax(0,1fr)_6.5rem]" : "grid-cols-1"}`}>
+        <div className={`mt-5 grid w-full items-start gap-4 ${neoPixelEnabled ? "grid-cols-[minmax(0,1fr)_6.5rem]" : "grid-cols-1"}`}>
           <div className="grid justify-items-center">
             <p className="text-xs font-black tracking-widest text-neutral-content/60">UIAPDUINO</p>
             <div
