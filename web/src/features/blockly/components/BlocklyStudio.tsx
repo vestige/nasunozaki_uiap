@@ -424,8 +424,8 @@ export function BlocklyStudio() {
           {tactSwitchExtension.data && activeEditorTab === "tactSwitch" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><p className="mb-3 font-black">タクトスイッチの配線</p><TactSwitchWiringGuide /></div>}
           {neoPixelExtension.data && activeEditorTab === "neoPixel" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><p className="mb-3 font-black">NeoPixelの配線</p><NeoPixelWiringGuide /></div>}
           <div className={`rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem] ${activeEditorTab !== "blocks" ? "hidden" : ""}`}>
-            <div className="mb-3 flex justify-end">
-              <button type="button" className="btn btn-outline btn-sm" aria-pressed={!toolboxVisible} onClick={() => { const visible = !toolboxVisibleRef.current; toolboxVisibleRef.current = visible; setToolboxVisible(visible); const workspace = workspaceRef.current; workspace?.getFlyout()?.setVisible(visible); if (workspace) Blockly.svgResize(workspace); }}>{toolboxVisible ? "ブロック一覧を隠す" : "ブロック一覧を表示"}</button>
+            <div className="mb-3 flex justify-start">
+              <button type="button" className="btn btn-outline btn-sm" aria-pressed={!toolboxVisible} onClick={() => { const visible = !toolboxVisibleRef.current; toolboxVisibleRef.current = visible; setToolboxVisible(visible); const workspace = workspaceRef.current; if (workspace) setWorkspaceToolboxVisible(workspace, { tactSwitch: tactSwitchExtension.data, neoPixel: neoPixelExtension.data }, visible); }}>{toolboxVisible ? "ブロック一覧を隠す" : "ブロック一覧を表示"}</button>
             </div>
             <div className={`grid min-w-0 gap-5 ${neoPixelExtension.data ? "lg:grid-cols-[minmax(0,1fr)_24rem]" : "lg:grid-cols-[minmax(0,1fr)_18rem]"}`}><div ref={mountWorkspace} className="blockly-workspace h-[38rem] w-full min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl lg:h-[44rem]" aria-label="ブロックプログラミング編集エリア" /><LedSimulator ledOn={led.data} buttonPressed={button.data} extensionEnabled={tactSwitchExtension.data} neoPixelEnabled={neoPixelExtension.data} neoPixels={neoPixels.data} instructions={program.data} onButtonChange={(pressed) => client.setQueryData(queryKeys.simulatorButton, pressed)} /></div>
           </div>
@@ -479,6 +479,29 @@ function updateWorkspaceToolbox(
   visible: boolean,
 ) {
   workspace.updateToolbox(createUiapToolbox(options));
-  workspace.getFlyout()?.setVisible(visible);
+  setWorkspaceToolboxVisible(workspace, options, visible);
+}
+
+function setWorkspaceToolboxVisible(
+  workspace: Blockly.WorkspaceSvg,
+  options: { tactSwitch: boolean; neoPixel: boolean },
+  visible: boolean,
+) {
+  const flyout = workspace.getFlyout();
+  if (visible) {
+    flyout?.setVisible(true);
+    flyout?.setContainerVisible(true);
+    flyout?.show(createUiapToolbox(options));
+  } else {
+    flyout?.hide();
+    flyout?.setVisible(false);
+    flyout?.setContainerVisible(false);
+    // Blockly keeps a hidden flyout's cached width in the workspace metrics.
+    // Clear it so the programming canvas can use the released space.
+    if (flyout) (flyout as unknown as { width_: number }).width_ = 0;
+  }
+  workspace.resize();
+  workspace.resizeContents();
   Blockly.svgResize(workspace);
+  flyout?.getWorkspace().scrollbar?.setContainerVisible(visible);
 }
