@@ -18,7 +18,7 @@ export function LedSimulator({
   return (
     <aside className="card h-[38rem] min-w-0 border-2 border-neutral bg-neutral text-neutral-content shadow-xl lg:h-[44rem]">
       <div className="card-body items-center text-center">
-        <p className="text-sm font-black tracking-widest text-neutral-content/60">
+        <p className="grow-0 text-sm font-black tracking-widest text-neutral-content/60">
           BOARD SIMULATOR
         </p>
         <div className={`mt-5 grid w-full items-start gap-4 ${neoPixelEnabled ? "grid-cols-[minmax(0,1fr)_6.5rem]" : "grid-cols-1"}`}>
