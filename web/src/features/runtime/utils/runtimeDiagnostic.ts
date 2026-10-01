@@ -21,7 +21,8 @@ export type RuntimeErrorPhase =
   | "runtime-select"
   | "runtime-open"
   | "led-send"
-  | "led-receive";
+  | "led-receive"
+  | "runtime-receive";
 
 const suggestions: Record<RuntimeErrorCode, string> = {
   WEBHID_UNSUPPORTED: "PC版ChromeまたはEdgeの最新版で開いてください。",

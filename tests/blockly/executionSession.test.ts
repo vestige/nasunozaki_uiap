@@ -14,6 +14,7 @@ const neoPixelSimulator = {
 function respondingRuntimeDevice() {
   let listener: ((event: RuntimeInputReportEvent) => void) | undefined;
   const payloads: number[] = [];
+  const commands: number[] = [];
   const device = {
     vendorId: 0x1209,
     productId: 0xd004,
@@ -25,6 +26,7 @@ function respondingRuntimeDevice() {
     sendFeatureReport: vi.fn(async (_reportId: number, data: BufferSource) => {
       const message = new Uint8Array(data as ArrayBufferView<ArrayBuffer>);
       payloads.push(message[7]);
+      commands.push(message[5]);
       queueMicrotask(() =>
         listener?.({
           reportId: 0,
@@ -35,7 +37,7 @@ function respondingRuntimeDevice() {
               0x41,
               0x50,
               1,
-              0x81,
+              message[5] | 0x80,
               message[6],
               0,
             ]).buffer,
@@ -50,7 +52,7 @@ function respondingRuntimeDevice() {
       if (listener === current) listener = undefined;
     },
   } satisfies RuntimeHidDevice;
-  return { device, payloads, hasListener: () => Boolean(listener) };
+  return { device, payloads, commands, hasListener: () => Boolean(listener) };
 }
 
 describe("board execution session", () => {
@@ -83,7 +85,8 @@ describe("board execution session", () => {
     await session.board.setLed(true);
     await session.close(true);
 
-    expect(fake.payloads).toEqual([1, 0]);
+    expect(fake.commands).toEqual([0x01, 0x01, 0x15]);
+    expect(fake.payloads).toEqual([1, 0, 0]);
     expect(fake.hasListener()).toBe(false);
   });
 
