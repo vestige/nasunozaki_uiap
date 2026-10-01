@@ -98,7 +98,14 @@ void handleMessage(const uint8_t *message, uint8_t length) {
     } else {
       pixels.setPixelColor(message[7] - 1, scaledNeoChannel(neoRed), scaledNeoChannel(neoGreen), scaledNeoChannel(neoBlue));
     }
-    // Let the USB control transfer finish before the short atomic SPI frame.
+    // pixels.show() disables interrupts for the NeoPixel frame. WebHID marks a
+    // Feature Report ready when its final EP0 OUT packet arrives, before the
+    // control transfer's status stage is guaranteed to have run. One full-speed
+    // USB frame (1 ms) gives the software USB ISR a chance to finish that stage
+    // before we enter the atomic section. This delay protects the USB transfer;
+    // NEOPIXELMIN_ATOMIC, not the delay, protects the NeoPixel waveform. It is a
+    // conservative timing workaround until the USB core exposes an explicit
+    // EP0-transfer-complete state.
     delay(1);
     pixels.show();
     sendResponse(command, sequence, kOk);
@@ -110,7 +117,7 @@ void handleMessage(const uint8_t *message, uint8_t length) {
       return;
     }
     pixels.clear();
-    // Let the USB control transfer finish before the short atomic SPI frame.
+    // Apply the same EP0 completion guard as kNeoApply above.
     delay(1);
     pixels.show();
     sendResponse(command, sequence, kOk);
