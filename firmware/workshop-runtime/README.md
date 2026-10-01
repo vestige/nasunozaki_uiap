@@ -60,4 +60,4 @@ ZIPには同じ完成済み`workshop-runtime.bin`、ソースの`workshop-runtim
 
 ソースから再ビルドする開発者だけがArduino coreとArduino CLIを使用します。既存の`./scripts/workshop-runtime.sh`はそのために残しています。
 
-ブラウザの実機AdapterとBlocklyからの内蔵LED送信は実機確認済みです。2026-10-01にD8（PC6）へ接続した8灯NeoPixelで、20%の明るさによる全灯、1番の個別点灯、全消灯とWebHID応答を実機確認しました。
+ブラウザの実機AdapterとBlocklyからの内蔵LED送信は実機確認済みです。2026-10-01にD8（PC6）へ接続した8灯NeoPixelで、20%の明るさによる全灯、1番の個別点灯、全消灯とWebHID応答を実機確認しました。D5とGNDへ接続したタクトスイッチとの同時利用も確認し、押している間だけNeoPixelを点灯し、離すと消灯するBlockly作品が動作しました。
