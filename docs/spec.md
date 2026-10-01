@@ -108,6 +108,14 @@ Blocklyは現在、Arduino C/C++や`.bin`を生成しない。ブラウザ内で
 - `0x01`: 内蔵LEDのON/OFF
 - `0x02`: D5タクトスイッチの状態読み取り
 
+### 5.1 WebHIDとNeoPixel送信の排他
+
+NeoPixelの色データ送信中は`NEOPIXELMIN_ATOMIC`で割り込みを停止し、ソフトウェアUSB割り込みによる波形の中断を防ぐ。これが色化けを防ぐ主対策である。
+
+WebHID coreはFeature Reportの最後のEP0 OUT packetを受信した時点で命令をメインループへ公開するため、その時点ではcontrol transferのstatus stageが完了していない可能性がある。命令受信直後に割り込みを停止すると、ホスト側でFeature Report送信失敗になる場合がある。この競合を避けるため、NeoPixelへ反映または全消灯する前にUSB Full Speedの1 frameに相当する1ms待ち、USB割り込みを処理できる期間を設ける。
+
+この1msはEP0の完了を直接検出するものではなく、現在のUSB coreに完了確認APIがないための保守的な時間待ちである。将来coreからEP0転送完了状態を取得できるようになった場合は、固定時間ではなく状態確認による送信開始へ置き換える。NeoPixelの応答はatomicな波形送信が終わった後に返す。
+
 ## 6. 対応環境
 
 - デスクトップ版ChromeまたはEdge

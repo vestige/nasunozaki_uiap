@@ -30,6 +30,12 @@ https://raw.githubusercontent.com/tarosay/board_manager_files/main/package_uiap_
 
 2026-10-01に修正版を実機へ書き込み、電源投入直後から8灯すべてが消灯状態になることを確認しました。
 
+8灯分の波形を送る約240µsの間は割り込みを停止します。ソフトウェアUSBの割り込みでNeoPixelの波形が途切れ、まれに異なる色として解釈されることを防ぎます。
+
+WebHIDのFeature Reportは、最後のEP0 OUT packetを受け取った時点でメインループへ公開されます。この時点ではcontrol transferのstatus stageが完了したとは限りません。直後にNeoPixel送信のため割り込みを停止するとブラウザ側の送信が失敗することがあったため、USB Full Speedの1 frameに相当する1msだけ割り込みを動かしてから波形を送ります。この待機はUSB転送を完了させるための保守的な回避策であり、NeoPixelの色を直接安定させるのは割り込み停止です。将来USB coreがEP0転送完了状態を公開した場合は、固定時間の待機を完了状態の確認へ置き換えます。応答は波形送信の完了後に返します。
+
+2026-10-01に、8灯すべてを赤、緑、青、白の順に20%の明るさで切り替える操作を10回繰り返し、色化けやちらつきが発生しないことを実機で確認しました。
+
 ## 外付けボタン
 
 基板上のボタンはリセット／起動モード切替に使われるため、教材の入力ボタンには使用しません。通常のタクトスイッチをD5とGNDの間へ接続してください。内蔵pull-upを使うため外付け抵抗は不要で、押していない状態を`0`、押した状態を`1`としてブラウザへ返します。
@@ -39,7 +45,7 @@ https://raw.githubusercontent.com/tarosay/board_manager_files/main/package_uiap_
 `workshop-runtime.ino`はArduino core `1.2.14`でコンパイル済みです。
 
 ```text
-Flash: 6116 / 16384 bytes (37%)
+Flash: 6164 / 16384 bytes (37%)
 RAM:    232 / 2048 bytes (11%)
 ```
 
@@ -52,7 +58,7 @@ core `1.2.14`のWebHID Only用USB構成は、実データ34 bytesに対して全
 公開ページに完成済みファームウェアを用意しています。利用者のPCにArduino CLI、Arduino IDE、ボードcoreをインストールする必要はありません。PC版ChromeまたはEdgeのWebHIDを使います。
 
 1. 必要なプログラムや保存した復旧用binを先に保管する
-2. UIAPduinoのボタンを押したままUSBへ接続し、約1秒後に離す
+2. UIAPduinoのボタンを押したままUSBへ接続し、挿したらすぐ離す
 3. [公開ページ](https://vestige.github.io/nasunozaki_uiap/)の「はじめて通常動作モードを使うとき」を開き、「教育用ランタイムを書き込む」を押す
 4. 書き込みモードのUIAPduinoを選択し、書き込みと照合の完了表示を待つ
 5. USBを外し、ボタンを押さずに接続し直す

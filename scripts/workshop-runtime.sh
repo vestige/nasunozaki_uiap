@@ -26,7 +26,7 @@ UIAPduino教育用ランタイムをArduino CLIで扱います。
 upload前の接続:
   1. UIAPduinoのボタンを押し続ける
   2. USBへ接続する
-  3. 約1秒待ってからボタンを離す
+  3. USBを挿したらすぐボタンを離す
 
 注意: uploadはUIAPduino上の現在のプログラムを置き換えます。
 EOF
