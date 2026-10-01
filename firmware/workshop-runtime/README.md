@@ -1,6 +1,6 @@
 # UIAPduino Workshop Runtime
 
-Blocklyの安全な中間命令をUIAPduinoで実行するための、最小教育用ランタイムです。現在は内蔵LED（Arduino pin 2）の点灯・消灯だけを扱います。
+Blocklyの安全な中間命令をUIAPduinoで実行するための、最小教育用ランタイムです。内蔵LED、D5のタクトスイッチ、D8（PC6）の8灯NeoPixelを扱います。
 
 ## 対象環境
 
@@ -20,7 +20,11 @@ https://raw.githubusercontent.com/tarosay/board_manager_files/main/package_uiap_
 - ブラウザ → UIAPduino: EP0 Feature Report、32バイトで転送し、先頭8バイトを命令として使用
 - UIAPduino → ブラウザ: EP1 Input Report、8バイト
 
-プロトコルは両方向とも `UIAP`識別子、version、command、8bit sequence、payload/statusからなる同じ8バイト構造を使います。ブラウザは既存ランタイムとの互換性のため最初に8バイトで送り、Windows HIDが短いreport bufferを拒否した場合だけ、先頭8バイトに命令を格納して残り24バイトを0で埋めた32バイトFeature Reportで再送します。command `0x01`は内蔵LED、`0x02`はD5（PC3）へ接続した外付けボタンの単発読み取りです。
+プロトコルは両方向とも `UIAP`識別子、version、command、8bit sequence、payload/statusからなる同じ8バイト構造を使います。ブラウザは既存ランタイムとの互換性のため最初に8バイトで送り、Windows HIDが短いreport bufferを拒否した場合だけ、先頭8バイトに命令を格納して残り24バイトを0で埋めた32バイトFeature Reportで再送します。command `0x01`は内蔵LED、`0x02`はD5（PC3）へ接続した外付けボタンの単発読み取りです。NeoPixelは`0x10`〜`0x13`でRGBと1〜100%の明るさを設定し、`0x14`で全灯または1〜8番へ反映、`0x15`で全消灯します。
+
+## NeoPixel
+
+`NeoPixelmin`を使い、DINはSPI1 MOSIのD8（PC6）固定、個数は8灯固定です。任意のGPIOや9番以降は操作できません。起動時と停止・エラー時は8灯を消灯します。SPI1を使うため、同じランタイムで`SPI.h`や`SDmin`とは併用できません。
 
 ## 外付けボタン
 
@@ -31,8 +35,8 @@ https://raw.githubusercontent.com/tarosay/board_manager_files/main/package_uiap_
 `workshop-runtime.ino`はArduino core `1.2.14`でコンパイル済みです。
 
 ```text
-Flash: 4976 / 16384 bytes (30%)
-RAM:    172 / 2048 bytes (8%)
+Flash: 6092 / 16384 bytes (37%)
+RAM:    232 / 2048 bytes (11%)
 ```
 
 2026-09-11にmacOS上のArduino CLI `1.5.1`と公式`uiapflash`で実機へ書き込み、4224 bytesのverifyとアプリ起動に成功しました。
@@ -56,4 +60,4 @@ ZIPには同じ完成済み`workshop-runtime.bin`、ソースの`workshop-runtim
 
 ソースから再ビルドする開発者だけがArduino coreとArduino CLIを使用します。既存の`./scripts/workshop-runtime.sh`はそのために残しています。
 
-ブラウザの実機AdapterとBlocklyからのLED送信は実機確認済みです。外付けボタンは単発診断を先に確認し、その後Blocklyの待機ブロックへ接続します。
+ブラウザの実機AdapterとBlocklyからの内蔵LED送信は実機確認済みです。2026-10-01にD8（PC6）へ接続した8灯NeoPixelで、20%の明るさによる全灯、1番の個別点灯、全消灯とWebHID応答を実機確認しました。D5とGNDへ接続したタクトスイッチとの同時利用も確認し、押している間だけNeoPixelを点灯し、離すと消灯するBlockly作品が動作しました。

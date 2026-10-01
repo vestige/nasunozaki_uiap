@@ -3,6 +3,12 @@ import type { RuntimeResponse } from "../types/protocol";
 export const RUNTIME_PROTOCOL_VERSION = 1;
 export const RUNTIME_COMMAND_SET_LED = 0x01;
 export const RUNTIME_COMMAND_READ_BUTTON = 0x02;
+export const RUNTIME_COMMAND_NEO_RED = 0x10;
+export const RUNTIME_COMMAND_NEO_GREEN = 0x11;
+export const RUNTIME_COMMAND_NEO_BLUE = 0x12;
+export const RUNTIME_COMMAND_NEO_BRIGHTNESS = 0x13;
+export const RUNTIME_COMMAND_NEO_APPLY = 0x14;
+export const RUNTIME_COMMAND_NEO_CLEAR = 0x15;
 export const RUNTIME_RESPONSE_FLAG = 0x80;
 export const RUNTIME_MESSAGE_SIZE = 8;
 export const RUNTIME_FEATURE_REPORT_SIZE = 32;
@@ -34,6 +40,27 @@ export function buildReadButtonMessage(sequence: number) {
     RUNTIME_COMMAND_READ_BUTTON,
     sequence,
     0,
+  ]);
+}
+
+export function buildRuntimeCommandMessage(
+  sequence: number,
+  command: number,
+  payload: number,
+) {
+  assertSequence(sequence);
+  if (!Number.isInteger(command) || command < 0 || command >= RUNTIME_RESPONSE_FLAG) {
+    throw new Error("commandが不正です。");
+  }
+  if (!Number.isInteger(payload) || payload < 0 || payload > 0xff) {
+    throw new Error("payloadは0から255の整数で指定してください。");
+  }
+  return Uint8Array.from([
+    ...MAGIC,
+    RUNTIME_PROTOCOL_VERSION,
+    command,
+    sequence,
+    payload,
   ]);
 }
 

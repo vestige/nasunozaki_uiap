@@ -1,4 +1,6 @@
 #include <WebHID.h>
+#define NEOPIXELMIN_MAX_LEDS 8
+#include <NeoPixelmin.h>
 
 #ifndef LED_BUILTIN
 #define LED_BUILTIN 2
@@ -9,12 +11,28 @@ constexpr uint8_t kMessageSize = 8;
 constexpr uint8_t kVersion = 1;
 constexpr uint8_t kSetLed = 0x01;
 constexpr uint8_t kReadButton = 0x02;
+constexpr uint8_t kNeoRed = 0x10;
+constexpr uint8_t kNeoGreen = 0x11;
+constexpr uint8_t kNeoBlue = 0x12;
+constexpr uint8_t kNeoBrightness = 0x13;
+constexpr uint8_t kNeoApply = 0x14;
+constexpr uint8_t kNeoClear = 0x15;
 constexpr uint8_t kButtonPin = 5;  // D5 / PC3. Connect a switch between D5 and GND.
+constexpr uint8_t kNeoPixelCount = 8;
 constexpr uint8_t kResponse = 0x80;
 constexpr uint8_t kOk = 0;
 constexpr uint8_t kUnsupportedCommand = 1;
 constexpr uint8_t kInvalidPayload = 2;
 constexpr uint8_t kMagic[] = {0x55, 0x49, 0x41, 0x50};  // "UIAP"
+NeoPixelmin pixels(kNeoPixelCount, NEOPIXELMIN_PIN, NEO_GRB + NEO_KHZ800);
+uint8_t neoRed = 0;
+uint8_t neoGreen = 0;
+uint8_t neoBlue = 0;
+uint8_t neoBrightness = 20;
+
+uint8_t scaledNeoChannel(uint8_t channel) {
+  return static_cast<uint8_t>((static_cast<uint16_t>(channel) * neoBrightness) / 100u);
+}
 
 bool hasMagic(const uint8_t *message) {
   for (uint8_t index = 0; index < sizeof(kMagic); index++) {
@@ -51,6 +69,48 @@ void handleMessage(const uint8_t *message, uint8_t length) {
     sendResponse(command, sequence, digitalRead(kButtonPin) == LOW ? 1 : 0);
     return;
   }
+  if (command == kNeoRed || command == kNeoGreen || command == kNeoBlue) {
+    if (command == kNeoRed) neoRed = message[7];
+    if (command == kNeoGreen) neoGreen = message[7];
+    if (command == kNeoBlue) neoBlue = message[7];
+    sendResponse(command, sequence, kOk);
+    return;
+  }
+  if (command == kNeoBrightness) {
+    if (message[7] < 1 || message[7] > 100) {
+      sendResponse(command, sequence, kInvalidPayload);
+      return;
+    }
+    neoBrightness = message[7];
+    sendResponse(command, sequence, kOk);
+    return;
+  }
+  if (command == kNeoApply) {
+    if (message[7] > kNeoPixelCount) {
+      sendResponse(command, sequence, kInvalidPayload);
+      return;
+    }
+    if (message[7] == 0) {
+      for (uint8_t index = 0; index < kNeoPixelCount; index++) {
+        pixels.setPixelColor(index, scaledNeoChannel(neoRed), scaledNeoChannel(neoGreen), scaledNeoChannel(neoBlue));
+      }
+    } else {
+      pixels.setPixelColor(message[7] - 1, scaledNeoChannel(neoRed), scaledNeoChannel(neoGreen), scaledNeoChannel(neoBlue));
+    }
+    pixels.show();
+    sendResponse(command, sequence, kOk);
+    return;
+  }
+  if (command == kNeoClear) {
+    if (message[7] != 0) {
+      sendResponse(command, sequence, kInvalidPayload);
+      return;
+    }
+    pixels.clear();
+    pixels.show();
+    sendResponse(command, sequence, kOk);
+    return;
+  }
   if (command != kSetLed) {
     sendResponse(command, sequence, kUnsupportedCommand);
     return;
@@ -69,6 +129,9 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
   pinMode(kButtonPin, INPUT_PULLUP);
+  pixels.begin();
+  pixels.clear();
+  pixels.show();
   WebHID.begin();
 }
 

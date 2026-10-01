@@ -3,6 +3,6 @@
   "board": "HID ProMicro CH32V003",
   "usb": "WebHID Only",
   "optimize": "Smallest (-Os) with LTO",
-  "source_sha256": "cd765437782d984619b93541db699281b5b01ad672db5f3d81f39ffb7a2bccdf",
-  "binary_sha256": "14a20dba6ffd461febca90600e74d33632cca46b0fc18427bcaeb69e3c0e418f"
+  "source_sha256": "c8259e8e06ef75503bf25727de979d3766b75c88e96c0f11f9644d427f84a842",
+  "binary_sha256": "080e2878f6b4afdd6eab4f62eaba110bbdd21da90fa8e21ed6f65f7e3a10efa8"
 }

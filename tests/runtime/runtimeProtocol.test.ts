@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildReadButtonMessage,
+  buildRuntimeCommandMessage,
   buildSetLedMessage,
   parseButtonStateResponse,
   parseRuntimeResponse,
@@ -19,6 +20,13 @@ describe("education runtime protocol", () => {
         Uint8Array.from([0x55, 0x49, 0x41, 0x50, 0x01, 0x81, 0x34, 0x00]),
       ),
     ).toEqual({ command: 1, sequence: 0x34, status: "ok" });
+  });
+
+  it("NeoPixel用の固定commandと1バイトpayloadを組み立てる", () => {
+    expect([...buildRuntimeCommandMessage(7, 0x14, 8)]).toEqual([
+      0x55, 0x49, 0x41, 0x50, 0x01, 0x14, 0x07, 0x08,
+    ]);
+    expect(() => buildRuntimeCommandMessage(0, 0x14, 256)).toThrow("payload");
   });
 
   it("外付けボタンの要求と押下応答を扱う", () => {

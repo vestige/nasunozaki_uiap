@@ -57,6 +57,9 @@ export function createBoardExecutionSession({
   const runtimeBoard = new RuntimeBoardAdapter(transport);
   const board = {
     setLed: (on: boolean) => runtimeBoard.setLed(on),
+    setNeoPixel: (index: number, color: string, brightness: number) => runtimeBoard.setNeoPixel(index, color, brightness),
+    fillNeoPixels: (color: string, brightness: number) => runtimeBoard.fillNeoPixels(color, brightness),
+    clearNeoPixels: () => runtimeBoard.clearNeoPixels(),
     isButtonPressed: async () => button.update(await runtimeBoard.isButtonPressed(), Date.now()),
     wait: (milliseconds: number, signal: AbortSignal) => runtimeBoard.wait(milliseconds, signal),
   };
@@ -77,6 +80,11 @@ export function createBoardExecutionSession({
             await board.setLed(false);
           } catch {
             // 切断・timeoutの元エラーを上書きせず、消灯は再接続後に案内する。
+          }
+          try {
+            await board.clearNeoPixels();
+          } catch {
+            // 内蔵LEDの消灯に失敗しても、NeoPixelの消灯は独立して試す。
           }
         }
       } finally {
