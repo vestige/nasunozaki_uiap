@@ -130,7 +130,12 @@ void setup() {
   digitalWrite(LED_BUILTIN, LOW);
   pinMode(kButtonPin, INPUT_PULLUP);
   pixels.begin();
+  // The strip can ignore a frame sent while its power is still stabilizing.
+  // Wait briefly, then send the cleared buffer twice so startup is always off.
+  delay(20);
   pixels.clear();
+  pixels.show();
+  delay(1);
   pixels.show();
   WebHID.begin();
 }
