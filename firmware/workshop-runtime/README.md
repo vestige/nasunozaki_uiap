@@ -26,6 +26,8 @@ https://raw.githubusercontent.com/tarosay/board_manager_files/main/package_uiap_
 
 `NeoPixelmin`を使い、DINはSPI1 MOSIのD8（PC6）固定、個数は8灯固定です。任意のGPIOや9番以降は操作できません。起動時と停止・エラー時は8灯を消灯します。SPI1を使うため、同じランタイムで`SPI.h`や`SDmin`とは併用できません。
 
+起動時はNeoPixel側の電源安定を20ms待ってから、全消灯フレームを2回送ります。電源投入直後のフレーム取りこぼしによる意図しない点灯を防ぎます。
+
 ## 外付けボタン
 
 基板上のボタンはリセット／起動モード切替に使われるため、教材の入力ボタンには使用しません。通常のタクトスイッチをD5とGNDの間へ接続してください。内蔵pull-upを使うため外付け抵抗は不要で、押していない状態を`0`、押した状態を`1`としてブラウザへ返します。
@@ -35,7 +37,7 @@ https://raw.githubusercontent.com/tarosay/board_manager_files/main/package_uiap_
 `workshop-runtime.ino`はArduino core `1.2.14`でコンパイル済みです。
 
 ```text
-Flash: 6092 / 16384 bytes (37%)
+Flash: 6116 / 16384 bytes (37%)
 RAM:    232 / 2048 bytes (11%)
 ```
 
