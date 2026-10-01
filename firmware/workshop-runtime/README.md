@@ -54,7 +54,7 @@ core `1.2.14`のWebHID Only用USB構成は、実データ34 bytesに対して全
 公開ページに完成済みファームウェアを用意しています。利用者のPCにArduino CLI、Arduino IDE、ボードcoreをインストールする必要はありません。PC版ChromeまたはEdgeのWebHIDを使います。
 
 1. 必要なプログラムや保存した復旧用binを先に保管する
-2. UIAPduinoのボタンを押したままUSBへ接続し、約1秒後に離す
+2. UIAPduinoのボタンを押したままUSBへ接続し、挿したらすぐ離す
 3. [公開ページ](https://vestige.github.io/nasunozaki_uiap/)の「はじめて通常動作モードを使うとき」を開き、「教育用ランタイムを書き込む」を押す
 4. 書き込みモードのUIAPduinoを選択し、書き込みと照合の完了表示を待つ
 5. USBを外し、ボタンを押さずに接続し直す

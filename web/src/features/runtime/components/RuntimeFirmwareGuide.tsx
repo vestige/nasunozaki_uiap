@@ -16,7 +16,7 @@ export function RuntimeFirmwareGuide() {
         </div>
         <p>完成済みファームウェアをブラウザから書き込めます。Arduino CLIのインストールは不要です。</p>
         <p>
-          ボタンを押したままUSBへ接続し、約1秒後に離して書き込みモードにします。下のボタンから書き込み、成功したらUSBを接続し直して「通常動作モードを調べる」を押します。
+          ボタンを押したままUSBへ接続し、挿したらすぐ離して書き込みモードにします。下のボタンから書き込み、成功したらUSBを接続し直して「通常動作モードを調べる」を押します。
         </p>
         <RuntimeFirmwareInstall />
         <p className="font-bold text-base-content/70">
