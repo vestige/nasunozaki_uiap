@@ -30,7 +30,7 @@ https://raw.githubusercontent.com/tarosay/board_manager_files/main/package_uiap_
 
 2026-10-01に修正版を実機へ書き込み、電源投入直後から8灯すべてが消灯状態になることを確認しました。
 
-8灯分の波形を送る約240µsの間は割り込みを停止します。ソフトウェアUSBの割り込みでNeoPixelの波形が途切れ、まれに異なる色として解釈されることを防ぎます。WebHID応答は波形送信の完了後に返します。
+8灯分の波形を送る約240µsの間は割り込みを停止します。ソフトウェアUSBの割り込みでNeoPixelの波形が途切れ、まれに異なる色として解釈されることを防ぎます。WebHID命令の受信完了を1ms待ってから波形を送り、応答は波形送信の完了後に返します。
 
 ## 外付けボタン
 
@@ -41,7 +41,7 @@ https://raw.githubusercontent.com/tarosay/board_manager_files/main/package_uiap_
 `workshop-runtime.ino`はArduino core `1.2.14`でコンパイル済みです。
 
 ```text
-Flash: 6144 / 16384 bytes (37%)
+Flash: 6164 / 16384 bytes (37%)
 RAM:    232 / 2048 bytes (11%)
 ```
 

@@ -98,6 +98,8 @@ void handleMessage(const uint8_t *message, uint8_t length) {
     } else {
       pixels.setPixelColor(message[7] - 1, scaledNeoChannel(neoRed), scaledNeoChannel(neoGreen), scaledNeoChannel(neoBlue));
     }
+    // Let the USB control transfer finish before the short atomic SPI frame.
+    delay(1);
     pixels.show();
     sendResponse(command, sequence, kOk);
     return;
@@ -108,6 +110,8 @@ void handleMessage(const uint8_t *message, uint8_t length) {
       return;
     }
     pixels.clear();
+    // Let the USB control transfer finish before the short atomic SPI frame.
+    delay(1);
     pixels.show();
     sendResponse(command, sequence, kOk);
     return;
