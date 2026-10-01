@@ -1,5 +1,6 @@
 #include <WebHID.h>
 #define NEOPIXELMIN_MAX_LEDS 8
+#define NEOPIXELMIN_ATOMIC
 #include <NeoPixelmin.h>
 
 #ifndef LED_BUILTIN
