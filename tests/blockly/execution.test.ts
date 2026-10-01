@@ -173,4 +173,23 @@ describe("runProgram", () => {
 
     expect(waits).toEqual([180, 50, 50]);
   });
+
+  it("NeoPixelの全灯・個別点灯・消灯を順番に実行する", async () => {
+    const events: string[] = [];
+    const board: BoardAdapter = {
+      setLed: () => undefined,
+      fillNeoPixels: (color, brightness) => events.push(`fill:${color}:${brightness}`),
+      setNeoPixel: (index, color, brightness) => events.push(`pixel:${index}:${color}:${brightness}`),
+      clearNeoPixels: () => events.push("clear"),
+      wait: async () => undefined,
+    };
+
+    await runProgram([
+      { type: "neoPixelFill", color: "#00ff00", brightness: 20, blockId: "fill" },
+      { type: "neoPixelSet", index: 7, color: "#ff0000", brightness: 40, blockId: "set" },
+      { type: "neoPixelClear", blockId: "clear" },
+    ], board, new AbortController().signal);
+
+    expect(events).toEqual(["fill:#00ff00:20", "pixel:7:#ff0000:40", "clear"]);
+  });
 });

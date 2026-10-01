@@ -40,7 +40,7 @@ function WiringDiagram() {
         const y = 150 + index * 26;
         const isGround = index === 2;
         const isD5 = index === 7;
-        return <g key={pin}><circle cx="142" cy={y} r="10" className={isD5 ? "fill-info stroke-info-content" : isGround ? "fill-base-100 stroke-base-content" : "fill-neutral-content/75 stroke-neutral-content"} strokeWidth="2" />{(isGround || isD5) && <circle cx="142" cy={y} r="15" className={isD5 ? "fill-none stroke-info" : "fill-none stroke-base-content"} strokeWidth="3" />}<text x="162" y={y + 5} className={isD5 ? "fill-info text-[13px] font-black" : isGround ? "fill-base-100 text-[13px] font-black" : "fill-neutral-content text-[13px]"}>{pin}</text></g>;
+        return <g key={`${pin}-${index}`}><circle cx="142" cy={y} r="10" className={isD5 ? "fill-info stroke-info-content" : isGround ? "fill-base-100 stroke-base-content" : "fill-neutral-content/75 stroke-neutral-content"} strokeWidth="2" />{(isGround || isD5) && <circle cx="142" cy={y} r="15" className={isD5 ? "fill-none stroke-info" : "fill-none stroke-base-content"} strokeWidth="3" />}<text x="162" y={y + 5} className={isD5 ? "fill-info text-[13px] font-black" : isGround ? "fill-base-100 text-[13px] font-black" : "fill-neutral-content text-[13px]"}>{pin}</text></g>;
       })}
       {HOLE_ROWS.map((row) => <circle key={`right-${row}`} cx="254" cy={150 + (row - 1) * 26} r="10" className="fill-neutral-content/75 stroke-neutral-content" strokeWidth="2" />)}
       <text x="112" y="512" className="fill-neutral-content/65 text-[14px]">丸印が使う実際の穴</text>

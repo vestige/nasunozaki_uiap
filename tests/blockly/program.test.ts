@@ -85,4 +85,32 @@ describe("compileWorkspace", () => {
       expect(program[0].body[0]).toMatchObject({ type: "led", on: true });
     }
   });
+
+  it("NeoPixelブロックを8灯に制限した中間命令へ変換する", () => {
+    registerUiapBlocks();
+    const workspace = new Blockly.Workspace();
+    Blockly.serialization.workspaces.load(
+      {
+        blocks: {
+          languageVersion: 0,
+          blocks: [{
+            type: "uiap_neopixel_fill",
+            fields: { COLOR: "#00ff00", BRIGHTNESS: 20 },
+            next: { block: {
+              type: "uiap_neopixel_set",
+              fields: { PIXEL: 8, COLOR: "#ff0000", BRIGHTNESS: 100 },
+              next: { block: { type: "uiap_neopixel_clear" } },
+            } },
+          }],
+        },
+      },
+      workspace,
+    );
+
+    expect(compileWorkspace(workspace)).toMatchObject([
+      { type: "neoPixelFill", color: "#00ff00", brightness: 20 },
+      { type: "neoPixelSet", index: 7, color: "#ff0000", brightness: 100 },
+      { type: "neoPixelClear" },
+    ]);
+  });
 });

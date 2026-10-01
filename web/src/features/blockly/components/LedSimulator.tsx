@@ -1,10 +1,9 @@
-import type { ProgramInstruction } from "../utils/program";
-
 type Props = {
   ledOn: boolean;
   buttonPressed: boolean;
   extensionEnabled: boolean;
-  instructions: ProgramInstruction[];
+  neoPixelEnabled: boolean;
+  neoPixels: string[];
   onButtonChange(pressed: boolean): void;
 };
 
@@ -12,23 +11,43 @@ export function LedSimulator({
   ledOn,
   buttonPressed,
   extensionEnabled,
-  instructions,
+  neoPixelEnabled,
+  neoPixels,
   onButtonChange,
 }: Props) {
   return (
     <aside className="card h-[38rem] min-w-0 border-2 border-neutral bg-neutral text-neutral-content shadow-xl lg:h-[44rem]">
       <div className="card-body items-center text-center">
-        <p className="text-sm font-black tracking-widest text-neutral-content/60">
+        <p className="grow-0 text-sm font-black tracking-widest text-neutral-content/60">
           BOARD SIMULATOR
         </p>
-        <div
-          className={`my-8 h-36 w-36 rounded-full border-8 transition-all duration-150 ${ledOn ? "border-warning/40 bg-warning shadow-[0_0_60px_20px_oklch(var(--wa)/.45)]" : "border-neutral-content/20 bg-black/50"}`}
-          role="img"
-          aria-label={ledOn ? "LED点灯中" : "LED消灯中"}
-        />
-        <p className="text-2xl font-black">
-          {ledOn ? "LED ついてる！" : "LED きえてる"}
-        </p>
+        <div className={`mt-5 grid w-full items-start gap-4 ${neoPixelEnabled ? "grid-cols-[minmax(0,1fr)_6.5rem]" : "grid-cols-1"}`}>
+          <div className="grid justify-items-center">
+            <p className="text-xs font-black tracking-widest text-neutral-content/60">UIAPDUINO</p>
+            <div
+              className={`my-5 rounded-full border-8 transition-all duration-150 ${neoPixelEnabled ? "h-28 w-28" : "h-36 w-36"} ${ledOn ? "border-warning/40 bg-warning shadow-[0_0_60px_20px_oklch(var(--wa)/.45)]" : "border-neutral-content/20 bg-black/50"}`}
+              role="img"
+              aria-label={ledOn ? "LED点灯中" : "LED消灯中"}
+            />
+            <p className={`${neoPixelEnabled ? "text-lg" : "text-2xl"} font-black`}>
+              {ledOn ? "LED ついてる！" : "LED きえてる"}
+            </p>
+          </div>
+          {neoPixelEnabled && (
+            <div className="rounded-box border border-neutral-content/20 bg-black/20 px-3 py-3">
+              <p className="text-[10px] font-black tracking-wider text-neutral-content/60">NEOPIXEL</p>
+              <p className="mb-2 text-[10px] font-bold text-neutral-content/60">D8 / PC6</p>
+              <div className="grid gap-1.5" role="img" aria-label="8個のNeoPixelシミュレーター">
+                {neoPixels.map((color, index) => (
+                  <div key={index} className="flex items-center justify-center gap-2">
+                    <span className="w-3 text-right text-[10px] font-bold">{index + 1}</span>
+                    <span className="h-6 w-10 rounded border-2 border-white/25 transition" style={{ backgroundColor: color, boxShadow: color === "#000000" ? "none" : `0 0 12px ${color}` }} aria-label={`${index + 1}番 ${color === "#000000" ? "消灯" : color}`} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
         {extensionEnabled && (
           <div className="mt-5 w-full rounded-box border border-neutral-content/20 bg-black/20 p-4">
             <p className="text-xs font-black tracking-widest text-neutral-content/60">
@@ -61,32 +80,7 @@ export function LedSimulator({
             </p>
           </div>
         )}
-        <div className="divider divider-neutral" />
-        <p className="text-sm leading-6 text-neutral-content/65">
-          ブロックは安全な命令へ変換してから順番に実行します。
-        </p>
-        <div className="badge badge-outline mt-2">
-          命令 {countInstructions(instructions)}個
-        </div>
       </div>
     </aside>
-  );
-}
-
-function countInstructions(instructions: ProgramInstruction[]): number {
-  return instructions.reduce(
-    (total, instruction) =>
-      total +
-      (instruction.type === "repeat"
-        ? instruction.times * countInstructions(instruction.body)
-        : instruction.type === "forever"
-          ? 1 + countInstructions(instruction.body)
-        : instruction.type === "ifButton"
-          ? 1 + Math.max(
-              countInstructions(instruction.body),
-              countInstructions(instruction.elseBody),
-            )
-        : 1),
-    0,
   );
 }
