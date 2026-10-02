@@ -12,6 +12,7 @@ readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 readonly SKETCH_DIR="${PROJECT_DIR}/firmware/workshop-runtime"
 readonly BUILD_DIR="${PROJECT_DIR}/.build/workshop-runtime"
+readonly LINKER_SCRIPT_NAME="uiap_standalone.ld"
 
 usage() {
   cat <<'EOF'
@@ -60,6 +61,21 @@ core_usb_config_path() {
     "${data_dir}" "${CORE_VERSION}"
 }
 
+core_linker_script_path() {
+  local data_dir
+  data_dir="$("${ARDUINO_CLI}" config get directories.data)"
+  printf '%s/packages/UIAP_HID/hardware/ch32v/%s/system/CH32V00x/SRC/Ld/%s\n' \
+    "${data_dir}" "${CORE_VERSION}" "${LINKER_SCRIPT_NAME}"
+}
+
+install_linker_script() {
+  local installed_script
+  installed_script="$(core_linker_script_path)"
+  if [[ ! -f "${installed_script}" ]] || ! cmp -s "${SKETCH_DIR}/${LINKER_SCRIPT_NAME}" "${installed_script}"; then
+    install -m 0644 "${SKETCH_DIR}/${LINKER_SCRIPT_NAME}" "${installed_script}"
+  fi
+}
+
 patch_webhid_descriptor() {
   require_core
   local config_file
@@ -100,22 +116,39 @@ setup_core() {
 build_runtime() {
   require_core
   require_descriptor_patch
+  install_linker_script
   mkdir -p "${BUILD_DIR}"
   echo "教育用ランタイムをコンパイルします。実機への書き込みは行いません。"
   "${ARDUINO_CLI}" compile \
     --fqbn "${FQBN}" \
     --board-options "${BOARD_OPTIONS}" \
+    --build-property "build.ldscript=${LINKER_SCRIPT_NAME}" \
     --clean \
     --output-dir "${BUILD_DIR}" \
     "${SKETCH_DIR}"
+  local binary="${BUILD_DIR}/workshop-runtime.ino.bin"
+  local binary_size
+  binary_size="$(wc -c < "${binary}" | tr -d ' ')"
+  if (( binary_size > 14336 )); then
+    echo "作品領域とランタイムが重なっています (${binary_size} > 14336 bytes)。" >&2
+    exit 1
+  fi
   echo "生成物: ${BUILD_DIR}/workshop-runtime.ino.bin"
 }
 
 upload_runtime() {
   require_core
+  install_linker_script
   local binary="${BUILD_DIR}/workshop-runtime.ino.bin"
   if [[ ! -f "${binary}" ]]; then
     echo "ビルド済みbinがありません。先にbuildを実行してください。" >&2
+    exit 1
+  fi
+
+  local binary_size
+  binary_size="$(wc -c < "${binary}" | tr -d ' ')"
+  if (( binary_size > 14336 )); then
+    echo "作品領域とランタイムが重なっています (${binary_size} > 14336 bytes)。" >&2
     exit 1
   fi
 
@@ -124,6 +157,7 @@ upload_runtime() {
   "${ARDUINO_CLI}" upload \
     --fqbn "${FQBN}" \
     --board-options "${BOARD_OPTIONS}" \
+    --build-property "build.ldscript=${LINKER_SCRIPT_NAME}" \
     --input-dir "${BUILD_DIR}" \
     "${SKETCH_DIR}"
 }

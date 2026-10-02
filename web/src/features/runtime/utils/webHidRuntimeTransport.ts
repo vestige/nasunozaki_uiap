@@ -30,9 +30,10 @@ export class WebHidRuntimeTransport implements RuntimeTransport {
 
   async send(message: Uint8Array) {
     this.assertAvailable();
-    if (message.length !== RUNTIME_MESSAGE_SIZE) {
+    if (message.length !== RUNTIME_MESSAGE_SIZE &&
+        message.length !== RUNTIME_FEATURE_REPORT_SIZE) {
       throw new Error(
-        `教育用ランタイム命令は${RUNTIME_MESSAGE_SIZE}バイト必要です。`,
+        `教育用ランタイム命令は${RUNTIME_MESSAGE_SIZE}または${RUNTIME_FEATURE_REPORT_SIZE}バイト必要です。`,
       );
     }
     try {

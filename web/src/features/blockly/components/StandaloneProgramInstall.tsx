@@ -1,159 +1,69 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { HidDevice, HidNavigator } from "../../device/types/webhid";
 import type { ProgramInstruction } from "../utils/program";
-import {
-  embedStandaloneProgram,
-  encodeStandaloneProgram,
-} from "../utils/standaloneProgram";
-import { loadVerifiedImage } from "../../runtime/components/RuntimeFirmwareInstall";
-import flash from "../../runtime/utils/rv003usb_webflasher.js";
+import { encodeStandaloneProgram } from "../utils/standaloneProgram";
+import { writeStandaloneProgram } from "../utils/writeStandaloneProgram";
+import type { RuntimeHidDevice } from "../../runtime/types/transport";
+import { requestUiapRuntimeDevice } from "../../runtime/utils/runtimeDevice";
 import {
   createDiagnosticLogEntry,
   type DiagnosticLogEntry,
 } from "../../../diagnosticLog";
 import { queryKeys } from "../../../query";
-import {
-  browserDiagnosticDetails,
-  formatVidPid,
-  RuntimeDiagnosticError,
-  runtimeErrorDetails,
-} from "../../runtime/utils/runtimeDiagnostic";
-
-const BOOTLOADER_VENDOR_ID = 0x1209;
-const BOOTLOADER_PRODUCT_ID = 0xb803;
 
 type Props = {
   program: ProgramInstruction[];
+  device: RuntimeHidDevice | null;
   disabled: boolean;
 };
 
-export function StandaloneProgramInstall({ program, disabled }: Props) {
+export function StandaloneProgramInstall({ program, device, disabled }: Props) {
   const client = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const appendLog = (
-    level: "info" | "success" | "warning" | "error",
+    level: "info" | "success" | "error",
     action: string,
     text: string,
     details?: Record<string, string | number | boolean>,
-  ) =>
-    client.setQueryData<DiagnosticLogEntry[]>(
-      queryKeys.diagnosticLog,
-      (entries = []) => [
-        ...entries,
-        createDiagnosticLogEntry(level, action, text, details),
-      ],
-    );
+  ) => client.setQueryData<DiagnosticLogEntry[]>(
+    queryKeys.diagnosticLog,
+    (entries = []) => [...entries, createDiagnosticLogEntry(level, action, text, details)],
+  );
 
   const install = async () => {
-    let programSlot: Uint8Array;
+    let encoded: Uint8Array;
     try {
-      programSlot = encodeStandaloneProgram(program);
+      encoded = encodeStandaloneProgram(program);
     } catch (error) {
       setMessage(errorMessage(error));
       return;
     }
-    if (!window.confirm(
-      "今のブロックをUIAPduinoへ書き込みます。UIAPduinoに入っているプログラムは置き換わります。続けますか？",
-    )) return;
-
-    const hid = (navigator as HidNavigator).hid;
-    if (!hid) {
-      setMessage("WebHID対応のPC版ChromeまたはEdgeで開いてください。");
+    if (!window.confirm("今のブロックをUIAPduinoへ保存します。現在の作品は置き換わります。続けますか？")) {
       return;
     }
 
     setBusy(true);
-    let device: HidDevice | undefined;
     try {
-      appendLog("info", "STANDALONE_ENVIRONMENT", "作品の書き込み環境を確認しました。", {
-        ...browserDiagnosticDetails(),
-        expectedMode: "bootloader",
-        expectedVidPid: "1209:B803",
+      // Requesting a device stays directly in the button's user gesture.
+      const connected = device?.opened ? device : await requestUiapRuntimeDevice();
+      client.setQueryData(queryKeys.runtimeDevice, connected);
+      setMessage("作品を書き込んでいます…");
+      appendLog("info", "STANDALONE_WRITE_START", "通常接続で作品の保存を開始しました。");
+      const bank = await writeStandaloneProgram(connected, encoded, (percent) => {
+        setMessage(`作品を書き込んでいます… ${percent}%`);
       });
-      let devices: HidDevice[];
-      try {
-        // Keep device selection as the first awaited operation after the click.
-        devices = await hid.requestDevice({
-          filters: [{
-            vendorId: BOOTLOADER_VENDOR_ID,
-            productId: BOOTLOADER_PRODUCT_ID,
-          }],
-        });
-      } catch (error) {
-        throw new RuntimeDiagnosticError(
-          "DEVICE_CANCELLED",
-          "bootloader-select",
-          "書き込みモードのUIAPduinoが選ばれませんでした。",
-          error,
-        );
-      }
-      device = devices[0];
-      if (!device) {
-        throw new RuntimeDiagnosticError(
-          "DEVICE_CANCELLED",
-          "bootloader-select",
-          "ボードが選択されませんでした。書き込みモードを確認してください。",
-        );
-      }
-      if (device.vendorId !== BOOTLOADER_VENDOR_ID ||
-          device.productId !== BOOTLOADER_PRODUCT_ID) {
-        throw new Error("対象外のボードが選択されました。");
-      }
-      appendLog("success", "STANDALONE_BOOTLOADER_SELECTED", "書き込みモードのUIAPduinoを選択しました。", {
-        product: device.productName || "名称なし",
-        vidPid: formatVidPid(device.vendorId, device.productId),
-      });
-
-      setMessage("作品を安全な命令へ変換しています…");
-      const baseImage = await loadVerifiedImage();
-      const image = embedStandaloneProgram(baseImage, programSlot);
-      appendLog("success", "STANDALONE_IMAGE_READY", "作品入りファームウェアを生成しました。", {
-        bytes: image.length,
-        topLevelInstructions: program.length,
-      });
-
-      let lastProgress = -10;
-      const succeeded = await flash(image, ({ step, offset, size }) => {
-        if (step < 4) setMessage("UIAPduinoを準備しています…");
-        else if (step < 6) {
-          const progress = Math.min(100, Math.round(offset / size * 100));
-          setMessage(`作品を書き込み、照合しています… ${progress}%`);
-          if (progress >= lastProgress + 10) {
-            lastProgress = Math.floor(progress / 10) * 10;
-            appendLog("info", "STANDALONE_WRITE_PROGRESS", "作品の書き込みと照合を進めています。", {
-              progress: lastProgress,
-            });
-          }
-        } else setMessage("作品を起動しています…");
-      }, device);
-      if (!succeeded) {
-        throw new RuntimeDiagnosticError(
-          "FLASH_FAILED",
-          "flash-write",
-          "作品の書き込みまたは照合に失敗しました。再試行せず、接続状態を確認してください。",
-        );
-      }
-
-      setMessage("作品を書き込みました。USBを接続し直すと、ブラウザなしで動きます。");
-      appendLog("success", "STANDALONE_WRITE_SUCCESS", "Blockly作品の書き込みと照合が完了しました。", {
-        bytes: image.length,
+      setMessage("作品を書き込みました。USBを外しても動きます。");
+      appendLog("success", "STANDALONE_WRITE_SUCCESS", "作品を保存し、保存先を確認しました。", {
+        bank,
       });
     } catch (error) {
       setMessage(errorMessage(error));
-      appendLog("error", "STANDALONE_WRITE_ERROR", "Blockly作品を書き込めませんでした。", {
-        ...runtimeErrorDetails(error),
+      appendLog("error", "STANDALONE_WRITE_ERROR", "作品を書き込めませんでした。", {
+        error: errorMessage(error),
       });
     } finally {
-      if (device?.opened && "close" in device) {
-        try {
-          await (device as HidDevice & { close(): Promise<void> }).close();
-        } catch {
-          // The bootloader can disconnect after starting the new application.
-        }
-      }
       setBusy(false);
     }
   };

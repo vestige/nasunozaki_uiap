@@ -406,6 +406,7 @@ export function BlocklyStudio() {
             />
             <StandaloneProgramInstall
               program={program.data}
+              device={runtimeDevice.data}
               disabled={run.isPending || importProject.isPending || exportProject.isPending}
             />
           </div>

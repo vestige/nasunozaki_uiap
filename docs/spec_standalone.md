@@ -85,7 +85,9 @@ WebHIDでランタイムへbytecodeを送り、ランタイム自身が予約済
 - 後から条件分岐、ボタン、NeoPixel、変数を追加できるversion付き形式にする
 - `blockId`などブラウザ表示専用情報はボードへ保存しない
 
-各bankを1024バイト、作品headerを16バイト、payloadを最大1008バイトとする。二重bankの管理情報（generation、有効化状態）は作品headerとは別に、各bankの固定位置へ持たせる。Flash/RAM実測後に、この領域を維持できるか再確認する。
+各bankを1024バイトとし、先頭16バイトをbank管理情報、続く1008バイトを作品領域とする。作品headerは16バイトで、payloadは最大992バイト。Flash/RAM実測後に、この領域を維持できるか再確認する。
+
+bank管理情報は先頭から`UIAB`（4バイト）、version（1）、generation（4、little endian）、予約（1、0）、commit marker（2、`0x0000`）、予約（4、`0xFF`）とする。新しいbankの全データとCRCを確認した後、commit markerのhalfwordを最後に書く。起動時は有効な両bankのgenerationを比較して新しい方を選ぶ。
 
 headerは次の形式とする。複数byteの数値はlittle endianで格納する。
 
@@ -130,7 +132,7 @@ headerは次の形式とする。複数byteの数値はlittle endianで格納す
 - `PROGRAM_ABORT`: 未完了の更新を破棄し、直前の有効bankを維持する
 - `PROGRAM_STATUS`: 有効bank、更新状態、受信済みbyte数、errorを返す
 
-Flashのpage sizeは64バイトである。消去・書き込み中にsoftware USBを長時間止めない単位を実機計測し、各操作の完了後に応答する。ブラウザは応答を待ってから次を送り、timeout時に自動で連続再試行しない。
+CH32V003 coreには1KiB単位の通常消去と64バイト単位の高速page消去がある。bank境界は両方に揃えている。消去・書き込み中にsoftware USBを長時間止めない単位を実機計測し、各操作の完了後に応答する。ブラウザは応答を待ってから次を送り、timeout時に自動で連続再試行しない。`PROGRAM_STATUS`の応答は`0x40`が対応済み・有効bankなし、`0x41`がbank A、`0x42`がbank Bを表す。
 
 ## 8. 書き込みの安全境界
 
@@ -156,14 +158,14 @@ Flashのpage sizeは64バイトである。消去・書き込み中にsoftware U
 
 ## 9. これからの実装順序
 
-1. [ ] 通常更新protocolのpacket生成・状態遷移・異常系をTypeScriptのテストで固定する
-2. [ ] linkerでFlash末尾2KiBを二重bankとして予約し、ランタイムを14KiB以内に制限する
-3. [ ] ランタイムを固定アドレスのbankから起動するよう変更する
-4. [ ] interpreterを非blocking化し、「ずっと」の実行中もWebHIDへ応答させる
-5. [ ] `PROGRAM_STATUS`とread-only検査を実装し、予約領域のアドレス・page境界を実機で確認する
-6. [ ] 未使用bankだけを対象に、1 pageの消去・書き込み・読戻しを実機確認する
-7. [ ] BEGIN/DATA/COMMIT/ABORTと電源断復旧を実装・検証する
-8. [ ] 画面の「UIAPduinoに書き込む」を接続済み通常ランタイム経由へ切り替える
+1. [x] 通常更新protocolのpacket生成・状態遷移・異常系をTypeScriptのテストで固定する
+2. [x] linkerでFlash末尾2KiBを二重bankとして予約し、ランタイムを14KiB以内に制限する
+3. [x] ランタイムを固定アドレスのbankから起動するよう変更する（実機未確認）
+4. [x] interpreterの待機・「ずっと」中もWebHIDを処理するよう変更する（実機未確認）
+5. [ ] `PROGRAM_STATUS`のread-only実機確認と、予約領域のアドレス・page境界を実機で確認する（実装済み）
+6. [ ] 未使用bankだけを対象に、1 pageの消去・書き込み・読戻しを実機確認する（実装済み）
+7. [ ] BEGIN/DATA/COMMIT/ABORTと電源断復旧を実機で検証する（実装と模擬通信テスト済み）
+8. [x] 画面の「UIAPduinoに書き込む」を接続済み通常ランタイム経由へ切り替える
 9. [ ] USBを抜いて再給電し、新しい作品がブラウザなしで動くことを確認する
 10. [ ] 既存の繰り返し、タクトスイッチ、NeoPixelの順に対応範囲を広げる
 
@@ -181,6 +183,6 @@ Flashのpage sizeは64バイトである。消去・書き込み中にsoftware U
 
 2026-10-02に、内蔵LEDを500msごとに点灯・消灯する「ずっと」作品を1024バイトの予約領域へ埋め込み、公式`uiapflash`で書き込みと8320バイトのverifyに成功した。アプリ起動直後に点滅し、USBを外してボタンを押さずに再接続した後も、ブラウザから命令を送らず自動で点滅を再開することを実機確認した。
 
-現在の空作品ランタイムはFlash 8096 / 16384バイト（49%）、RAM 232 / 2048バイト（11%）。作品payloadはheaderを除く最大1008バイトである。
+当時の空作品ランタイムはFlash 8096 / 16384バイト（49%）、RAM 232 / 2048バイト（11%）。作品payloadはheaderを除く最大1008バイトだった。現在の二重bank版はFlash 9596 / 14336バイト（67%）、RAM 248 / 2048バイト（12%）、作品payload最大992バイト。通常接続での更新は実機未確認。
 
 同日、作品入りランタイムから空作品ランタイムへ書き戻し、8320バイトのverify、通常動作モード`0x1209:0xD004`への復帰、LED点滅の停止を確認した。

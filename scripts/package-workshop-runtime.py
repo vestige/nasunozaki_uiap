@@ -14,7 +14,7 @@ PUBLIC = ROOT / "web" / "public"
 
 def main() -> None:
     build_info = json.loads((SOURCE / "build-info.json").read_text())
-    for name, key in (("workshop-runtime.ino", "source_sha256"), ("workshop-runtime.bin", "binary_sha256")):
+    for name, key in (("workshop-runtime.ino", "source_sha256"), ("uiap_standalone.ld", "linker_sha256"), ("workshop-runtime.bin", "binary_sha256")):
         actual = hashlib.sha256((SOURCE / name).read_bytes()).hexdigest()
         if actual != build_info[key]:
             raise ValueError(f"{name} does not match build-info.json; rebuild the runtime")
@@ -24,6 +24,7 @@ def main() -> None:
         files = (
             (SOURCE / "README.md", "workshop-runtime/README.md"),
             (SOURCE / "workshop-runtime.ino", "workshop-runtime/workshop-runtime.ino"),
+            (SOURCE / "uiap_standalone.ld", "workshop-runtime/uiap_standalone.ld"),
             (SOURCE / "workshop-runtime.bin", "workshop-runtime/workshop-runtime.bin"),
             (SOURCE / "build-info.json", "workshop-runtime/build-info.json"),
         )
