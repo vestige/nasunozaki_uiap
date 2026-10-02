@@ -44,7 +44,7 @@ WebHIDのFeature Reportは、最後のEP0 OUT packetを受け取った時点で�
 
 ファームウェア内に1024バイトのBlockly作品領域を予約しています。配布binでは自動実行を無効にした空作品が入り、従来どおりWebHID命令を待ちます。ブラウザが有効な作品を予約領域へ埋め込んだ場合だけ、起動時に内蔵LED、待機、回数指定の繰り返し、「ずっと」のbytecodeを検証してから実行します。
 
-magic、version、payload長、CRC、予約byte、各opcodeの引数と入れ子をすべて確認し、不正な作品は実行しません。2026-10-02に、500msごとの内蔵LED点滅作品を書き込み、USBを外して再給電した後もブラウザから命令を送らず自動実行を再開することを実機確認しました。詳細は[`docs/spec_standalone.md`](../../docs/spec_standalone.md)を参照してください。
+magic、version、payload長、CRC、予約byte、各opcodeの引数と入れ子をすべて確認し、不正な作品は実行しません。2026-10-02に、500msごとの内蔵LED点滅作品を書き込み、USBを外して再給電した後もブラウザから命令を送らず自動実行を再開することを実機確認しました。その後、空作品ランタイムを書き戻し、通常動作モードへの復帰と点滅停止も確認しました。詳細は[`docs/spec_standalone.md`](../../docs/spec_standalone.md)を参照してください。
 
 ## 現在の確認範囲
 
