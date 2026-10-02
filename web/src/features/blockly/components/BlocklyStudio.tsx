@@ -32,6 +32,7 @@ import { TactSwitchWiringGuide } from "./TactSwitchWiringGuide";
 import { NeoPixelWiringGuide } from "./NeoPixelWiringGuide";
 import { ProjectFileActions } from "./ProjectFileActions";
 import { ExecutionTargetSelector } from "./ExecutionTargetSelector";
+import { StandaloneProgramInstall } from "./StandaloneProgramInstall";
 import type { ExecutionTarget } from "../types/execution";
 import type { RuntimeHidDevice } from "../../runtime/types/transport";
 import {
@@ -403,6 +404,12 @@ export function BlocklyStudio() {
             }}
           />
         </div>
+      </div>
+      <div className="mb-5">
+        <StandaloneProgramInstall
+          program={program.data}
+          disabled={run.isPending || importProject.isPending || exportProject.isPending}
+        />
       </div>
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="lg:col-span-2">
