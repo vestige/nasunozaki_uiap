@@ -4,7 +4,7 @@ import type {
   RuntimeInputReportEvent,
 } from "../../web/src/features/runtime/types/transport";
 import { encodeStandaloneProgram } from "../../web/src/features/blockly/utils/standaloneProgram";
-import { writeStandaloneProgram } from "../../web/src/features/blockly/utils/writeStandaloneProgram";
+import { readStandaloneStatus, writeStandaloneProgram } from "../../web/src/features/blockly/utils/writeStandaloneProgram";
 
 function fakeRuntime(initialStatus: number) {
   let listener: ((event: RuntimeInputReportEvent) => void) | undefined;
@@ -39,6 +39,15 @@ function fakeRuntime(initialStatus: number) {
 }
 
 describe("writeStandaloneProgram", () => {
+  it("STATUSだけで旧ランタイムへの非対応を判定する", async () => {
+    const fake = fakeRuntime(1);
+    await expect(readStandaloneStatus(fake.device)).resolves.toEqual({
+      supported: false,
+      activeBank: null,
+    });
+    expect(fake.commands.map((command) => command[5])).toEqual([0x24]);
+  });
+
   it("通常接続でSTATUS、BEGIN、連番DATA、COMMIT、STATUSを送る", async () => {
     const fake = fakeRuntime(0x40);
     const slot = encodeStandaloneProgram([{ type: "led", on: true, blockId: "led" }]);

@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useRuntimeDeviceDiagnostics } from "../hooks/useRuntimeDeviceDiagnostics";
+import { readStandaloneStatus } from "../../blockly/utils/writeStandaloneProgram";
 import { assessRuntimeCompatibility } from "../utils/runtimeCompatibility";
 import {
   UIAP_RUNTIME_PRODUCT_ID,
@@ -10,6 +12,8 @@ const hex = (value: number) =>
   `0x${value.toString(16).toUpperCase().padStart(4, "0")}`;
 
 export function RuntimeDeviceCard() {
+  const [programStatus, setProgramStatus] = useState<string | null>(null);
+  const [checkingProgramStatus, setCheckingProgramStatus] = useState(false);
   const diagnostics = useRuntimeDeviceDiagnostics();
   const device = diagnostics.device;
   const compatibility = device
@@ -52,6 +56,33 @@ export function RuntimeDeviceCard() {
 
           {device && compatibility?.mode === "runtime-candidate" && (
             <div className="grid gap-4">
+            <div className="rounded-box border border-info/40 bg-info/10 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="font-black">作品保存に対応しているか確認する</h3>
+                  {programStatus && <p role="status" className="mt-1 text-sm">{programStatus}</p>}
+                </div>
+                <button
+                  className="btn btn-info w-full font-black sm:w-auto sm:shrink-0"
+                  disabled={checkingProgramStatus}
+                  onClick={async () => {
+                    setCheckingProgramStatus(true);
+                    try {
+                      const status = await readStandaloneStatus(device);
+                      setProgramStatus(status.supported
+                        ? `作品保存に対応しています。現在の保存先：${status.activeBank ?? "なし"}`
+                        : "このランタイムは作品だけの保存に未対応です。最初に教育用ランタイムを更新してください。");
+                    } catch (error) {
+                      setProgramStatus(error instanceof Error ? error.message : String(error));
+                    } finally {
+                      setCheckingProgramStatus(false);
+                    }
+                  }}
+                >
+                  {checkingProgramStatus ? "確認中…" : "作品保存の対応を確認"}
+                </button>
+              </div>
+            </div>
             <div className="rounded-box border border-success/40 bg-success/10 p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>

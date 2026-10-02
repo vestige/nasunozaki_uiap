@@ -23,6 +23,23 @@ import {
 
 const MAX_BANK_PROGRAM_SIZE = 1008;
 
+export async function readStandaloneStatus(device: RuntimeHidDevice) {
+  if (device.vendorId !== 0x1209 || device.productId !== 0xd004 || !device.opened) {
+    throw new Error("通常接続のUIAPduinoを接続してください。");
+  }
+  const transport = new WebHidRuntimeTransport(device);
+  try {
+    await transport.send(buildStandaloneUpdateStatus(0));
+    const response = await withRuntimeResponseTimeout(transport.receive(), 2_000);
+    const status = parseStandaloneUpdateResponse(response, STANDALONE_UPDATE_COMMAND_STATUS, 0);
+    return status >= 0x40 && status <= 0x42
+      ? { supported: true, activeBank: status === 0x40 ? null : status === 0x41 ? "A" : "B" }
+      : { supported: false, activeBank: null };
+  } finally {
+    transport.dispose();
+  }
+}
+
 export async function writeStandaloneProgram(
   device: RuntimeHidDevice,
   encodedSlot: Uint8Array,
