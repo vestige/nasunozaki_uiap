@@ -31,9 +31,7 @@ type Props = {
 export function StandaloneProgramInstall({ program, disabled }: Props) {
   const client = useQueryClient();
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState(
-    "現在はLED・待機・繰り返し・「ずっと」に対応しています。",
-  );
+  const [message, setMessage] = useState<string | null>(null);
 
   const appendLog = (
     level: "info" | "success" | "warning" | "error",
@@ -161,21 +159,17 @@ export function StandaloneProgramInstall({ program, disabled }: Props) {
   };
 
   return (
-    <div className="rounded-box border border-secondary/40 bg-secondary/10 p-4">
-      <p className="font-black">ブラウザを閉じても動かす</p>
-      <p className="mt-1 text-sm text-base-content/70">
-        書き込みモードで接続し、今のブロックをUIAPduinoへ保存します。
-      </p>
+    <div className="flex min-w-0 flex-col gap-2 lg:items-end">
       <button
         type="button"
-        className="btn btn-secondary btn-sm mt-3"
+        className="btn btn-secondary btn-sm font-black shadow-md"
         disabled={disabled || busy || program.length === 0}
         onClick={install}
       >
         {busy && <span className="loading loading-spinner loading-xs" />}
-        {busy ? "書き込み中…" : "UIAPduinoへ作品を書き込む"}
+        {busy ? "書き込み中…" : "UIAPduinoに書き込む"}
       </button>
-      <p role="status" className="mt-2 text-sm">{message}</p>
+      {message && <p role="status" className="text-sm font-bold text-base-content/70">{message}</p>}
     </div>
   );
 }

@@ -387,29 +387,29 @@ export function BlocklyStudio() {
             onStop={stop}
             onReset={resetWorkspace}
           />
-          <ProjectFileActions
-            disabled={
-              run.isPending ||
-              importProject.isPending ||
-              exportProject.isPending
-            }
-            message={projectFileMessage(exportProject, importProject)}
-            onExport={() => {
-              importProject.reset();
-              exportProject.mutate();
-            }}
-            onImport={(file) => {
-              exportProject.reset();
-              importProject.mutate(file);
-            }}
-          />
+          <div className="flex min-w-0 flex-wrap items-start justify-end gap-2">
+            <ProjectFileActions
+              disabled={
+                run.isPending ||
+                importProject.isPending ||
+                exportProject.isPending
+              }
+              message={projectFileMessage(exportProject, importProject)}
+              onExport={() => {
+                importProject.reset();
+                exportProject.mutate();
+              }}
+              onImport={(file) => {
+                exportProject.reset();
+                importProject.mutate(file);
+              }}
+            />
+            <StandaloneProgramInstall
+              program={program.data}
+              disabled={run.isPending || importProject.isPending || exportProject.isPending}
+            />
+          </div>
         </div>
-      </div>
-      <div className="mb-5">
-        <StandaloneProgramInstall
-          program={program.data}
-          disabled={run.isPending || importProject.isPending || exportProject.isPending}
-        />
       </div>
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="lg:col-span-2">
