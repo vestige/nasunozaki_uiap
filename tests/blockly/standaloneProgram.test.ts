@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ProgramInstruction } from "../../web/src/features/blockly/utils/program";
 import {
   crc16Ccitt,
+  embedStandaloneProgram,
   encodeStandaloneProgram,
   STANDALONE_OPCODE_END,
   STANDALONE_OPCODE_FOREVER,
@@ -92,8 +93,55 @@ describe("encodeStandaloneProgram", () => {
 
     expect(() => encodeStandaloneProgram(program)).toThrow("作品が大きすぎます");
   });
+
+  it("完成済みbinの予約領域だけを作品で置き換える", () => {
+    const emptySlot = new Uint8Array(STANDALONE_PROGRAM_SLOT_SIZE);
+    emptySlot.set([
+      0x55, 0x49, 0x42, 0x50, STANDALONE_PROGRAM_VERSION, 0,
+      0, 0, 0xff, 0xff, 0, 0, 0, 0, 0, 0,
+    ]);
+    const prefix = new Uint8Array([1, 2, 3]);
+    const suffix = new Uint8Array([4, 5]);
+    const baseImage = concat(prefix, emptySlot, suffix);
+    const programSlot = encodeStandaloneProgram([{
+      type: "led",
+      on: true,
+      blockId,
+    }]);
+
+    const embedded = embedStandaloneProgram(baseImage, programSlot);
+
+    expect([...embedded.slice(0, prefix.length)]).toEqual([...prefix]);
+    expect([...embedded.slice(prefix.length, prefix.length + programSlot.length)]).toEqual([...programSlot]);
+    expect([...embedded.slice(-suffix.length)]).toEqual([...suffix]);
+    expect([...baseImage.slice(prefix.length, prefix.length + 6)]).toEqual([
+      0x55, 0x49, 0x42, 0x50, STANDALONE_PROGRAM_VERSION, 0,
+    ]);
+  });
+
+  it("予約領域が見つからないbinや複数あるbinを拒否する", () => {
+    const programSlot = encodeStandaloneProgram([]);
+    expect(() => embedStandaloneProgram(new Uint8Array(2048), programSlot)).toThrow("見つかりません");
+
+    const emptySlot = new Uint8Array(STANDALONE_PROGRAM_SLOT_SIZE);
+    emptySlot.set([
+      0x55, 0x49, 0x42, 0x50, STANDALONE_PROGRAM_VERSION, 0,
+      0, 0, 0xff, 0xff, 0, 0, 0, 0, 0, 0,
+    ]);
+    expect(() => embedStandaloneProgram(concat(emptySlot, emptySlot), programSlot)).toThrow("複数");
+  });
 });
 
 function readUint16(bytes: Uint8Array, offset: number) {
   return bytes[offset] | (bytes[offset + 1] << 8);
+}
+
+function concat(...parts: Uint8Array[]) {
+  const result = new Uint8Array(parts.reduce((size, part) => size + part.length, 0));
+  let offset = 0;
+  for (const part of parts) {
+    result.set(part, offset);
+    offset += part.length;
+  }
+  return result;
 }

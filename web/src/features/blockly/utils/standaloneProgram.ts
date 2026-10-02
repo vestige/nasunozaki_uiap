@@ -16,6 +16,14 @@ const MAX_NESTING_DEPTH = 8;
 const MAX_WAIT_MILLISECONDS = 5000;
 const MAX_REPEAT_COUNT = 20;
 const ERASED_FLASH_BYTE = 0xff;
+const EMPTY_SLOT_HEADER = new Uint8Array([
+  ...MAGIC,
+  STANDALONE_PROGRAM_VERSION,
+  0x00,
+  0x00, 0x00,
+  0xff, 0xff,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+]);
 
 export function encodeStandaloneProgram(
   instructions: ProgramInstruction[],
@@ -52,6 +60,32 @@ export function crc16Ccitt(bytes: ArrayLike<number>): number {
     }
   }
   return crc;
+}
+
+export function embedStandaloneProgram(
+  baseImage: Uint8Array,
+  programSlot: Uint8Array,
+): Uint8Array {
+  if (programSlot.length !== STANDALONE_PROGRAM_SLOT_SIZE) {
+    throw new Error("単独実行用の作品領域サイズが正しくありません。");
+  }
+
+  const offsets = findPatternOffsets(baseImage, EMPTY_SLOT_HEADER);
+  if (offsets.length !== 1) {
+    throw new Error(
+      offsets.length === 0
+        ? "完成済みランタイムに空の作品領域が見つかりません。"
+        : "完成済みランタイムに作品領域が複数見つかりました。",
+    );
+  }
+  const offset = offsets[0];
+  if (offset + STANDALONE_PROGRAM_SLOT_SIZE > baseImage.length) {
+    throw new Error("完成済みランタイムの作品領域が途中で切れています。");
+  }
+
+  const image = baseImage.slice();
+  image.set(programSlot, offset);
+  return image;
 }
 
 function encodeInstructions(
@@ -135,4 +169,19 @@ function assertBodyLength(body: number[]) {
 function writeUint16(target: Uint8Array, offset: number, value: number) {
   target[offset] = value & 0xff;
   target[offset + 1] = value >> 8;
+}
+
+function findPatternOffsets(image: Uint8Array, pattern: Uint8Array) {
+  const offsets: number[] = [];
+  for (let offset = 0; offset <= image.length - pattern.length; offset += 1) {
+    let matches = true;
+    for (let index = 0; index < pattern.length; index += 1) {
+      if (image[offset + index] !== pattern[index]) {
+        matches = false;
+        break;
+      }
+    }
+    if (matches) offsets.push(offset);
+  }
+  return offsets;
 }
