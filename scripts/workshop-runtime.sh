@@ -157,7 +157,6 @@ upload_runtime() {
   "${ARDUINO_CLI}" upload \
     --fqbn "${FQBN}" \
     --board-options "${BOARD_OPTIONS}" \
-    --build-property "build.ldscript=${LINKER_SCRIPT_NAME}" \
     --input-dir "${BUILD_DIR}" \
     "${SKETCH_DIR}"
 }
