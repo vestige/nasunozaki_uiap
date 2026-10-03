@@ -108,7 +108,7 @@ describe("WebHidRuntimeTransport", () => {
   it("8バイト以外の命令と未接続deviceを拒否する", async () => {
     const fake = fakeDevice();
     const transport = new WebHidRuntimeTransport(fake.device);
-    await expect(transport.send(new Uint8Array(7))).rejects.toThrow("8バイト");
+    await expect(transport.send(new Uint8Array(7))).rejects.toThrow("8または32バイト");
 
     fake.device.opened = false;
     await expect(transport.send(new Uint8Array(8))).rejects.toThrow("接続されていません");

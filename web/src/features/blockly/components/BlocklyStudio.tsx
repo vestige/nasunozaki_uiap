@@ -32,6 +32,7 @@ import { TactSwitchWiringGuide } from "./TactSwitchWiringGuide";
 import { NeoPixelWiringGuide } from "./NeoPixelWiringGuide";
 import { ProjectFileActions } from "./ProjectFileActions";
 import { ExecutionTargetSelector } from "./ExecutionTargetSelector";
+import { StandaloneProgramInstall } from "./StandaloneProgramInstall";
 import type { ExecutionTarget } from "../types/execution";
 import type { RuntimeHidDevice } from "../../runtime/types/transport";
 import {
@@ -386,22 +387,29 @@ export function BlocklyStudio() {
             onStop={stop}
             onReset={resetWorkspace}
           />
-          <ProjectFileActions
-            disabled={
-              run.isPending ||
-              importProject.isPending ||
-              exportProject.isPending
-            }
-            message={projectFileMessage(exportProject, importProject)}
-            onExport={() => {
-              importProject.reset();
-              exportProject.mutate();
-            }}
-            onImport={(file) => {
-              exportProject.reset();
-              importProject.mutate(file);
-            }}
-          />
+          <div className="flex min-w-0 flex-wrap items-start justify-end gap-2">
+            <ProjectFileActions
+              disabled={
+                run.isPending ||
+                importProject.isPending ||
+                exportProject.isPending
+              }
+              message={projectFileMessage(exportProject, importProject)}
+              onExport={() => {
+                importProject.reset();
+                exportProject.mutate();
+              }}
+              onImport={(file) => {
+                exportProject.reset();
+                importProject.mutate(file);
+              }}
+            />
+            <StandaloneProgramInstall
+              program={program.data}
+              device={runtimeDevice.data}
+              disabled={run.isPending || importProject.isPending || exportProject.isPending}
+            />
+          </div>
         </div>
       </div>
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
