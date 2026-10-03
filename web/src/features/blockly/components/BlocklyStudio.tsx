@@ -418,11 +418,11 @@ export function BlocklyStudio() {
         </div>
       </div>
       <p className="mb-5 max-w-3xl text-sm leading-6 text-base-content/70">
-        「ためす」は今だけ動かします。作品をボードに残したいときは「ボードにかきこむ」を使ってね。
+        画面やボードでためしたあと、作品を残すときは「ボードにかきこむ」を選びます。
       </p>
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="lg:col-span-2">
-          <p className="mb-2 text-sm text-base-content/65">タクトスイッチやNeoPixelを使うときは「＋」で追加。ブロックと配線図が使えるようになります。</p>
+          <p className="mb-2 text-sm text-base-content/65">タクトスイッチやNeoPixelは、下の「＋」から追加できます。使えるブロックと配線図が表示されます。</p>
           <div className="tabs tabs-lift after:hidden" role="tablist" aria-label="Blocklyと配線ガイドの表示切り替え">
             <button type="button" role="tab" aria-selected={activeEditorTab === "blocks"} className={`tab ${activeEditorTab === "blocks" ? "tab-active" : ""}`} onClick={() => setActiveEditorTab("blocks")}>ブロックプログラミング</button>
             {tactSwitchExtension.data ? (
