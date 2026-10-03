@@ -640,7 +640,7 @@ export function useDeviceDiagnostics() {
       clearDiagnosticResults();
       client.setQueryData(
         queryKeys.connectionMessage,
-        "ボード情報を取得できました。Phase 0の接続確認は成功です。",
+        "ボード情報を取得できました。接続確認は成功です。",
       );
       appendLog("success", "DEVICE_CONNECT", "UIAPduinoへ接続しました。", {
         product: device.productName || "名称なし",

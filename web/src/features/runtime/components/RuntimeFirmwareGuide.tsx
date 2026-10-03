@@ -1,4 +1,5 @@
 import { RuntimeFirmwareInstall } from "./RuntimeFirmwareInstall";
+import { ConnectionGuide } from "../../device/components/ConnectionGuide";
 
 const SKETCH_ZIP_URL = "/nasunozaki_uiap/workshop-runtime.zip";
 
@@ -6,27 +7,26 @@ export function RuntimeFirmwareGuide() {
   return (
     <details className="collapse-arrow collapse border border-base-300 bg-base-200">
       <summary className="collapse-title font-black">
-        はじめて通常動作モードを使うとき
+        はじめての準備（最初の1回だけ）
       </summary>
       <div className="collapse-content space-y-4 text-sm leading-6">
         <div className="alert alert-warning">
           <span>
-            この手順は現在のプログラムを教育用ランタイムへ置き換えます。必要なプログラムや退避ファイルがある場合は、先に保存してください。
+            この準備をすると、ボードに入っている前のプログラムは消えます。必要なら先生や保護者といっしょに、先に保存してください。
           </span>
         </div>
-        <p>完成済みファームウェアをブラウザから書き込めます。Arduino CLIのインストールは不要です。</p>
-        <p>
-          ボタンを押したままUSBへ接続し、挿したらすぐ離して書き込みモードにします。下のボタンから書き込み、成功したらUSBを接続し直して「通常動作モードを調べる」を押します。
-        </p>
+        <p>ボードをはじめて使うときは、動かすための準備を一度だけ行います。おとなといっしょに進めてください。</p>
+        <ConnectionGuide />
         <RuntimeFirmwareInstall />
-        <p className="font-bold text-base-content/70">
-          この段階では、ページ内のflash erase実験は使用しません。
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <a className="btn btn-primary btn-sm" href={SKETCH_ZIP_URL} download="workshop-runtime.zip">
-            完成済みファームウェアをZIPで保存
-          </a>
-        </div>
+        <p className="font-bold text-base-content/70">終わったらUSBを抜き、ボタンを押さずにつなぎ直して「ボードに接続」を押してください。</p>
+        <details className="rounded-box border border-base-300 bg-base-100 p-3">
+          <summary className="cursor-pointer font-bold">先生・保護者向け：準備用ファイル</summary>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <a className="btn btn-primary btn-sm" href={SKETCH_ZIP_URL} download="workshop-runtime.zip">
+              完成済みファームウェアをZIPで保存
+            </a>
+          </div>
+        </details>
       </div>
     </details>
   );

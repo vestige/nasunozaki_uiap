@@ -22,21 +22,21 @@ export function ExecutionTargetSelector({
         <TargetButton
           checked={target === "simulator"}
           disabled={disabled}
-          label="画面で試す"
+          label="画面でためす"
           onChange={() => onChange("simulator")}
         />
         <TargetButton
           checked={target === "uiapduino"}
           disabled={disabled || !runtimeConnected}
-          label="UIAPduinoで動かす"
+          label="ボードでためす"
           onChange={() => onChange("uiapduino")}
         />
       </div>
       <p className="mt-2 text-sm font-bold text-base-content/60" role="status">
         {message ??
           (runtimeConnected
-            ? "UIAPduinoへ接続済みです。実行先を選べます。"
-            : "実機で動かすには、下の通常動作モードへ接続してください。")}
+            ? "ボードにつながっています。ためす場所をえらべます。"
+            : "ボードでためすには、下の「ボードにつなぐ」を押してください。")}
       </p>
     </fieldset>
   );

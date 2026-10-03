@@ -62,7 +62,7 @@ export async function loadVerifiedImage(): Promise<Uint8Array> {
 export function RuntimeFirmwareInstall() {
   const client = useQueryClient();
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("書き込みモードのUIAPduinoを接続してから開始してください。");
+  const [message, setMessage] = useState("上の手順でボードをつないでから始めてください。");
 
   const appendLog = (
     level: DiagnosticLogLevel,
@@ -162,7 +162,7 @@ export function RuntimeFirmwareInstall() {
           "書き込みまたは照合に失敗しました。再試行せず、接続状態を確認してください。",
         );
       }
-      setMessage("書き込みと照合が完了しました。USBを接続し直し、通常動作モードを調べてください。");
+      setMessage("準備ができました。USBを抜き、ボタンを押さずにつなぎ直してください。");
       appendLog("success", "FLASH_VERIFY_SUCCESS", "書き込み、照合、アプリ起動命令が完了しました。", {
         bytes: image.length,
       });
@@ -187,10 +187,10 @@ export function RuntimeFirmwareInstall() {
 
   return (
     <div className="rounded-box border border-warning/40 bg-warning/10 p-4">
-      <p className="font-bold">ブラウザから書き込む</p>
+      <p className="font-bold">ボードを使う準備</p>
       <p className="mt-1 text-sm">現在のプログラムを置き換えます。必要なプログラムや退避ファイルを先に保存してください。</p>
       <button className="btn btn-warning btn-sm mt-3" disabled={busy} onClick={install}>
-        {busy ? "書き込み中…" : "教育用ランタイムを書き込む"}
+        {busy ? "準備中…" : "ボードを準備する"}
       </button>
       <p role="status" className="mt-3 text-sm">{message}</p>
     </div>

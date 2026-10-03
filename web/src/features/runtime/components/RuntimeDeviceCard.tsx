@@ -26,14 +26,12 @@ export function RuntimeDeviceCard() {
         <div className="card-body min-w-0 gap-5">
           <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start">
             <div className="min-w-0 flex-1">
-              <div className="badge badge-info font-bold">READ ONLY</div>
+              <div className="badge badge-info font-bold">ふだんの接続</div>
               <h2 className="mt-2 text-2xl font-black">
-                通常動作モードを調べる
+                ボードにつなぐ
               </h2>
               <p className="mt-2 text-sm leading-6 text-base-content/65">
-                ワークショップ用ファームウェアを書き込んだ後の接続を確認します。
-                対象は {hex(UIAP_RUNTIME_VENDOR_ID)}:{hex(UIAP_RUNTIME_PRODUCT_ID)}
-                です。この確認ではLED命令を送りません。
+                ボタンを押さずにUSBでつなぎ、「ボードに接続」を押して「UIAPduino WebHID」をえらんでください。パソコンのChromeまたはEdgeで使えます。
               </p>
             </div>
             <button
@@ -44,7 +42,7 @@ export function RuntimeDeviceCard() {
               {diagnostics.connect.isPending && (
                 <span className="loading loading-spinner" />
               )}
-              {diagnostics.connect.isPending ? "確認中…" : "通常動作モードを調べる"}
+              {diagnostics.connect.isPending ? "接続中…" : "ボードに接続"}
             </button>
           </div>
 
@@ -54,7 +52,10 @@ export function RuntimeDeviceCard() {
 
           <RuntimeFirmwareGuide />
 
-          {device && compatibility?.mode === "runtime-candidate" && (
+          <details className="collapse-arrow collapse border border-base-300 bg-base-200">
+            <summary className="collapse-title font-black">困ったときの接続チェック</summary>
+            <div className="collapse-content grid gap-4">
+            {device && compatibility?.mode === "runtime-candidate" && (
             <div className="grid gap-4">
             <div className="rounded-box border border-info/40 bg-info/10 p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -128,7 +129,7 @@ export function RuntimeDeviceCard() {
               </div>
             </div>
             </div>
-          )}
+            )}
 
           {device && (
             <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,.7fr)_minmax(0,1.3fr)]">
@@ -152,6 +153,10 @@ export function RuntimeDeviceCard() {
               </div>
             </div>
           )}
+            {!device && <p className="text-sm text-base-content/70">まず「ボードに接続」を押してください。つながると確認メニューが表示されます。</p>}
+            <p className="text-xs text-base-content/60">接続先ID: {hex(UIAP_RUNTIME_VENDOR_ID)}:{hex(UIAP_RUNTIME_PRODUCT_ID)}</p>
+            </div>
+          </details>
         </div>
       </article>
     </section>

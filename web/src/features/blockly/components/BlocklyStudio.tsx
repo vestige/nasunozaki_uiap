@@ -342,14 +342,19 @@ export function BlocklyStudio() {
       <div className="mb-5 flex min-w-0 flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-black tracking-[.18em] text-primary">
-            PHASE 1 · BLOCK PROGRAMMING
+            BLOCK STUDIO
           </p>
           <h2 id="blockly-title" className="mt-1 text-3xl font-black">
             ブロックでLEDを動かそう
           </h2>
           <p className="mt-2 text-base text-base-content/65">
-            左からブロックを運び、画面または接続したUIAPduinoで実行できます。
+            左の一覧からブロックをえらんで、組み合わせてみよう。
           </p>
+          <ol className="mt-4 flex flex-wrap gap-2 text-sm font-bold" aria-label="ブロックの使い方">
+            <li className="rounded-full border border-base-content/20 bg-base-100 px-3 py-1">1 ブロックをおく</li>
+            <li className="rounded-full border border-base-content/20 bg-base-100 px-3 py-1">2 ▶でためす</li>
+            <li className="rounded-full border border-base-content/20 bg-base-100 px-3 py-1">3 ■でとめる</li>
+          </ol>
         </div>
         <div className="min-w-0 flex flex-col gap-3 lg:items-end">
           <ExecutionTargetSelector
@@ -373,8 +378,8 @@ export function BlocklyStudio() {
             saveMessage={saveMessage}
             runLabel={
               executionTarget.data === "uiapduino"
-                ? "UIAPduinoで実行"
-                : "画面で実行"
+                ? "ボードでためす"
+                : "画面でためす"
             }
             onStepDisplayChange={(enabled) => {
               setStepDisplay(enabled);
@@ -412,8 +417,12 @@ export function BlocklyStudio() {
           </div>
         </div>
       </div>
+      <p className="mb-5 max-w-3xl text-sm leading-6 text-base-content/70">
+        「ためす」は今だけ動かします。作品をボードに残したいときは「ボードにかきこむ」を使ってね。
+      </p>
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="lg:col-span-2">
+          <p className="mb-2 text-sm text-base-content/65">タクトスイッチやNeoPixelを使うときは「＋」で追加。ブロックと配線図が使えるようになります。</p>
           <div className="tabs tabs-lift after:hidden" role="tablist" aria-label="Blocklyと配線ガイドの表示切り替え">
             <button type="button" role="tab" aria-selected={activeEditorTab === "blocks"} className={`tab ${activeEditorTab === "blocks" ? "tab-active" : ""}`} onClick={() => setActiveEditorTab("blocks")}>ブロックプログラミング</button>
             {tactSwitchExtension.data ? (
