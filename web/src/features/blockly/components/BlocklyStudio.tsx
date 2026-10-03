@@ -422,7 +422,6 @@ export function BlocklyStudio() {
       </p>
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="lg:col-span-2">
-          <p className="mb-2 text-sm text-base-content/65">タクトスイッチやNeoPixelは、下の「＋」から追加できます。使えるブロックと配線図が表示されます。</p>
           <div className="tabs tabs-lift after:hidden" role="tablist" aria-label="Blocklyと配線ガイドの表示切り替え">
             <button type="button" role="tab" aria-selected={activeEditorTab === "blocks"} className={`tab ${activeEditorTab === "blocks" ? "tab-active" : ""}`} onClick={() => setActiveEditorTab("blocks")}>ブロックプログラミング</button>
             {tactSwitchExtension.data ? (
@@ -438,8 +437,8 @@ export function BlocklyStudio() {
               </div>
             ) : <button type="button" className="tab" onClick={() => { client.setQueryData(queryKeys.neoPixelExtension, true); if (workspaceRef.current) updateWorkspaceToolbox(workspaceRef.current, { tactSwitch: tactSwitchExtension.data, neoPixel: true }, toolboxVisibleRef.current); if (workspaceRef.current) saveBlocklyWorkspace(window.localStorage, Blockly.serialization.workspaces.save(workspaceRef.current), tactSwitchExtension.data, true); setActiveEditorTab("neoPixel"); }}>＋ NeoPixelを追加</button>}
           </div>
-          {tactSwitchExtension.data && activeEditorTab === "tactSwitch" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><p className="mb-3 font-black">タクトスイッチの配線</p><TactSwitchWiringGuide /></div>}
-          {neoPixelExtension.data && activeEditorTab === "neoPixel" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><p className="mb-3 font-black">NeoPixelの配線</p><NeoPixelWiringGuide /></div>}
+          {tactSwitchExtension.data && activeEditorTab === "tactSwitch" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><TactSwitchWiringGuide /></div>}
+          {neoPixelExtension.data && activeEditorTab === "neoPixel" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><NeoPixelWiringGuide /></div>}
           <div className={`rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem] ${activeEditorTab !== "blocks" ? "hidden" : ""}`}>
             <div className="mb-3 flex justify-start">
               <button type="button" className="btn btn-outline btn-sm" aria-pressed={!toolboxVisible} onClick={() => { const visible = !toolboxVisibleRef.current; toolboxVisibleRef.current = visible; setToolboxVisible(visible); const workspace = workspaceRef.current; if (workspace) setWorkspaceToolboxVisible(workspace, { tactSwitch: tactSwitchExtension.data, neoPixel: neoPixelExtension.data }, visible); }}>{toolboxVisible ? "ブロック一覧をかくす 😶‍🌫️" : "ブロック一覧をみせる 👀"}</button>
