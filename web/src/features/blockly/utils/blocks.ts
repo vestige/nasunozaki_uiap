@@ -86,6 +86,26 @@ export function registerUiapBlocks() {
       tooltip: "タクトスイッチの状態で、実行するブロックを選びます。",
     },
     {
+      type: "uiap_if",
+      message0: "もし %1 なら",
+      args0: [{ type: "input_value", name: "CONDITION", check: "Boolean" }],
+      message1: "%1",
+      args1: [{ type: "input_statement", name: "DO" }],
+      message2: "でなければ",
+      message3: "%1",
+      args3: [{ type: "input_statement", name: "ELSE" }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: 210,
+    },
+    { type: "uiap_boolean", message0: "%1", args0: [{ type: "field_dropdown", name: "VALUE", options: [["ほんとう", "TRUE"], ["ちがう", "FALSE"]] }], output: "Boolean", colour: 210 },
+    { type: "uiap_number", message0: "%1", args0: [{ type: "field_number", name: "VALUE", value: 0 }], output: "Number", colour: 230 },
+    { type: "uiap_variable_get", message0: "%1", args0: [{ type: "field_variable", name: "VAR", variable: "じょうたい" }], output: null, colour: 330 },
+    { type: "uiap_variable_set", message0: "%1 を %2 にする", args0: [{ type: "field_variable", name: "VAR", variable: "じょうたい" }, { type: "input_value", name: "VALUE" }], previousStatement: null, nextStatement: null, colour: 330 },
+    { type: "uiap_not", message0: "%1 ではない", args0: [{ type: "input_value", name: "VALUE", check: "Boolean" }], output: "Boolean", colour: 210 },
+    { type: "uiap_compare", message0: "%1 %2 %3", args0: [{ type: "input_value", name: "LEFT" }, { type: "field_dropdown", name: "OP", options: [["＝", "EQ"], ["≠", "NEQ"], ["＜", "LT"], ["≤", "LTE"], ["＞", "GT"], ["≥", "GTE"]] }, { type: "input_value", name: "RIGHT" }], output: "Boolean", colour: 210 },
+    { type: "uiap_logic", message0: "%1 %2 %3", args0: [{ type: "input_value", name: "LEFT", check: "Boolean" }, { type: "field_dropdown", name: "OP", options: [["かつ", "AND"], ["または", "OR"]] }, { type: "input_value", name: "RIGHT", check: "Boolean" }], output: "Boolean", colour: 210 },
+    {
       type: "uiap_neopixel_fill",
       message0: "NeoPixelを全部 %1 で 明るさ %2 % で光らせる",
       args0: [
@@ -127,6 +147,14 @@ const baseBlocks: Blockly.utils.toolbox.ToolboxItemInfo[] = [
   { kind: "block", type: "uiap_wait" },
   { kind: "block", type: "uiap_repeat" },
   { kind: "block", type: "uiap_forever" },
+  { kind: "block", type: "uiap_if" },
+  { kind: "block", type: "uiap_variable_set" },
+  { kind: "block", type: "uiap_variable_get" },
+  { kind: "block", type: "uiap_boolean" },
+  { kind: "block", type: "uiap_number" },
+  { kind: "block", type: "uiap_compare" },
+  { kind: "block", type: "uiap_logic" },
+  { kind: "block", type: "uiap_not" },
 ];
 
 export const uiapToolbox: Blockly.utils.toolbox.ToolboxDefinition = {

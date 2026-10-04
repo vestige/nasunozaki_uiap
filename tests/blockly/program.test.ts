@@ -113,4 +113,28 @@ describe("compileWorkspace", () => {
       { type: "neoPixelClear" },
     ]);
   });
+
+  it("変数と条件ブロックを安全な中間表現へ変換する", () => {
+    registerUiapBlocks();
+    const workspace = new Blockly.Workspace();
+    const variable = workspace.getVariableMap().createVariable("じょうたい");
+    Blockly.serialization.workspaces.load({ variables: [{ name: "じょうたい", id: variable.getId() }], blocks: { languageVersion: 0, blocks: [{
+      type: "uiap_variable_set", fields: { VAR: { id: variable.getId() } },
+      inputs: { VALUE: { block: { type: "uiap_boolean", fields: { VALUE: "FALSE" } } } },
+      next: { block: { type: "uiap_if", inputs: {
+        CONDITION: { block: { type: "uiap_not", inputs: { VALUE: { block: { type: "uiap_variable_get", fields: { VAR: { id: variable.getId() } } } } } } },
+        DO: { block: { type: "uiap_led", fields: { STATE: "ON" } } },
+      } } },
+    }] } }, workspace);
+
+    expect(compileWorkspace(workspace)).toMatchObject([
+      { type: "setVariable", id: variable.getId(), value: { type: "boolean", value: false } },
+      { type: "if", condition: { type: "not", value: { type: "variable", id: variable.getId() } }, body: [{ type: "led", on: true }] },
+    ]);
+
+    const restored = new Blockly.Workspace();
+    Blockly.serialization.workspaces.load(Blockly.serialization.workspaces.save(workspace), restored);
+    expect(restored.getVariableMap().getVariableById(variable.getId())?.name).toBe("じょうたい");
+    expect(compileWorkspace(restored)).toEqual(compileWorkspace(workspace));
+  });
 });
