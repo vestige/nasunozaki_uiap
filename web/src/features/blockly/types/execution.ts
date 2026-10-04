@@ -4,6 +4,7 @@ export type BoardAdapter = {
   fillNeoPixels?(color: string, brightness: number): void | Promise<void>;
   clearNeoPixels?(): void | Promise<void>;
   isButtonPressed?(): boolean | Promise<boolean>;
+  consumeButtonPress?(): boolean | Promise<boolean>;
   wait(milliseconds: number, signal: AbortSignal): Promise<void>;
 };
 

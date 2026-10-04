@@ -29,6 +29,9 @@ async function runInstructions(
       const condition = evaluateValue(instruction.condition, variables);
       if (typeof condition !== "boolean") throw new Error("条件には、ほんとう／ちがうを入れてください。");
       await runInstructions(condition ? instruction.body : instruction.elseBody, board, signal, observer, variables);
+    } else if (instruction.type === "ifButtonPressed") {
+      if (!board.consumeButtonPress) throw new Error("この実行先ではタクトスイッチを使えません。");
+      if (await board.consumeButtonPress()) await runInstructions(instruction.body, board, signal, observer, variables);
     } else if (instruction.type === "led") {
       await board.setLed(instruction.on);
       await board.wait(180, signal);

@@ -86,6 +86,16 @@ export function registerUiapBlocks() {
       tooltip: "タクトスイッチの状態で、実行するブロックを選びます。",
     },
     {
+      type: "uiap_if_button_pressed",
+      message0: "タクトスイッチを押したとき",
+      message1: "%1",
+      args1: [{ type: "input_statement", name: "DO" }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: 210,
+      tooltip: "押し続けても、1回だけ中のブロックを動かします。",
+    },
+    {
       type: "uiap_if",
       message0: "もし %1 なら",
       args0: [{ type: "input_value", name: "CONDITION", check: "Boolean" }],
@@ -164,9 +174,10 @@ export const uiapToolbox: Blockly.utils.toolbox.ToolboxDefinition = {
 
 export const tactSwitchToolbox: Blockly.utils.toolbox.ToolboxDefinition = {
   kind: "flyoutToolbox",
-  contents: [
-    ...baseBlocks,
-    { kind: "block", type: "uiap_if_button" },
+    contents: [
+      ...baseBlocks,
+      { kind: "block", type: "uiap_if_button" },
+      { kind: "block", type: "uiap_if_button_pressed" },
   ],
 };
 
@@ -181,7 +192,7 @@ export function createUiapToolbox(options: { tactSwitch: boolean; neoPixel: bool
     kind: "flyoutToolbox",
     contents: [
       ...baseBlocks,
-      ...(options.tactSwitch ? [{ kind: "block", type: "uiap_if_button" }] : []),
+      ...(options.tactSwitch ? [{ kind: "block", type: "uiap_if_button" }, { kind: "block", type: "uiap_if_button_pressed" }] : []),
       ...(options.neoPixel ? neoPixelBlocks : []),
     ],
   } satisfies Blockly.utils.toolbox.ToolboxDefinition;

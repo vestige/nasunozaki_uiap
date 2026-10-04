@@ -137,4 +137,11 @@ describe("compileWorkspace", () => {
     expect(restored.getVariableMap().getVariableById(variable.getId())?.name).toBe("じょうたい");
     expect(compileWorkspace(restored)).toEqual(compileWorkspace(workspace));
   });
+
+  it("押した瞬間のブロックを1回限りの条件として変換する", () => {
+    registerUiapBlocks();
+    const workspace = new Blockly.Workspace();
+    Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks: [{ type: "uiap_if_button_pressed", inputs: { DO: { block: { type: "uiap_neopixel_clear" } } } }] } }, workspace);
+    expect(compileWorkspace(workspace)).toMatchObject([{ type: "ifButtonPressed", body: [{ type: "neoPixelClear" }] }]);
+  });
 });

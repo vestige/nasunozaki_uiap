@@ -11,6 +11,7 @@ export type ProgramValue =
 export type ProgramInstruction =
   | { type: "setVariable"; id: string; value: ProgramValue; blockId: string }
   | { type: "if"; condition: ProgramValue; body: ProgramInstruction[]; elseBody: ProgramInstruction[]; blockId: string }
+  | { type: "ifButtonPressed"; body: ProgramInstruction[]; blockId: string }
   | { type: "led"; on: boolean; blockId: string }
   | { type: "neoPixelFill"; color: string; brightness: number; blockId: string }
   | { type: "neoPixelSet"; index: number; color: string; brightness: number; blockId: string }
@@ -48,6 +49,8 @@ function compileChain(first: Blockly.Block | null): ProgramInstruction[] {
       instructions.push({ type: "setVariable", id: block.getFieldValue("VAR"), value: compileValue(block.getInputTargetBlock("VALUE")), blockId: block.id });
     } else if (block.type === "uiap_if") {
       instructions.push({ type: "if", condition: compileValue(block.getInputTargetBlock("CONDITION")), body: compileChain(block.getInputTargetBlock("DO")), elseBody: compileChain(block.getInputTargetBlock("ELSE")), blockId: block.id });
+    } else if (block.type === "uiap_if_button_pressed") {
+      instructions.push({ type: "ifButtonPressed", body: compileChain(block.getInputTargetBlock("DO")), blockId: block.id });
     } else if (block.type === "uiap_led") {
       instructions.push({
         type: "led",

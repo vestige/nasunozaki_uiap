@@ -33,6 +33,17 @@ const createExecution = () => {
 };
 
 describe("runProgram", () => {
+  it("押し続けたボタンは1回だけ実行する", async () => {
+    const { board, events } = createExecution();
+    let pending = true;
+    board.consumeButtonPress = () => {
+      const pressed = pending;
+      pending = false;
+      return pressed;
+    };
+    await runProgram([{ type: "repeat", times: 3, body: [{ type: "ifButtonPressed", body: [{ type: "led", on: true, blockId: "on" }], blockId: "press" }], blockId: "repeat" }], board, new AbortController().signal);
+    expect(events.filter((event) => event === "led:true")).toHaveLength(1);
+  });
   it("変数を保持して条件・反転・比較を実行する", async () => {
     const { board, events } = createExecution();
     const conditional: ProgramInstruction[] = [

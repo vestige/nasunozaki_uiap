@@ -36,6 +36,10 @@ export function createBoardExecutionSession({
         fillNeoPixels: fillSimulatorNeoPixels,
         clearNeoPixels: clearSimulatorNeoPixels,
         isButtonPressed: () => button.update(getSimulatorButton(), Date.now()),
+        consumeButtonPress: () => {
+          button.update(getSimulatorButton(), Date.now());
+          return button.consumePress();
+        },
         wait: abortableDelay,
       },
       async close(turnOff) {
@@ -61,6 +65,10 @@ export function createBoardExecutionSession({
     fillNeoPixels: (color: string, brightness: number) => runtimeBoard.fillNeoPixels(color, brightness),
     clearNeoPixels: () => runtimeBoard.clearNeoPixels(),
     isButtonPressed: async () => button.update(await runtimeBoard.isButtonPressed(), Date.now()),
+    consumeButtonPress: async () => {
+      button.update(await runtimeBoard.isButtonPressed(), Date.now());
+      return button.consumePress();
+    },
     wait: (milliseconds: number, signal: AbortSignal) => runtimeBoard.wait(milliseconds, signal),
   };
   let disconnected = false;
