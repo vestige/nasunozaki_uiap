@@ -342,14 +342,19 @@ export function BlocklyStudio() {
       <div className="mb-5 flex min-w-0 flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-black tracking-[.18em] text-primary">
-            PHASE 1 · BLOCK PROGRAMMING
+            BLOCK STUDIO
           </p>
           <h2 id="blockly-title" className="mt-1 text-3xl font-black">
             ブロックでLEDを動かそう
           </h2>
           <p className="mt-2 text-base text-base-content/65">
-            左からブロックを運び、画面または接続したUIAPduinoで実行できます。
+            左の一覧からブロックをえらんで、組み合わせてみよう。
           </p>
+          <ol className="mt-4 flex flex-wrap gap-2 text-sm font-bold" aria-label="ブロックの使い方">
+            <li className="rounded-full border border-base-content/20 bg-base-100 px-3 py-1">1 ブロックをおく</li>
+            <li className="rounded-full border border-base-content/20 bg-base-100 px-3 py-1">2 ▶でためす</li>
+            <li className="rounded-full border border-base-content/20 bg-base-100 px-3 py-1">3 ■でとめる</li>
+          </ol>
         </div>
         <div className="min-w-0 flex flex-col gap-3 lg:items-end">
           <ExecutionTargetSelector
@@ -373,8 +378,8 @@ export function BlocklyStudio() {
             saveMessage={saveMessage}
             runLabel={
               executionTarget.data === "uiapduino"
-                ? "UIAPduinoで実行"
-                : "画面で実行"
+                ? "ボードでためす"
+                : "画面でためす"
             }
             onStepDisplayChange={(enabled) => {
               setStepDisplay(enabled);
@@ -412,6 +417,9 @@ export function BlocklyStudio() {
           </div>
         </div>
       </div>
+      <p className="mb-5 max-w-3xl text-sm leading-6 text-base-content/70">
+        画面やボードでためしたあと、作品を残すときは「ボードにかきこむ」を選びます。
+      </p>
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="lg:col-span-2">
           <div className="tabs tabs-lift after:hidden" role="tablist" aria-label="Blocklyと配線ガイドの表示切り替え">
@@ -429,11 +437,11 @@ export function BlocklyStudio() {
               </div>
             ) : <button type="button" className="tab" onClick={() => { client.setQueryData(queryKeys.neoPixelExtension, true); if (workspaceRef.current) updateWorkspaceToolbox(workspaceRef.current, { tactSwitch: tactSwitchExtension.data, neoPixel: true }, toolboxVisibleRef.current); if (workspaceRef.current) saveBlocklyWorkspace(window.localStorage, Blockly.serialization.workspaces.save(workspaceRef.current), tactSwitchExtension.data, true); setActiveEditorTab("neoPixel"); }}>＋ NeoPixelを追加</button>}
           </div>
-          {tactSwitchExtension.data && activeEditorTab === "tactSwitch" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><p className="mb-3 font-black">タクトスイッチの配線</p><TactSwitchWiringGuide /></div>}
-          {neoPixelExtension.data && activeEditorTab === "neoPixel" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><p className="mb-3 font-black">NeoPixelの配線</p><NeoPixelWiringGuide /></div>}
+          {tactSwitchExtension.data && activeEditorTab === "tactSwitch" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><TactSwitchWiringGuide /></div>}
+          {neoPixelExtension.data && activeEditorTab === "neoPixel" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><NeoPixelWiringGuide /></div>}
           <div className={`rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem] ${activeEditorTab !== "blocks" ? "hidden" : ""}`}>
             <div className="mb-3 flex justify-start">
-              <button type="button" className="btn btn-outline btn-sm" aria-pressed={!toolboxVisible} onClick={() => { const visible = !toolboxVisibleRef.current; toolboxVisibleRef.current = visible; setToolboxVisible(visible); const workspace = workspaceRef.current; if (workspace) setWorkspaceToolboxVisible(workspace, { tactSwitch: tactSwitchExtension.data, neoPixel: neoPixelExtension.data }, visible); }}>{toolboxVisible ? "ブロック一覧を隠す" : "ブロック一覧を表示"}</button>
+              <button type="button" className="btn btn-outline btn-sm" aria-pressed={!toolboxVisible} onClick={() => { const visible = !toolboxVisibleRef.current; toolboxVisibleRef.current = visible; setToolboxVisible(visible); const workspace = workspaceRef.current; if (workspace) setWorkspaceToolboxVisible(workspace, { tactSwitch: tactSwitchExtension.data, neoPixel: neoPixelExtension.data }, visible); }}>{toolboxVisible ? "ブロック一覧をかくす 😶‍🌫️" : "ブロック一覧をみせる 👀"}</button>
             </div>
             <div className={`grid min-w-0 gap-5 ${neoPixelExtension.data ? "lg:grid-cols-[minmax(0,1fr)_24rem]" : "lg:grid-cols-[minmax(0,1fr)_18rem]"}`}><div ref={mountWorkspace} className={`blockly-workspace h-[38rem] w-full min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl lg:h-[44rem] ${toolboxVisible ? "" : "blockly-workspace--toolbox-hidden"}`} aria-label="ブロックプログラミング編集エリア" /><LedSimulator ledOn={led.data} buttonPressed={button.data} extensionEnabled={tactSwitchExtension.data} neoPixelEnabled={neoPixelExtension.data} neoPixels={neoPixels.data} onButtonChange={(pressed) => client.setQueryData(queryKeys.simulatorButton, pressed)} /></div>
           </div>

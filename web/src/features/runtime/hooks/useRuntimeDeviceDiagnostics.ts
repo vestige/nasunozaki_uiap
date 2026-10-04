@@ -34,7 +34,7 @@ export function useRuntimeDeviceDiagnostics() {
   const messageQuery = useQuery<string>({
     queryKey: queryKeys.runtimeConnectionMessage,
     queryFn: async () => "",
-    initialData: "通常動作モードの実機情報はまだ確認していません。",
+    initialData: "まだボードにつながっていません。",
     enabled: false,
   });
 
@@ -63,14 +63,14 @@ export function useRuntimeDeviceDiagnostics() {
       appendLog("info", "RUNTIME_CONNECT", "通常動作モードのデバイス選択を開始しました。");
       client.setQueryData(
         queryKeys.runtimeConnectionMessage,
-        "通常動作モードのUIAPduinoを選んでください。",
+        "表示された一覧から「UIAPduino WebHID」をえらんでください。",
       );
     },
     onSuccess: (device) => {
       client.setQueryData(queryKeys.runtimeDevice, device);
       client.setQueryData(
         queryKeys.runtimeConnectionMessage,
-        "通常動作モードのHID情報を取得しました。まだ命令は送信していません。",
+        "ボードにつながりました。ブロックを画面やボードでためせます。",
       );
       appendLog("success", "RUNTIME_CONNECT", "教育用ランタイムへ接続しました。", {
         product: device.productName ?? "",
@@ -82,7 +82,7 @@ export function useRuntimeDeviceDiagnostics() {
         client.setQueryData(queryKeys.runtimeDevice, null);
         client.setQueryData(
           queryKeys.runtimeConnectionMessage,
-          "通常動作モードのUIAPduinoが外されました。",
+          "ボードとの接続が切れました。もう一度つなぐときは「ボードに接続」を押してください。",
         );
         appendLog("warning", "RUNTIME_DISCONNECT", "教育用ランタイムが外されました。");
       });
@@ -90,7 +90,7 @@ export function useRuntimeDeviceDiagnostics() {
     onError: (error) => {
       client.setQueryData(
         queryKeys.runtimeConnectionMessage,
-        `確認できませんでした：${errorMessage(error)}`,
+        `ボードにつなげませんでした：${errorMessage(error)}`,
       );
       appendLog("error", "RUNTIME_CONNECT", "教育用ランタイムへ接続できませんでした。", {
         ...runtimeErrorDetails(error),
@@ -106,14 +106,14 @@ export function useRuntimeDeviceDiagnostics() {
     onMutate: () => {
       client.setQueryData(
         queryKeys.runtimeConnectionMessage,
-        "LEDを1回だけ点灯・消灯し、応答を確認しています。",
+        "LEDが光るか確認しています。",
       );
       appendLog("info", "RUNTIME_LED_CHECK", "LED往復確認を開始しました。");
     },
     onSuccess: (result) => {
       client.setQueryData(
         queryKeys.runtimeConnectionMessage,
-        "LEDの点灯・消灯と2回の成功応答を確認しました。",
+        "LEDが光って消えることを確認しました。",
       );
       appendLog("success", "RUNTIME_LED_CHECK", "LED往復確認に成功しました。", {
         reportId: 0,
