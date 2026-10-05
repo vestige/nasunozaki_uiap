@@ -7,6 +7,13 @@ import {
 import { compileWorkspace } from "../../web/src/features/blockly/utils/program";
 
 describe("compileWorkspace", () => {
+  it("比較と論理の入力を横一列に並べる", () => {
+    registerUiapBlocks();
+    const workspace = new Blockly.Workspace();
+    expect(workspace.newBlock("uiap_compare").getInputsInline()).toBe(true);
+    expect(workspace.newBlock("uiap_logic").getInputsInline()).toBe(true);
+  });
+
   it("点滅ブロックを安全な中間命令へ変換する", () => {
     registerUiapBlocks();
     const workspace = new Blockly.Workspace();
