@@ -38,6 +38,8 @@ body { margin: 0; min-width: 0; font-family: "Hiragino Kaku Gothic ProN", "Yu Go
 .blockly-workspace .blocklyToolboxCategoryLabel { font-family: inherit; font-size: 15px; font-weight: 700; }
 .blockly-workspace .blocklyTreeSeparator { border-bottom: 1px solid #b8c0c6; margin: 10px 12px; }
 .blockly-workspace .blocklyFlyoutBackground { fill-opacity: 1; }
+/* Blockly renders each flyout scrollbar beside its SVG, outside its hidden container. */
+.blockly-workspace .blocklyFlyout[style*="display: none"] + .blocklyFlyoutScrollbar { display: none !important; }
 .blockly-workspace--toolbox-hidden .blocklyFlyoutScrollbar { display: none !important; }
 pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
 

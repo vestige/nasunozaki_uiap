@@ -109,7 +109,7 @@ export function registerUiapBlocks() {
       colour: 210,
     },
     { type: "uiap_boolean", message0: "%1", args0: [{ type: "field_dropdown", name: "VALUE", options: [["はい", "TRUE"], ["いいえ", "FALSE"]] }], output: "Boolean", colour: 210, tooltip: "条件があっているときは『はい』、そうでないときは『いいえ』です。" },
-    { type: "uiap_number", message0: "%1", args0: [{ type: "field_number", name: "VALUE", value: 0 }], output: "Number", colour: 230 },
+    { type: "uiap_number", message0: "すうじ %1", args0: [{ type: "field_number", name: "VALUE", value: 0 }], output: "Number", colour: 230, tooltip: "数字を書きかえて、くらべるブロックや、めもに入れます。" },
     { type: "uiap_variable_get", message0: "%1 のなかみ", args0: [{ type: "field_variable", name: "VAR", variable: "めも" }], output: null, colour: 330, tooltip: "おぼえた値を取り出します。▼から名前を変えられます。" },
     { type: "uiap_variable_set", message0: "%1 に %2 をおぼえる", args0: [{ type: "field_variable", name: "VAR", variable: "めも" }, { type: "input_value", name: "VALUE" }], inputsInline: true, previousStatement: null, nextStatement: null, colour: 330, tooltip: "数字や『はい・いいえ』をおぼえます。▼から名前を変えられます。" },
     { type: "uiap_not", message0: "%1 ではない", args0: [{ type: "input_value", name: "VALUE", check: "Boolean" }], output: "Boolean", colour: 210 },
@@ -163,10 +163,10 @@ export function createUiapToolbox(options: { tactSwitch: boolean; neoPixel: bool
   return {
     kind: "categoryToolbox",
     contents: [
-      category("きほん", "#b09a58", ["uiap_led", "uiap_wait", "uiap_number"]),
+      category("きほん", "#b09a58", ["uiap_led", "uiap_wait"]),
       category("くりかえし", "#8557a4", ["uiap_repeat", "uiap_forever"]),
-      category("もし・くらべる", "#547ea2", ["uiap_if", "uiap_boolean", "uiap_compare", "uiap_logic", "uiap_not"]),
-      category("おぼえる", "#a25780", ["uiap_variable_set", "uiap_variable_get"]),
+      category("もし・くらべる", "#547ea2", ["uiap_if", "uiap_boolean", "uiap_number", "uiap_compare", "uiap_logic", "uiap_not"]),
+      category("おぼえる", "#a25780", ["uiap_variable_set", "uiap_variable_get", "uiap_number"]),
       ...(options.tactSwitch || options.neoPixel ? [{ kind: "sep" as const }] : []),
       ...(options.tactSwitch ? [category("タクトスイッチ", "#65885d", ["uiap_if_button", "uiap_if_button_pressed"])] : []),
       ...(options.neoPixel ? [category("NeoPixel", "#a25780", ["uiap_neopixel_fill", "uiap_neopixel_set", "uiap_neopixel_clear"])] : []),
