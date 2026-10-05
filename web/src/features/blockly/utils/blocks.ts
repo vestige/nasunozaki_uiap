@@ -86,6 +86,36 @@ export function registerUiapBlocks() {
       tooltip: "タクトスイッチの状態で、実行するブロックを選びます。",
     },
     {
+      type: "uiap_if_button_pressed",
+      message0: "タクトスイッチを押したとき",
+      message1: "%1",
+      args1: [{ type: "input_statement", name: "DO" }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: 210,
+      tooltip: "押し続けても、1回だけ中のブロックを動かします。",
+    },
+    {
+      type: "uiap_if",
+      message0: "もし %1 なら",
+      args0: [{ type: "input_value", name: "CONDITION", check: "Boolean" }],
+      message1: "%1",
+      args1: [{ type: "input_statement", name: "DO" }],
+      message2: "でなければ",
+      message3: "%1",
+      args3: [{ type: "input_statement", name: "ELSE" }],
+      previousStatement: null,
+      nextStatement: null,
+      colour: 210,
+    },
+    { type: "uiap_boolean", message0: "%1", args0: [{ type: "field_dropdown", name: "VALUE", options: [["はい", "TRUE"], ["いいえ", "FALSE"]] }], output: "Boolean", colour: 210, tooltip: "条件があっているときは『はい』、そうでないときは『いいえ』です。" },
+    { type: "uiap_number", message0: "すうじ %1", args0: [{ type: "field_number", name: "VALUE", value: 0 }], output: "Number", colour: 230, tooltip: "数字を書きかえて、くらべるブロックや、めもに入れます。" },
+    { type: "uiap_variable_get", message0: "%1 のなかみ", args0: [{ type: "field_variable", name: "VAR", variable: "めも" }], output: null, colour: 330, tooltip: "おぼえた値を取り出します。▼から名前を変えられます。" },
+    { type: "uiap_variable_set", message0: "%1 に %2 をおぼえる", args0: [{ type: "field_variable", name: "VAR", variable: "めも" }, { type: "input_value", name: "VALUE" }], inputsInline: true, previousStatement: null, nextStatement: null, colour: 330, tooltip: "数字や『はい・いいえ』をおぼえます。▼から名前を変えられます。" },
+    { type: "uiap_not", message0: "%1 ではない", args0: [{ type: "input_value", name: "VALUE", check: "Boolean" }], output: "Boolean", colour: 210 },
+    { type: "uiap_compare", message0: "%1 %2 %3", args0: [{ type: "input_value", name: "LEFT" }, { type: "field_dropdown", name: "OP", options: [["＝", "EQ"], ["≠", "NEQ"], ["＜", "LT"], ["≤", "LTE"], ["＞", "GT"], ["≥", "GTE"]] }, { type: "input_value", name: "RIGHT" }], inputsInline: true, output: "Boolean", colour: 210 },
+    { type: "uiap_logic", message0: "%1 %2 %3", args0: [{ type: "input_value", name: "LEFT", check: "Boolean" }, { type: "field_dropdown", name: "OP", options: [["かつ", "AND"], ["または", "OR"]] }, { type: "input_value", name: "RIGHT", check: "Boolean" }], inputsInline: true, output: "Boolean", colour: 210 },
+    {
       type: "uiap_neopixel_fill",
       message0: "NeoPixelを全部 %1 で 明るさ %2 % で光らせる",
       args0: [
@@ -122,42 +152,29 @@ export function registerUiapBlocks() {
   registered = true;
 }
 
-const baseBlocks: Blockly.utils.toolbox.ToolboxItemInfo[] = [
-  { kind: "block", type: "uiap_led" },
-  { kind: "block", type: "uiap_wait" },
-  { kind: "block", type: "uiap_repeat" },
-  { kind: "block", type: "uiap_forever" },
-];
+const category = (name: string, colour: string, types: string[]) => ({
+  kind: "category" as const,
+  name,
+  colour,
+  contents: types.map((type) => ({ kind: "block" as const, type })),
+});
 
-export const uiapToolbox: Blockly.utils.toolbox.ToolboxDefinition = {
-  kind: "flyoutToolbox",
-  contents: baseBlocks,
-};
-
-export const tactSwitchToolbox: Blockly.utils.toolbox.ToolboxDefinition = {
-  kind: "flyoutToolbox",
-  contents: [
-    ...baseBlocks,
-    { kind: "block", type: "uiap_if_button" },
-  ],
-};
-
-const neoPixelBlocks: Blockly.utils.toolbox.ToolboxItemInfo[] = [
-  { kind: "block", type: "uiap_neopixel_fill" },
-  { kind: "block", type: "uiap_neopixel_set" },
-  { kind: "block", type: "uiap_neopixel_clear" },
-];
-
-export function createUiapToolbox(options: { tactSwitch: boolean; neoPixel: boolean }) {
+export function createUiapToolbox(options: { tactSwitch: boolean; neoPixel: boolean }): Blockly.utils.toolbox.ToolboxDefinition {
   return {
-    kind: "flyoutToolbox",
+    kind: "categoryToolbox",
     contents: [
-      ...baseBlocks,
-      ...(options.tactSwitch ? [{ kind: "block", type: "uiap_if_button" }] : []),
-      ...(options.neoPixel ? neoPixelBlocks : []),
+      category("きほん", "#b09a58", ["uiap_led", "uiap_wait"]),
+      category("くりかえし", "#8557a4", ["uiap_repeat", "uiap_forever"]),
+      category("もし・くらべる", "#547ea2", ["uiap_if", "uiap_boolean", "uiap_number", "uiap_compare", "uiap_logic", "uiap_not"]),
+      category("おぼえる", "#a25780", ["uiap_variable_set", "uiap_variable_get", "uiap_number"]),
+      ...(options.tactSwitch || options.neoPixel ? [{ kind: "sep" as const }] : []),
+      ...(options.tactSwitch ? [category("タクトスイッチ", "#65885d", ["uiap_if_button", "uiap_if_button_pressed"])] : []),
+      ...(options.neoPixel ? [category("NeoPixel", "#a25780", ["uiap_neopixel_fill", "uiap_neopixel_set", "uiap_neopixel_clear"])] : []),
     ],
-  } satisfies Blockly.utils.toolbox.ToolboxDefinition;
+  };
 }
+
+export const uiapToolbox = createUiapToolbox({ tactSwitch: false, neoPixel: false });
 
 function neoPixelColorOptions(): [string, string][] {
   return [

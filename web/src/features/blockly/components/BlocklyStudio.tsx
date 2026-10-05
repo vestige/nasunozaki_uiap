@@ -500,24 +500,20 @@ function updateWorkspaceToolbox(
 
 function setWorkspaceToolboxVisible(
   workspace: Blockly.WorkspaceSvg,
-  options: { tactSwitch: boolean; neoPixel: boolean },
+  _options: { tactSwitch: boolean; neoPixel: boolean },
   visible: boolean,
 ) {
-  const flyout = workspace.getFlyout();
-  if (visible) {
-    flyout?.setVisible(true);
-    flyout?.setContainerVisible(true);
-    flyout?.show(createUiapToolbox(options));
-  } else {
-    flyout?.hide();
-    flyout?.setVisible(false);
-    flyout?.setContainerVisible(false);
-    // Blockly keeps a hidden flyout's cached width in the workspace metrics.
-    // Clear it so the programming canvas can use the released space.
-    if (flyout) (flyout as unknown as { width_: number }).width_ = 0;
+  const toolbox = workspace.getToolbox();
+  toolbox?.setVisible(visible);
+  if (!visible) {
+    toolbox?.clearSelection();
+    workspace.getFlyout()?.hide();
   }
   workspace.resize();
   workspace.resizeContents();
   Blockly.svgResize(workspace);
-  flyout?.getWorkspace().scrollbar?.setContainerVisible(visible);
+  const flyout = workspace.getFlyout();
+  if (!flyout?.isVisible()) {
+    flyout?.getWorkspace().scrollbar?.setContainerVisible(false);
+  }
 }

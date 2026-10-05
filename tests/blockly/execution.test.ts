@@ -33,6 +33,34 @@ const createExecution = () => {
 };
 
 describe("runProgram", () => {
+  it("押し続けたボタンは1回だけ実行する", async () => {
+    const { board, events } = createExecution();
+    let pending = true;
+    board.consumeButtonPress = () => {
+      const pressed = pending;
+      pending = false;
+      return pressed;
+    };
+    await runProgram([{ type: "repeat", times: 3, body: [{ type: "ifButtonPressed", body: [{ type: "led", on: true, blockId: "on" }], blockId: "press" }], blockId: "repeat" }], board, new AbortController().signal);
+    expect(events.filter((event) => event === "led:true")).toHaveLength(1);
+  });
+  it("変数を保持して条件・反転・比較を実行する", async () => {
+    const { board, events } = createExecution();
+    const conditional: ProgramInstruction[] = [
+      { type: "setVariable", id: "state", value: { type: "boolean", value: false }, blockId: "init" },
+      { type: "setVariable", id: "state", value: { type: "not", value: { type: "variable", id: "state" } }, blockId: "toggle" },
+      { type: "if", condition: { type: "compare", op: "EQ", left: { type: "variable", id: "state" }, right: { type: "boolean", value: true } }, body: [{ type: "led", on: true, blockId: "on" }], elseBody: [{ type: "led", on: false, blockId: "off" }], blockId: "if" },
+    ];
+
+    await runProgram(conditional, board, new AbortController().signal);
+
+    expect(events.filter((event) => event.startsWith("led:"))).toEqual(["led:true"]);
+  });
+
+  it("値を入れていない変数は安全にエラーにする", async () => {
+    const { board } = createExecution();
+    await expect(runProgram([{ type: "if", condition: { type: "variable", id: "missing" }, body: [], elseBody: [], blockId: "if" }], board, new AbortController().signal)).rejects.toThrow("値を入れていない変数");
+  });
   it("繰り返し内も実行順にブロックをハイライトする", async () => {
     const { board, observer, events } = createExecution();
 
