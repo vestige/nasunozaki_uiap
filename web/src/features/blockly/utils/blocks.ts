@@ -152,51 +152,29 @@ export function registerUiapBlocks() {
   registered = true;
 }
 
-const baseBlocks: Blockly.utils.toolbox.ToolboxItemInfo[] = [
-  { kind: "block", type: "uiap_led" },
-  { kind: "block", type: "uiap_wait" },
-  { kind: "block", type: "uiap_repeat" },
-  { kind: "block", type: "uiap_forever" },
-  { kind: "block", type: "uiap_if" },
-  { kind: "block", type: "uiap_variable_set" },
-  { kind: "block", type: "uiap_variable_get" },
-  { kind: "block", type: "uiap_boolean" },
-  { kind: "block", type: "uiap_number" },
-  { kind: "block", type: "uiap_compare" },
-  { kind: "block", type: "uiap_logic" },
-  { kind: "block", type: "uiap_not" },
-];
+const category = (name: string, colour: string, types: string[]) => ({
+  kind: "category" as const,
+  name,
+  colour,
+  contents: types.map((type) => ({ kind: "block" as const, type })),
+});
 
-export const uiapToolbox: Blockly.utils.toolbox.ToolboxDefinition = {
-  kind: "flyoutToolbox",
-  contents: baseBlocks,
-};
-
-export const tactSwitchToolbox: Blockly.utils.toolbox.ToolboxDefinition = {
-  kind: "flyoutToolbox",
-    contents: [
-      ...baseBlocks,
-      { kind: "block", type: "uiap_if_button" },
-      { kind: "block", type: "uiap_if_button_pressed" },
-  ],
-};
-
-const neoPixelBlocks: Blockly.utils.toolbox.ToolboxItemInfo[] = [
-  { kind: "block", type: "uiap_neopixel_fill" },
-  { kind: "block", type: "uiap_neopixel_set" },
-  { kind: "block", type: "uiap_neopixel_clear" },
-];
-
-export function createUiapToolbox(options: { tactSwitch: boolean; neoPixel: boolean }) {
+export function createUiapToolbox(options: { tactSwitch: boolean; neoPixel: boolean }): Blockly.utils.toolbox.ToolboxDefinition {
   return {
-    kind: "flyoutToolbox",
+    kind: "categoryToolbox",
     contents: [
-      ...baseBlocks,
-      ...(options.tactSwitch ? [{ kind: "block", type: "uiap_if_button" }, { kind: "block", type: "uiap_if_button_pressed" }] : []),
-      ...(options.neoPixel ? neoPixelBlocks : []),
+      category("きほん", "#b09a58", ["uiap_led", "uiap_wait", "uiap_number"]),
+      category("くりかえし", "#8557a4", ["uiap_repeat", "uiap_forever"]),
+      category("もし・くらべる", "#547ea2", ["uiap_if", "uiap_boolean", "uiap_compare", "uiap_logic", "uiap_not"]),
+      category("おぼえる", "#a25780", ["uiap_variable_set", "uiap_variable_get"]),
+      ...(options.tactSwitch || options.neoPixel ? [{ kind: "sep" as const }] : []),
+      ...(options.tactSwitch ? [category("タクトスイッチ", "#65885d", ["uiap_if_button", "uiap_if_button_pressed"])] : []),
+      ...(options.neoPixel ? [category("NeoPixel", "#a25780", ["uiap_neopixel_fill", "uiap_neopixel_set", "uiap_neopixel_clear"])] : []),
     ],
-  } satisfies Blockly.utils.toolbox.ToolboxDefinition;
+  };
 }
+
+export const uiapToolbox = createUiapToolbox({ tactSwitch: false, neoPixel: false });
 
 function neoPixelColorOptions(): [string, string][] {
   return [
