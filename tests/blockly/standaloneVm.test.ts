@@ -42,6 +42,18 @@ it("実際の論理確認作品をボード用C++で実行して8灯とも緑に
   expect(pixels).toEqual(Array.from({ length: 8 }, (_, i) => `N ${i + 1} 0 255 0 20`));
 });
 
+it.each(["safety-invalid-type", "safety-uninitialized"])("安全停止作品 %s は緑の後にエラー終了し赤を実行しない", name => {
+  expect(run(example(name))).toBe("VALID 1\nN 0 0 255 0 20\nDONE 0\n");
+});
+
+it("構造・式とも深さ8の実機確認作品が上限内で繰り返し動く", () => {
+  const result = run(example("depth-limit-check"));
+  expect(result).toContain("VALID 1");
+  const events = result.split("\n").filter(line => line.startsWith("N "));
+  expect(events.length).toBeGreaterThan(4);
+  events.forEach((line, i) => expect(line).toBe(i % 2 ? "N 0 0 0 0 100" : "N 0 0 255 0 20"));
+});
+
 it("トグル作品は長押し中に反転せず、再押下で消灯する", () => {
   const result = run(example("tact-neopixel-toggle"));
   expect(result.split("\n").filter(line => line.startsWith("N "))).toEqual([

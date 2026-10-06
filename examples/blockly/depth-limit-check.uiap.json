@@ -1,0 +1,190 @@
+{
+  "format": "uiapduino-blockly-project",
+  "version": 3,
+  "savedAt": "2026-10-06T00:00:00.000Z",
+  "extensions": {
+    "tactSwitch": false,
+    "neoPixel": true
+  },
+  "workspace": {
+    "variables": [
+      {
+        "id": "test-value",
+        "name": "チェック"
+      }
+    ],
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "uiap_forever",
+          "inputs": {
+            "DO": {
+              "block": {
+                "type": "uiap_repeat",
+                "fields": {
+                  "TIMES": 1
+                },
+                "inputs": {
+                  "DO": {
+                    "block": {
+                      "type": "uiap_repeat",
+                      "fields": {
+                        "TIMES": 1
+                      },
+                      "inputs": {
+                        "DO": {
+                          "block": {
+                            "type": "uiap_repeat",
+                            "fields": {
+                              "TIMES": 1
+                            },
+                            "inputs": {
+                              "DO": {
+                                "block": {
+                                  "type": "uiap_repeat",
+                                  "fields": {
+                                    "TIMES": 1
+                                  },
+                                  "inputs": {
+                                    "DO": {
+                                      "block": {
+                                        "type": "uiap_repeat",
+                                        "fields": {
+                                          "TIMES": 1
+                                        },
+                                        "inputs": {
+                                          "DO": {
+                                            "block": {
+                                              "type": "uiap_repeat",
+                                              "fields": {
+                                                "TIMES": 1
+                                              },
+                                              "inputs": {
+                                                "DO": {
+                                                  "block": {
+                                                    "type": "uiap_if",
+                                                    "inputs": {
+                                                      "CONDITION": {
+                                                        "block": {
+                                                          "type": "uiap_not",
+                                                          "inputs": {
+                                                            "VALUE": {
+                                                              "block": {
+                                                                "type": "uiap_not",
+                                                                "inputs": {
+                                                                  "VALUE": {
+                                                                    "block": {
+                                                                      "type": "uiap_not",
+                                                                      "inputs": {
+                                                                        "VALUE": {
+                                                                          "block": {
+                                                                            "type": "uiap_not",
+                                                                            "inputs": {
+                                                                              "VALUE": {
+                                                                                "block": {
+                                                                                  "type": "uiap_not",
+                                                                                  "inputs": {
+                                                                                    "VALUE": {
+                                                                                      "block": {
+                                                                                        "type": "uiap_not",
+                                                                                        "inputs": {
+                                                                                          "VALUE": {
+                                                                                            "block": {
+                                                                                              "type": "uiap_not",
+                                                                                              "inputs": {
+                                                                                                "VALUE": {
+                                                                                                  "block": {
+                                                                                                    "type": "uiap_not",
+                                                                                                    "inputs": {
+                                                                                                      "VALUE": {
+                                                                                                        "block": {
+                                                                                                          "type": "uiap_boolean",
+                                                                                                          "fields": {
+                                                                                                            "VALUE": "TRUE"
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "DO": {
+                                                        "block": {
+                                                          "type": "uiap_neopixel_fill",
+                                                          "fields": {
+                                                            "COLOR": "#00ff00",
+                                                            "BRIGHTNESS": 20
+                                                          },
+                                                          "next": {
+                                                            "block": {
+                                                              "type": "uiap_wait",
+                                                              "fields": {
+                                                                "MILLISECONDS": 1000
+                                                              },
+                                                              "next": {
+                                                                "block": {
+                                                                  "type": "uiap_neopixel_clear",
+                                                                  "next": {
+                                                                    "block": {
+                                                                      "type": "uiap_wait",
+                                                                      "fields": {
+                                                                        "MILLISECONDS": 1000
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "x": 36,
+          "y": 36
+        }
+      ]
+    }
+  }
+}
