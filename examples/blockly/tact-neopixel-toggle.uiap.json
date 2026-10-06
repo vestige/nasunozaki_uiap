@@ -1,0 +1,41 @@
+{
+  "format": "uiapduino-blockly-project",
+  "version": 3,
+  "savedAt": "2026-10-06T00:00:00.000Z",
+  "extensions": { "tactSwitch": true, "neoPixel": true },
+  "workspace": {
+    "variables": [{ "name": "ひかる", "id": "toggle-state" }],
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [{
+        "type": "uiap_variable_set", "x": 36, "y": 36,
+        "fields": { "VAR": { "id": "toggle-state" } },
+        "inputs": { "VALUE": { "block": { "type": "uiap_boolean", "fields": { "VALUE": "FALSE" } } } },
+        "next": { "block": {
+          "type": "uiap_neopixel_clear",
+          "next": { "block": {
+            "type": "uiap_forever",
+            "inputs": { "DO": { "block": {
+              "type": "uiap_if_button_pressed",
+              "inputs": { "DO": { "block": {
+                "type": "uiap_variable_set", "fields": { "VAR": { "id": "toggle-state" } },
+                "inputs": { "VALUE": { "block": {
+                  "type": "uiap_not",
+                  "inputs": { "VALUE": { "block": { "type": "uiap_variable_get", "fields": { "VAR": { "id": "toggle-state" } } } } }
+                } } },
+                "next": { "block": {
+                  "type": "uiap_if",
+                  "inputs": {
+                    "CONDITION": { "block": { "type": "uiap_variable_get", "fields": { "VAR": { "id": "toggle-state" } } } },
+                    "DO": { "block": { "type": "uiap_neopixel_fill", "fields": { "COLOR": "#00ff00", "BRIGHTNESS": 20 } } },
+                    "ELSE": { "block": { "type": "uiap_neopixel_clear" } }
+                  }
+                } }
+              } } }
+            } } }
+          } }
+        } }
+      }]
+    }
+  }
+}
