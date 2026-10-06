@@ -56,6 +56,28 @@ function respondingRuntimeDevice() {
 }
 
 describe("board execution session", () => {
+  it("応答がない場合も終了処理は有限時間で終わりlistenerを外す", async () => {
+    vi.useFakeTimers();
+    try {
+      const fake = respondingRuntimeDevice();
+      fake.device.sendFeatureReport.mockImplementation(async () => undefined);
+      const session = createBoardExecutionSession({
+        target: "uiapduino", runtimeDevice: fake.device,
+        setSimulatorLed: () => undefined, ...neoPixelSimulator,
+        getSimulatorButton: () => false,
+      });
+      const failed = expect(session.board.setLed(true)).rejects.toThrow();
+      await vi.runAllTimersAsync();
+      await failed;
+      const closed = session.close(true);
+      await vi.runAllTimersAsync();
+      await closed;
+      expect(fake.device.sendFeatureReport).toHaveBeenCalledTimes(3);
+      expect(fake.hasListener()).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
   it("画面実行ではsimulatorのLED状態を更新する", async () => {
     const states: boolean[] = [];
     const session = createBoardExecutionSession({
