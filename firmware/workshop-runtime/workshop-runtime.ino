@@ -1,4 +1,6 @@
 #include <WebHID.h>
+#include "standalone_vm.h"
+#include "standalone_button.h"
 #include <ch32v00x_flash.h>
 #define NEOPIXELMIN_MAX_LEDS 8
 #define NEOPIXELMIN_ATOMIC
@@ -20,6 +22,7 @@ constexpr uint8_t kNeoBrightness = 0x13;
 constexpr uint8_t kNeoApply = 0x14;
 constexpr uint8_t kNeoClear = 0x15;
 constexpr uint8_t kProgramStatus = 0x24;
+constexpr uint8_t kProgramCapabilities = 0x25;
 constexpr uint8_t kProgramBegin = 0x20;
 constexpr uint8_t kProgramData = 0x21;
 constexpr uint8_t kProgramCommit = 0x22;
@@ -35,15 +38,8 @@ constexpr uint8_t kMagic[] = {0x55, 0x49, 0x41, 0x50};  // "UIAP"
 constexpr uint16_t kStandaloneSlotSize = 1024;
 constexpr uint8_t kStandaloneHeaderSize = 16;
 constexpr uint8_t kStandaloneVersion = 1;
+constexpr uint8_t kStandaloneMaxVersion = 2;
 constexpr uint8_t kStandaloneAutostart = 0x01;
-constexpr uint8_t kStandaloneEnd = 0x00;
-constexpr uint8_t kStandaloneSetLed = 0x01;
-constexpr uint8_t kStandaloneWait = 0x02;
-constexpr uint8_t kStandaloneRepeat = 0x10;
-constexpr uint8_t kStandaloneForever = 0x11;
-constexpr uint8_t kStandaloneMaxDepth = 8;
-constexpr uint16_t kStandaloneMaxWait = 5000;
-constexpr uint8_t kStandaloneMaxRepeat = 20;
 constexpr uint32_t kProgramBankA = 0x08003800;
 constexpr uint32_t kProgramBankB = 0x08003c00;
 constexpr uint8_t kBankHeaderSize = 16;
@@ -54,6 +50,8 @@ uint8_t neoGreen = 0;
 uint8_t neoBlue = 0;
 uint8_t neoBrightness = 20;
 bool standaloneProgramReady = false;
+uiap::StandaloneVm standaloneVm;
+uiap::StandaloneButton standaloneButtonState;
 
 // The browser replaces this entire slot in the compiled image. volatile keeps
 // the compiler from constant-folding the empty development image: the bytes in
@@ -139,52 +137,12 @@ uint16_t updateCrc16(const volatile uint8_t *bytes, uint16_t length) {
   return crc;
 }
 
-bool standaloneHasBytes(uint16_t cursor, uint16_t count, uint16_t end) {
-  return cursor <= end && count <= static_cast<uint16_t>(end - cursor);
-}
-
-bool validateStandaloneRange(uint16_t start, uint16_t end, uint8_t depth,
-                             bool requireEnd) {
-  if (depth > kStandaloneMaxDepth || start > end) return false;
-  uint16_t cursor = start;
-  while (cursor < end) {
-    const uint8_t opcode = standaloneProgramSlot[cursor++];
-    if (opcode == kStandaloneEnd) return requireEnd && cursor == end;
-    if (opcode == kStandaloneSetLed) {
-      if (!standaloneHasBytes(cursor, 1, end) || standaloneProgramSlot[cursor] > 1) return false;
-      cursor++;
-    } else if (opcode == kStandaloneWait) {
-      if (!standaloneHasBytes(cursor, 2, end) || standaloneUint16(cursor) > kStandaloneMaxWait) return false;
-      cursor += 2;
-    } else if (opcode == kStandaloneRepeat) {
-      if (!standaloneHasBytes(cursor, 3, end)) return false;
-      const uint8_t count = standaloneProgramSlot[cursor++];
-      const uint16_t bodyLength = standaloneUint16(cursor);
-      cursor += 2;
-      if (count < 1 || count > kStandaloneMaxRepeat ||
-          !standaloneHasBytes(cursor, bodyLength, end) ||
-          !validateStandaloneRange(cursor, cursor + bodyLength, depth + 1, false)) return false;
-      cursor += bodyLength;
-    } else if (opcode == kStandaloneForever) {
-      if (!standaloneHasBytes(cursor, 2, end)) return false;
-      const uint16_t bodyLength = standaloneUint16(cursor);
-      cursor += 2;
-      if (bodyLength == 0 || !standaloneHasBytes(cursor, bodyLength, end) ||
-          !validateStandaloneRange(cursor, cursor + bodyLength, depth + 1, false)) return false;
-      cursor += bodyLength;
-    } else {
-      return false;
-    }
-  }
-  return !requireEnd;
-}
-
 bool validateStandaloneProgram() {
   const uint8_t expectedMagic[] = {0x55, 0x49, 0x42, 0x50};
   for (uint8_t index = 0; index < sizeof(expectedMagic); index++) {
     if (standaloneProgramSlot[index] != expectedMagic[index]) return false;
   }
-  if (standaloneProgramSlot[4] != kStandaloneVersion ||
+  if (standaloneProgramSlot[4] < 1 || standaloneProgramSlot[4] > kStandaloneMaxVersion ||
       (standaloneProgramSlot[5] & kStandaloneAutostart) == 0 ||
       (standaloneProgramSlot[5] & ~kStandaloneAutostart) != 0) return false;
   for (uint8_t index = 10; index < kStandaloneHeaderSize; index++) {
@@ -195,13 +153,14 @@ bool validateStandaloneProgram() {
       ? kStandaloneSlotSize : kBankProgramSize;
   if (payloadLength == 0 || payloadLength > slotSize - kStandaloneHeaderSize) return false;
   if (standaloneUint16(8) != standaloneCrc16(kStandaloneHeaderSize, payloadLength)) return false;
-  return validateStandaloneRange(kStandaloneHeaderSize,
-      kStandaloneHeaderSize + payloadLength, 0, true);
+  return standaloneVm.validate(standaloneProgramSlot + kStandaloneHeaderSize,
+      payloadLength, standaloneProgramSlot[4]);
 }
 
 void serviceWebHid();
 
 void selectStandaloneProgram() {
+  standaloneButtonState.reset();
   const volatile uint8_t *bankA = bankAt(kProgramBankA);
   const volatile uint8_t *bankB = bankAt(kProgramBankB);
   bool validA = false;
@@ -228,36 +187,45 @@ void selectStandaloneProgram() {
   standaloneProgramReady = validateStandaloneProgram();
 }
 
-void executeStandaloneRange(uint16_t start, uint16_t end) {
-  uint16_t cursor = start;
-  while (cursor < end && standaloneProgramReady) {
-    serviceWebHid();
-    if (!standaloneProgramReady) return;
-    const uint8_t opcode = standaloneProgramSlot[cursor++];
-    if (opcode == kStandaloneEnd) return;
-    if (opcode == kStandaloneSetLed) {
-      digitalWrite(LED_BUILTIN, standaloneProgramSlot[cursor++] == 1 ? HIGH : LOW);
-    } else if (opcode == kStandaloneWait) {
-      const uint16_t milliseconds = standaloneUint16(cursor);
-      cursor += 2;
-      for (uint16_t elapsed = 0; elapsed < milliseconds && standaloneProgramReady; elapsed++) {
-        serviceWebHid();
-        delay(1);
-      }
-    } else if (opcode == kStandaloneRepeat) {
-      const uint8_t count = standaloneProgramSlot[cursor++];
-      const uint16_t bodyLength = standaloneUint16(cursor);
-      cursor += 2;
-      for (uint8_t iteration = 0; iteration < count && standaloneProgramReady; iteration++) {
-        executeStandaloneRange(cursor, cursor + bodyLength);
-      }
-      cursor += bodyLength;
-    } else if (opcode == kStandaloneForever) {
-      const uint16_t bodyLength = standaloneUint16(cursor);
-      cursor += 2;
-      while (standaloneProgramReady) executeStandaloneRange(cursor, cursor + bodyLength);
-    }
+bool standaloneService() {
+  serviceWebHid();
+  return standaloneProgramReady;
+}
+
+bool standaloneWait(uint16_t ms) {
+  const uint32_t start = millis();
+  do {
+    if (!standaloneService()) return false;
+    if (static_cast<uint32_t>(millis() - start) >= ms) break;
+    delay(1);
+  } while (true);
+  return true;
+}
+
+bool standaloneButton(bool consume) {
+  const bool pressed = standaloneButtonState.update(digitalRead(kButtonPin) == LOW, millis());
+  return consume ? standaloneButtonState.consume() : pressed;
+}
+
+void standaloneLed(bool on) { digitalWrite(LED_BUILTIN, on ? HIGH : LOW); }
+
+void standaloneNeo(uint8_t index, uint8_t r, uint8_t g, uint8_t b, uint8_t brightness) {
+  r = static_cast<uint16_t>(r) * brightness / 100;
+  g = static_cast<uint16_t>(g) * brightness / 100;
+  b = static_cast<uint16_t>(b) * brightness / 100;
+  for (uint8_t i = 0; i < kNeoPixelCount; ++i) {
+    if (!index || i == index - 1) pixels.setPixelColor(i, r, g, b);
   }
+  // Same USB EP0 guard as the interactive NeoPixel commands below.
+  delay(1);
+  pixels.show();
+}
+
+void executeStandaloneRange(uint16_t start, uint16_t end) {
+  const uiap::VmHost host = {standaloneService, standaloneWait, standaloneButton,
+      standaloneLed, standaloneNeo};
+  standaloneVm.run(standaloneProgramSlot + start, end - start,
+      standaloneProgramSlot[4], host);
 }
 
 void sendResponse(uint8_t command, uint8_t sequence, uint8_t status) {
@@ -287,7 +255,7 @@ uint8_t handleProgramUpdate(uint8_t command, const uint8_t *message, uint8_t len
     return kInvalidPayload;
   }
   if (command == kProgramBegin) {
-    if (payloadLength != 5 || programUpdateActive || message[8] != kStandaloneVersion) {
+    if (payloadLength != 5 || programUpdateActive || message[8] < 1 || message[8] > kStandaloneMaxVersion) {
       return kInvalidPayload;
     }
     const uint16_t requestedLength = static_cast<uint16_t>(message[9]) |
@@ -321,6 +289,7 @@ uint8_t handleProgramUpdate(uint8_t command, const uint8_t *message, uint8_t len
   }
   if (command == kProgramAbort) {
     if (payloadLength != 0) return kInvalidPayload;
+    stopStandaloneOutputs();
     programUpdateActive = false;
     programRestartPending = true;
     return kOk;
@@ -417,6 +386,13 @@ void handleMessage(const uint8_t *message, uint8_t length) {
     sendResponse(command, sequence, digitalRead(kButtonPin) == LOW ? 1 : 0);
     return;
   }
+  if (command == kProgramCapabilities) {
+    // Read-only: do not stop execution or modify flash. Advertise only formats
+    // implemented by both the validator and interpreter.
+    sendResponse(command, sequence, message[7] == 0
+        ? static_cast<uint8_t>(0x50 | kStandaloneMaxVersion) : kInvalidPayload);
+    return;
+  }
   if (command == kProgramStatus) {
     if (message[7] != 0) {
       sendResponse(command, sequence, kInvalidPayload);
@@ -451,6 +427,7 @@ void handleMessage(const uint8_t *message, uint8_t length) {
       sendResponse(command, sequence, kInvalidPayload);
       return;
     }
+    if (standaloneProgramReady) stopStandaloneOutputs();
     if (message[7] == 0) {
       for (uint8_t index = 0; index < kNeoPixelCount; index++) {
         pixels.setPixelColor(index, scaledNeoChannel(neoRed), scaledNeoChannel(neoGreen), scaledNeoChannel(neoBlue));
@@ -476,6 +453,7 @@ void handleMessage(const uint8_t *message, uint8_t length) {
       sendResponse(command, sequence, kInvalidPayload);
       return;
     }
+    if (standaloneProgramReady) stopStandaloneOutputs();
     pixels.clear();
     // Apply the same EP0 completion guard as kNeoApply above.
     delay(1);
@@ -492,6 +470,7 @@ void handleMessage(const uint8_t *message, uint8_t length) {
     return;
   }
 
+  if (standaloneProgramReady) stopStandaloneOutputs();
   digitalWrite(LED_BUILTIN, message[7] == 1 ? HIGH : LOW);
   sendResponse(command, sequence, kOk);
 }
@@ -524,8 +503,7 @@ void loop() {
   if (standaloneProgramReady) {
     executeStandaloneRange(kStandaloneHeaderSize,
         kStandaloneHeaderSize + standaloneUint16(6));
-    standaloneProgramReady = false;
-    digitalWrite(LED_BUILTIN, LOW);
+    if (standaloneProgramReady) stopStandaloneOutputs();
   }
   serviceWebHid();
   if (programRestartPending) {

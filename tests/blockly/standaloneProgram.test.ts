@@ -63,11 +63,32 @@ describe("encodeStandaloneProgram", () => {
     ]);
   });
 
-  it("未対応ブロックを任意命令へ変換しない", () => {
-    expect(() => encodeStandaloneProgram([{
+  it("NeoPixelを含む作品はversion 2で変換する", () => {
+    const slot = encodeStandaloneProgram([{
       type: "neoPixelClear",
       blockId,
-    }])).toThrow("まだUIAPduino単体");
+    }]);
+    expect(slot[4]).toBe(2);
+    expect([...slot.slice(16, 18)]).toEqual([0x32, 0]);
+  });
+
+  it("小数・非有限値・範囲外整数を丸めず拒否する", () => {
+    for (const value of [0.5, NaN, Infinity, 2147483648, -2147483649]) {
+      expect(() => encodeStandaloneProgram([{ type: "setVariable", id: "n", value: { type: "number", value }, blockId }])).toThrow("整数");
+    }
+  });
+
+  it("変数17個と8段を超える式を拒否する", () => {
+    expect(() => encodeStandaloneProgram(Array.from({ length: 17 }, (_, n) => ({
+      type: "setVariable", id: String(n), value: { type: "boolean", value: true }, blockId,
+    })))).toThrow("16個");
+    let value: import("../../web/src/features/blockly/utils/program").ProgramValue = { type: "boolean", value: true };
+    for (let i = 0; i < 9; ++i) value = { type: "not", value };
+    expect(() => encodeStandaloneProgram([{ type: "setVariable", id: "n", value, blockId }])).toThrow("8段");
+  });
+
+  it("二重bankの992バイト上限を変換時点で検査する", () => {
+    expect(() => encodeStandaloneProgram(Array.from({ length: 496 }, () => ({ type: "led", on: true, blockId })))).toThrow("992");
   });
 
   it("空のずっとブロックと範囲外の値を拒否する", () => {
