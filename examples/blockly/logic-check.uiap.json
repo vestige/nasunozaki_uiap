@@ -1,0 +1,1143 @@
+{
+  "format": "uiapduino-blockly-project",
+  "version": 3,
+  "savedAt": "2026-10-06T00:00:00.000Z",
+  "extensions": {
+    "tactSwitch": false,
+    "neoPixel": true
+  },
+  "workspace": {
+    "variables": [
+      {
+        "name": "かず",
+        "id": "check-number"
+      }
+    ],
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "uiap_neopixel_clear",
+          "next": {
+            "block": {
+              "type": "uiap_if",
+              "inputs": {
+                "CONDITION": {
+                  "block": {
+                    "type": "uiap_logic",
+                    "fields": {
+                      "OP": "AND"
+                    },
+                    "inputs": {
+                      "LEFT": {
+                        "block": {
+                          "type": "uiap_compare",
+                          "fields": {
+                            "OP": "EQ"
+                          },
+                          "inputs": {
+                            "LEFT": {
+                              "block": {
+                                "type": "uiap_number",
+                                "fields": {
+                                  "VALUE": 2
+                                }
+                              }
+                            },
+                            "RIGHT": {
+                              "block": {
+                                "type": "uiap_number",
+                                "fields": {
+                                  "VALUE": 2
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "RIGHT": {
+                        "block": {
+                          "type": "uiap_not",
+                          "inputs": {
+                            "VALUE": {
+                              "block": {
+                                "type": "uiap_compare",
+                                "fields": {
+                                  "OP": "EQ"
+                                },
+                                "inputs": {
+                                  "LEFT": {
+                                    "block": {
+                                      "type": "uiap_number",
+                                      "fields": {
+                                        "VALUE": 2
+                                      }
+                                    }
+                                  },
+                                  "RIGHT": {
+                                    "block": {
+                                      "type": "uiap_number",
+                                      "fields": {
+                                        "VALUE": 3
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "DO": {
+                  "block": {
+                    "type": "uiap_neopixel_set",
+                    "fields": {
+                      "PIXEL": 1,
+                      "COLOR": "#00ff00",
+                      "BRIGHTNESS": 20
+                    }
+                  }
+                },
+                "ELSE": {
+                  "block": {
+                    "type": "uiap_neopixel_set",
+                    "fields": {
+                      "PIXEL": 1,
+                      "COLOR": "#ff0000",
+                      "BRIGHTNESS": 20
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "uiap_if",
+                  "inputs": {
+                    "CONDITION": {
+                      "block": {
+                        "type": "uiap_logic",
+                        "fields": {
+                          "OP": "AND"
+                        },
+                        "inputs": {
+                          "LEFT": {
+                            "block": {
+                              "type": "uiap_compare",
+                              "fields": {
+                                "OP": "NEQ"
+                              },
+                              "inputs": {
+                                "LEFT": {
+                                  "block": {
+                                    "type": "uiap_number",
+                                    "fields": {
+                                      "VALUE": 2
+                                    }
+                                  }
+                                },
+                                "RIGHT": {
+                                  "block": {
+                                    "type": "uiap_number",
+                                    "fields": {
+                                      "VALUE": 3
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "RIGHT": {
+                            "block": {
+                              "type": "uiap_not",
+                              "inputs": {
+                                "VALUE": {
+                                  "block": {
+                                    "type": "uiap_compare",
+                                    "fields": {
+                                      "OP": "NEQ"
+                                    },
+                                    "inputs": {
+                                      "LEFT": {
+                                        "block": {
+                                          "type": "uiap_number",
+                                          "fields": {
+                                            "VALUE": 2
+                                          }
+                                        }
+                                      },
+                                      "RIGHT": {
+                                        "block": {
+                                          "type": "uiap_number",
+                                          "fields": {
+                                            "VALUE": 2
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "DO": {
+                      "block": {
+                        "type": "uiap_neopixel_set",
+                        "fields": {
+                          "PIXEL": 2,
+                          "COLOR": "#00ff00",
+                          "BRIGHTNESS": 20
+                        }
+                      }
+                    },
+                    "ELSE": {
+                      "block": {
+                        "type": "uiap_neopixel_set",
+                        "fields": {
+                          "PIXEL": 2,
+                          "COLOR": "#ff0000",
+                          "BRIGHTNESS": 20
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "uiap_if",
+                      "inputs": {
+                        "CONDITION": {
+                          "block": {
+                            "type": "uiap_logic",
+                            "fields": {
+                              "OP": "AND"
+                            },
+                            "inputs": {
+                              "LEFT": {
+                                "block": {
+                                  "type": "uiap_compare",
+                                  "fields": {
+                                    "OP": "LT"
+                                  },
+                                  "inputs": {
+                                    "LEFT": {
+                                      "block": {
+                                        "type": "uiap_number",
+                                        "fields": {
+                                          "VALUE": 2
+                                        }
+                                      }
+                                    },
+                                    "RIGHT": {
+                                      "block": {
+                                        "type": "uiap_number",
+                                        "fields": {
+                                          "VALUE": 3
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "RIGHT": {
+                                "block": {
+                                  "type": "uiap_not",
+                                  "inputs": {
+                                    "VALUE": {
+                                      "block": {
+                                        "type": "uiap_compare",
+                                        "fields": {
+                                          "OP": "LT"
+                                        },
+                                        "inputs": {
+                                          "LEFT": {
+                                            "block": {
+                                              "type": "uiap_number",
+                                              "fields": {
+                                                "VALUE": 3
+                                              }
+                                            }
+                                          },
+                                          "RIGHT": {
+                                            "block": {
+                                              "type": "uiap_number",
+                                              "fields": {
+                                                "VALUE": 3
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "DO": {
+                          "block": {
+                            "type": "uiap_neopixel_set",
+                            "fields": {
+                              "PIXEL": 3,
+                              "COLOR": "#00ff00",
+                              "BRIGHTNESS": 20
+                            }
+                          }
+                        },
+                        "ELSE": {
+                          "block": {
+                            "type": "uiap_neopixel_set",
+                            "fields": {
+                              "PIXEL": 3,
+                              "COLOR": "#ff0000",
+                              "BRIGHTNESS": 20
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "uiap_if",
+                          "inputs": {
+                            "CONDITION": {
+                              "block": {
+                                "type": "uiap_logic",
+                                "fields": {
+                                  "OP": "AND"
+                                },
+                                "inputs": {
+                                  "LEFT": {
+                                    "block": {
+                                      "type": "uiap_compare",
+                                      "fields": {
+                                        "OP": "LTE"
+                                      },
+                                      "inputs": {
+                                        "LEFT": {
+                                          "block": {
+                                            "type": "uiap_number",
+                                            "fields": {
+                                              "VALUE": 3
+                                            }
+                                          }
+                                        },
+                                        "RIGHT": {
+                                          "block": {
+                                            "type": "uiap_number",
+                                            "fields": {
+                                              "VALUE": 3
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "RIGHT": {
+                                    "block": {
+                                      "type": "uiap_not",
+                                      "inputs": {
+                                        "VALUE": {
+                                          "block": {
+                                            "type": "uiap_compare",
+                                            "fields": {
+                                              "OP": "LTE"
+                                            },
+                                            "inputs": {
+                                              "LEFT": {
+                                                "block": {
+                                                  "type": "uiap_number",
+                                                  "fields": {
+                                                    "VALUE": 4
+                                                  }
+                                                }
+                                              },
+                                              "RIGHT": {
+                                                "block": {
+                                                  "type": "uiap_number",
+                                                  "fields": {
+                                                    "VALUE": 3
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "DO": {
+                              "block": {
+                                "type": "uiap_neopixel_set",
+                                "fields": {
+                                  "PIXEL": 4,
+                                  "COLOR": "#00ff00",
+                                  "BRIGHTNESS": 20
+                                }
+                              }
+                            },
+                            "ELSE": {
+                              "block": {
+                                "type": "uiap_neopixel_set",
+                                "fields": {
+                                  "PIXEL": 4,
+                                  "COLOR": "#ff0000",
+                                  "BRIGHTNESS": 20
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "uiap_if",
+                              "inputs": {
+                                "CONDITION": {
+                                  "block": {
+                                    "type": "uiap_logic",
+                                    "fields": {
+                                      "OP": "AND"
+                                    },
+                                    "inputs": {
+                                      "LEFT": {
+                                        "block": {
+                                          "type": "uiap_compare",
+                                          "fields": {
+                                            "OP": "GT"
+                                          },
+                                          "inputs": {
+                                            "LEFT": {
+                                              "block": {
+                                                "type": "uiap_number",
+                                                "fields": {
+                                                  "VALUE": 4
+                                                }
+                                              }
+                                            },
+                                            "RIGHT": {
+                                              "block": {
+                                                "type": "uiap_number",
+                                                "fields": {
+                                                  "VALUE": 3
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "RIGHT": {
+                                        "block": {
+                                          "type": "uiap_not",
+                                          "inputs": {
+                                            "VALUE": {
+                                              "block": {
+                                                "type": "uiap_compare",
+                                                "fields": {
+                                                  "OP": "GT"
+                                                },
+                                                "inputs": {
+                                                  "LEFT": {
+                                                    "block": {
+                                                      "type": "uiap_number",
+                                                      "fields": {
+                                                        "VALUE": 3
+                                                      }
+                                                    }
+                                                  },
+                                                  "RIGHT": {
+                                                    "block": {
+                                                      "type": "uiap_number",
+                                                      "fields": {
+                                                        "VALUE": 3
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "DO": {
+                                  "block": {
+                                    "type": "uiap_neopixel_set",
+                                    "fields": {
+                                      "PIXEL": 5,
+                                      "COLOR": "#00ff00",
+                                      "BRIGHTNESS": 20
+                                    }
+                                  }
+                                },
+                                "ELSE": {
+                                  "block": {
+                                    "type": "uiap_neopixel_set",
+                                    "fields": {
+                                      "PIXEL": 5,
+                                      "COLOR": "#ff0000",
+                                      "BRIGHTNESS": 20
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "uiap_if",
+                                  "inputs": {
+                                    "CONDITION": {
+                                      "block": {
+                                        "type": "uiap_logic",
+                                        "fields": {
+                                          "OP": "AND"
+                                        },
+                                        "inputs": {
+                                          "LEFT": {
+                                            "block": {
+                                              "type": "uiap_compare",
+                                              "fields": {
+                                                "OP": "GTE"
+                                              },
+                                              "inputs": {
+                                                "LEFT": {
+                                                  "block": {
+                                                    "type": "uiap_number",
+                                                    "fields": {
+                                                      "VALUE": 3
+                                                    }
+                                                  }
+                                                },
+                                                "RIGHT": {
+                                                  "block": {
+                                                    "type": "uiap_number",
+                                                    "fields": {
+                                                      "VALUE": 3
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "RIGHT": {
+                                            "block": {
+                                              "type": "uiap_not",
+                                              "inputs": {
+                                                "VALUE": {
+                                                  "block": {
+                                                    "type": "uiap_compare",
+                                                    "fields": {
+                                                      "OP": "GTE"
+                                                    },
+                                                    "inputs": {
+                                                      "LEFT": {
+                                                        "block": {
+                                                          "type": "uiap_number",
+                                                          "fields": {
+                                                            "VALUE": 2
+                                                          }
+                                                        }
+                                                      },
+                                                      "RIGHT": {
+                                                        "block": {
+                                                          "type": "uiap_number",
+                                                          "fields": {
+                                                            "VALUE": 3
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "DO": {
+                                      "block": {
+                                        "type": "uiap_neopixel_set",
+                                        "fields": {
+                                          "PIXEL": 6,
+                                          "COLOR": "#00ff00",
+                                          "BRIGHTNESS": 20
+                                        }
+                                      }
+                                    },
+                                    "ELSE": {
+                                      "block": {
+                                        "type": "uiap_neopixel_set",
+                                        "fields": {
+                                          "PIXEL": 6,
+                                          "COLOR": "#ff0000",
+                                          "BRIGHTNESS": 20
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "uiap_if",
+                                      "inputs": {
+                                        "CONDITION": {
+                                          "block": {
+                                            "type": "uiap_logic",
+                                            "fields": {
+                                              "OP": "AND"
+                                            },
+                                            "inputs": {
+                                              "LEFT": {
+                                                "block": {
+                                                  "type": "uiap_logic",
+                                                  "fields": {
+                                                    "OP": "AND"
+                                                  },
+                                                  "inputs": {
+                                                    "LEFT": {
+                                                      "block": {
+                                                        "type": "uiap_logic",
+                                                        "fields": {
+                                                          "OP": "AND"
+                                                        },
+                                                        "inputs": {
+                                                          "LEFT": {
+                                                            "block": {
+                                                              "type": "uiap_logic",
+                                                              "fields": {
+                                                                "OP": "AND"
+                                                              },
+                                                              "inputs": {
+                                                                "LEFT": {
+                                                                  "block": {
+                                                                    "type": "uiap_logic",
+                                                                    "fields": {
+                                                                      "OP": "AND"
+                                                                    },
+                                                                    "inputs": {
+                                                                      "LEFT": {
+                                                                        "block": {
+                                                                          "type": "uiap_logic",
+                                                                          "fields": {
+                                                                            "OP": "AND"
+                                                                          },
+                                                                          "inputs": {
+                                                                            "LEFT": {
+                                                                              "block": {
+                                                                                "type": "uiap_logic",
+                                                                                "fields": {
+                                                                                  "OP": "AND"
+                                                                                },
+                                                                                "inputs": {
+                                                                                  "LEFT": {
+                                                                                    "block": {
+                                                                                      "type": "uiap_logic",
+                                                                                      "fields": {
+                                                                                        "OP": "AND"
+                                                                                      },
+                                                                                      "inputs": {
+                                                                                        "LEFT": {
+                                                                                          "block": {
+                                                                                            "type": "uiap_logic",
+                                                                                            "fields": {
+                                                                                              "OP": "AND"
+                                                                                            },
+                                                                                            "inputs": {
+                                                                                              "LEFT": {
+                                                                                                "block": {
+                                                                                                  "type": "uiap_not",
+                                                                                                  "inputs": {
+                                                                                                    "VALUE": {
+                                                                                                      "block": {
+                                                                                                        "type": "uiap_logic",
+                                                                                                        "fields": {
+                                                                                                          "OP": "AND"
+                                                                                                        },
+                                                                                                        "inputs": {
+                                                                                                          "LEFT": {
+                                                                                                            "block": {
+                                                                                                              "type": "uiap_boolean",
+                                                                                                              "fields": {
+                                                                                                                "VALUE": "FALSE"
+                                                                                                              }
+                                                                                                            }
+                                                                                                          },
+                                                                                                          "RIGHT": {
+                                                                                                            "block": {
+                                                                                                              "type": "uiap_boolean",
+                                                                                                              "fields": {
+                                                                                                                "VALUE": "FALSE"
+                                                                                                              }
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              },
+                                                                                              "RIGHT": {
+                                                                                                "block": {
+                                                                                                  "type": "uiap_not",
+                                                                                                  "inputs": {
+                                                                                                    "VALUE": {
+                                                                                                      "block": {
+                                                                                                        "type": "uiap_logic",
+                                                                                                        "fields": {
+                                                                                                          "OP": "OR"
+                                                                                                        },
+                                                                                                        "inputs": {
+                                                                                                          "LEFT": {
+                                                                                                            "block": {
+                                                                                                              "type": "uiap_boolean",
+                                                                                                              "fields": {
+                                                                                                                "VALUE": "FALSE"
+                                                                                                              }
+                                                                                                            }
+                                                                                                          },
+                                                                                                          "RIGHT": {
+                                                                                                            "block": {
+                                                                                                              "type": "uiap_boolean",
+                                                                                                              "fields": {
+                                                                                                                "VALUE": "FALSE"
+                                                                                                              }
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        },
+                                                                                        "RIGHT": {
+                                                                                          "block": {
+                                                                                            "type": "uiap_not",
+                                                                                            "inputs": {
+                                                                                              "VALUE": {
+                                                                                                "block": {
+                                                                                                  "type": "uiap_logic",
+                                                                                                  "fields": {
+                                                                                                    "OP": "AND"
+                                                                                                  },
+                                                                                                  "inputs": {
+                                                                                                    "LEFT": {
+                                                                                                      "block": {
+                                                                                                        "type": "uiap_boolean",
+                                                                                                        "fields": {
+                                                                                                          "VALUE": "FALSE"
+                                                                                                        }
+                                                                                                      }
+                                                                                                    },
+                                                                                                    "RIGHT": {
+                                                                                                      "block": {
+                                                                                                        "type": "uiap_boolean",
+                                                                                                        "fields": {
+                                                                                                          "VALUE": "TRUE"
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  },
+                                                                                  "RIGHT": {
+                                                                                    "block": {
+                                                                                      "type": "uiap_logic",
+                                                                                      "fields": {
+                                                                                        "OP": "OR"
+                                                                                      },
+                                                                                      "inputs": {
+                                                                                        "LEFT": {
+                                                                                          "block": {
+                                                                                            "type": "uiap_boolean",
+                                                                                            "fields": {
+                                                                                              "VALUE": "FALSE"
+                                                                                            }
+                                                                                          }
+                                                                                        },
+                                                                                        "RIGHT": {
+                                                                                          "block": {
+                                                                                            "type": "uiap_boolean",
+                                                                                            "fields": {
+                                                                                              "VALUE": "TRUE"
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            },
+                                                                            "RIGHT": {
+                                                                              "block": {
+                                                                                "type": "uiap_not",
+                                                                                "inputs": {
+                                                                                  "VALUE": {
+                                                                                    "block": {
+                                                                                      "type": "uiap_logic",
+                                                                                      "fields": {
+                                                                                        "OP": "AND"
+                                                                                      },
+                                                                                      "inputs": {
+                                                                                        "LEFT": {
+                                                                                          "block": {
+                                                                                            "type": "uiap_boolean",
+                                                                                            "fields": {
+                                                                                              "VALUE": "TRUE"
+                                                                                            }
+                                                                                          }
+                                                                                        },
+                                                                                        "RIGHT": {
+                                                                                          "block": {
+                                                                                            "type": "uiap_boolean",
+                                                                                            "fields": {
+                                                                                              "VALUE": "FALSE"
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "RIGHT": {
+                                                                        "block": {
+                                                                          "type": "uiap_logic",
+                                                                          "fields": {
+                                                                            "OP": "OR"
+                                                                          },
+                                                                          "inputs": {
+                                                                            "LEFT": {
+                                                                              "block": {
+                                                                                "type": "uiap_boolean",
+                                                                                "fields": {
+                                                                                  "VALUE": "TRUE"
+                                                                                }
+                                                                              }
+                                                                            },
+                                                                            "RIGHT": {
+                                                                              "block": {
+                                                                                "type": "uiap_boolean",
+                                                                                "fields": {
+                                                                                  "VALUE": "FALSE"
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                },
+                                                                "RIGHT": {
+                                                                  "block": {
+                                                                    "type": "uiap_logic",
+                                                                    "fields": {
+                                                                      "OP": "AND"
+                                                                    },
+                                                                    "inputs": {
+                                                                      "LEFT": {
+                                                                        "block": {
+                                                                          "type": "uiap_boolean",
+                                                                          "fields": {
+                                                                            "VALUE": "TRUE"
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "RIGHT": {
+                                                                        "block": {
+                                                                          "type": "uiap_boolean",
+                                                                          "fields": {
+                                                                            "VALUE": "TRUE"
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "RIGHT": {
+                                                            "block": {
+                                                              "type": "uiap_logic",
+                                                              "fields": {
+                                                                "OP": "OR"
+                                                              },
+                                                              "inputs": {
+                                                                "LEFT": {
+                                                                  "block": {
+                                                                    "type": "uiap_boolean",
+                                                                    "fields": {
+                                                                      "VALUE": "TRUE"
+                                                                    }
+                                                                  }
+                                                                },
+                                                                "RIGHT": {
+                                                                  "block": {
+                                                                    "type": "uiap_boolean",
+                                                                    "fields": {
+                                                                      "VALUE": "TRUE"
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    },
+                                                    "RIGHT": {
+                                                      "block": {
+                                                        "type": "uiap_compare",
+                                                        "fields": {
+                                                          "OP": "EQ"
+                                                        },
+                                                        "inputs": {
+                                                          "LEFT": {
+                                                            "block": {
+                                                              "type": "uiap_boolean",
+                                                              "fields": {
+                                                                "VALUE": "TRUE"
+                                                              }
+                                                            }
+                                                          },
+                                                          "RIGHT": {
+                                                            "block": {
+                                                              "type": "uiap_boolean",
+                                                              "fields": {
+                                                                "VALUE": "TRUE"
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                              "RIGHT": {
+                                                "block": {
+                                                  "type": "uiap_compare",
+                                                  "fields": {
+                                                    "OP": "NEQ"
+                                                  },
+                                                  "inputs": {
+                                                    "LEFT": {
+                                                      "block": {
+                                                        "type": "uiap_boolean",
+                                                        "fields": {
+                                                          "VALUE": "TRUE"
+                                                        }
+                                                      }
+                                                    },
+                                                    "RIGHT": {
+                                                      "block": {
+                                                        "type": "uiap_boolean",
+                                                        "fields": {
+                                                          "VALUE": "FALSE"
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        },
+                                        "DO": {
+                                          "block": {
+                                            "type": "uiap_neopixel_set",
+                                            "fields": {
+                                              "PIXEL": 7,
+                                              "COLOR": "#00ff00",
+                                              "BRIGHTNESS": 20
+                                            }
+                                          }
+                                        },
+                                        "ELSE": {
+                                          "block": {
+                                            "type": "uiap_neopixel_set",
+                                            "fields": {
+                                              "PIXEL": 7,
+                                              "COLOR": "#ff0000",
+                                              "BRIGHTNESS": 20
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "uiap_variable_set",
+                                          "fields": {
+                                            "VAR": {
+                                              "id": "check-number"
+                                            }
+                                          },
+                                          "inputs": {
+                                            "VALUE": {
+                                              "block": {
+                                                "type": "uiap_number",
+                                                "fields": {
+                                                  "VALUE": 3
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "uiap_if",
+                                              "inputs": {
+                                                "CONDITION": {
+                                                  "block": {
+                                                    "type": "uiap_compare",
+                                                    "fields": {
+                                                      "OP": "EQ"
+                                                    },
+                                                    "inputs": {
+                                                      "LEFT": {
+                                                        "block": {
+                                                          "type": "uiap_variable_get",
+                                                          "fields": {
+                                                            "VAR": {
+                                                              "id": "check-number"
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "RIGHT": {
+                                                        "block": {
+                                                          "type": "uiap_number",
+                                                          "fields": {
+                                                            "VALUE": 3
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "DO": {
+                                                  "block": {
+                                                    "type": "uiap_if",
+                                                    "inputs": {
+                                                      "CONDITION": {
+                                                        "block": {
+                                                          "type": "uiap_compare",
+                                                          "fields": {
+                                                            "OP": "GT"
+                                                          },
+                                                          "inputs": {
+                                                            "LEFT": {
+                                                              "block": {
+                                                                "type": "uiap_variable_get",
+                                                                "fields": {
+                                                                  "VAR": {
+                                                                    "id": "check-number"
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "RIGHT": {
+                                                              "block": {
+                                                                "type": "uiap_number",
+                                                                "fields": {
+                                                                  "VALUE": 5
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "DO": {
+                                                        "block": {
+                                                          "type": "uiap_neopixel_set",
+                                                          "fields": {
+                                                            "PIXEL": 8,
+                                                            "COLOR": "#ff0000",
+                                                            "BRIGHTNESS": 20
+                                                          }
+                                                        }
+                                                      },
+                                                      "ELSE": {
+                                                        "block": {
+                                                          "type": "uiap_neopixel_set",
+                                                          "fields": {
+                                                            "PIXEL": 8,
+                                                            "COLOR": "#00ff00",
+                                                            "BRIGHTNESS": 20
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "ELSE": {
+                                                  "block": {
+                                                    "type": "uiap_neopixel_set",
+                                                    "fields": {
+                                                      "PIXEL": 8,
+                                                      "COLOR": "#ff0000",
+                                                      "BRIGHTNESS": 20
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                              "next": {
+                                                "block": {
+                                                  "type": "uiap_forever",
+                                                  "inputs": {
+                                                    "DO": {
+                                                      "block": {
+                                                        "type": "uiap_wait",
+                                                        "fields": {
+                                                          "MILLISECONDS": 500
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "x": 36,
+          "y": 36
+        }
+      ]
+    }
+  }
+}

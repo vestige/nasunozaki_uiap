@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { ProgramInstruction } from "../../web/src/features/blockly/utils/program";
+import type { ProgramInstruction, ProgramValue } from "../../web/src/features/blockly/utils/program";
 import type { BoardAdapter } from "../../web/src/features/blockly/types/execution";
 import { runProgram } from "../../web/src/features/blockly/utils/execution";
 
@@ -33,6 +33,20 @@ const createExecution = () => {
 };
 
 describe("runProgram", () => {
+  it.each<ProgramValue>([
+    { type: "variable", id: "unset" },
+    { type: "number", value: 1 },
+    { type: "not", value: { type: "number", value: 1 } },
+    { type: "compare", op: "LT", left: { type: "boolean", value: true }, right: { type: "number", value: 2 } },
+    { type: "logic", op: "AND", left: { type: "boolean", value: true }, right: { type: "number", value: 2 } },
+  ])("不正な条件は後続の点灯命令を実行しない: %j", async (condition) => {
+    const { board, events } = createExecution();
+    await expect(runProgram([
+      { type: "if", condition, body: [{ type: "led", on: true, blockId: "inside" }], elseBody: [], blockId: "if" },
+      { type: "led", on: true, blockId: "after" },
+    ], board, new AbortController().signal)).rejects.toThrow();
+    expect(events).toEqual([]);
+  });
   it("押し続けたボタンは1回だけ実行する", async () => {
     const { board, events } = createExecution();
     let pending = true;
