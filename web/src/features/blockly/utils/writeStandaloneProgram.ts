@@ -4,7 +4,6 @@ import { withRuntimeResponseTimeout } from "../../runtime/utils/runtimeTiming";
 import {
   crc16Ccitt,
   STANDALONE_PROGRAM_HEADER_SIZE,
-  STANDALONE_PROGRAM_VERSION,
 } from "./standaloneProgram";
 import {
   buildStandaloneUpdateAbort,
@@ -12,6 +11,8 @@ import {
   buildStandaloneUpdateCommit,
   buildStandaloneUpdateData,
   buildStandaloneUpdateStatus,
+  buildStandaloneCapabilities,
+  standaloneSupportedVersion,
   parseStandaloneUpdateResponse,
   STANDALONE_UPDATE_COMMAND_ABORT,
   STANDALONE_UPDATE_COMMAND_BEGIN,
@@ -55,6 +56,10 @@ export async function writeStandaloneProgram(
     throw new Error("この作品は保存領域へ収まりません。命令を少し減らしてください。");
   }
   const bytes = encodedSlot.slice(0, length);
+  const formatVersion = encodedSlot[4];
+  if (formatVersion !== 1 && formatVersion !== 2) {
+    throw new Error("この作品形式には対応していません。");
+  }
   const transport = new WebHidRuntimeTransport(device);
   let sequence = 0;
   let began = false;
@@ -76,8 +81,18 @@ export async function writeStandaloneProgram(
     if (before < 0x40 || before > 0x42) {
       throw new Error("作品だけを書き込めるランタイムが必要です。最初に教育用ランタイムを更新してください。");
     }
+    // Version 1 keeps the legacy transfer path. Check newer formats before
+    // BEGIN, which stops the current program and erases the inactive bank.
+    if (formatVersion > 1) {
+      const supportedVersion = standaloneSupportedVersion(
+        await exchange(buildStandaloneCapabilities(next())),
+      );
+      if (formatVersion > supportedVersion) {
+        throw new Error("この作品を使うには、最初にボードの教育用ランタイムを更新してください。");
+      }
+    }
     const begin = await exchange(buildStandaloneUpdateBegin(
-      next(), length, crc16Ccitt(bytes), STANDALONE_PROGRAM_VERSION,
+      next(), length, crc16Ccitt(bytes), formatVersion,
     ), 10_000);
     if (begin !== 0) throw new Error(`作品の保存を開始できませんでした（${begin}）。`);
     began = true;

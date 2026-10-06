@@ -5,6 +5,8 @@ import {
   buildStandaloneUpdateCommit,
   buildStandaloneUpdateData,
   buildStandaloneUpdateStatus,
+  buildStandaloneCapabilities,
+  standaloneSupportedVersion,
   parseStandaloneUpdateResponse,
   STANDALONE_UPDATE_COMMAND_BEGIN,
   STANDALONE_UPDATE_COMMAND_DATA,
@@ -49,10 +51,21 @@ describe("standalone update protocol", () => {
       buildStandaloneUpdateCommit(1),
       buildStandaloneUpdateAbort(2),
       buildStandaloneUpdateStatus(3),
+      buildStandaloneCapabilities(4),
     ]) {
       expect(message).toHaveLength(32);
       expect(message[7]).toBe(0);
       expect([...message.slice(8)]).toEqual(new Array(24).fill(0));
+    }
+  });
+
+  it("作品形式の対応情報は旧ファームと明示応答を区別する", () => {
+    expect(buildStandaloneCapabilities(9)[5]).toBe(0x25);
+    expect(standaloneSupportedVersion(1)).toBe(1);
+    expect(standaloneSupportedVersion(0x51)).toBe(1);
+    expect(standaloneSupportedVersion(0x52)).toBe(2);
+    for (const invalid of [0, 2, 3, 0x40, 0x50, 0x60]) {
+      expect(() => standaloneSupportedVersion(invalid)).toThrow("確認できません");
     }
   });
 

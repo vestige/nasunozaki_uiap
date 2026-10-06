@@ -9,6 +9,7 @@ export const STANDALONE_UPDATE_COMMAND_DATA = 0x21;
 export const STANDALONE_UPDATE_COMMAND_COMMIT = 0x22;
 export const STANDALONE_UPDATE_COMMAND_ABORT = 0x23;
 export const STANDALONE_UPDATE_COMMAND_STATUS = 0x24;
+export const STANDALONE_UPDATE_COMMAND_CAPABILITIES = 0x25;
 export const STANDALONE_UPDATE_DATA_SIZE = 22;
 
 const MAGIC = [0x55, 0x49, 0x41, 0x50] as const; // "UIAP"
@@ -63,6 +64,19 @@ export function buildStandaloneUpdateAbort(sequence: number) {
 
 export function buildStandaloneUpdateStatus(sequence: number) {
   return buildMessage(sequence, STANDALONE_UPDATE_COMMAND_STATUS, []);
+}
+
+export function buildStandaloneCapabilities(sequence: number) {
+  return buildMessage(sequence, STANDALONE_UPDATE_COMMAND_CAPABILITIES, []);
+}
+
+// Capability replies use 0x50 + maximum supported format version. Legacy
+// runtimes reply UNSUPPORTED (1); STATUS must confirm storage support first.
+// This is a format capability, not a firmware build identifier.
+export function standaloneSupportedVersion(response: number): number {
+  if (response === 1) return 1;
+  if (response >= 0x51 && response <= 0x5f) return response & 0x0f;
+  throw new Error("ボードの作品形式への対応を確認できませんでした。");
 }
 
 export function parseStandaloneUpdateResponse(

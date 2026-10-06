@@ -20,6 +20,7 @@ constexpr uint8_t kNeoBrightness = 0x13;
 constexpr uint8_t kNeoApply = 0x14;
 constexpr uint8_t kNeoClear = 0x15;
 constexpr uint8_t kProgramStatus = 0x24;
+constexpr uint8_t kProgramCapabilities = 0x25;
 constexpr uint8_t kProgramBegin = 0x20;
 constexpr uint8_t kProgramData = 0x21;
 constexpr uint8_t kProgramCommit = 0x22;
@@ -415,6 +416,13 @@ void handleMessage(const uint8_t *message, uint8_t length) {
     }
     // For READ_BUTTON, the final response byte is the sampled state (0 or 1).
     sendResponse(command, sequence, digitalRead(kButtonPin) == LOW ? 1 : 0);
+    return;
+  }
+  if (command == kProgramCapabilities) {
+    // Read-only: do not stop execution or modify flash. Advertise only formats
+    // implemented by both the validator and interpreter (currently version 1).
+    sendResponse(command, sequence, message[7] == 0
+        ? static_cast<uint8_t>(0x50 | kStandaloneVersion) : kInvalidPayload);
     return;
   }
   if (command == kProgramStatus) {

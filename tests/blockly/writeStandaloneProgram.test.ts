@@ -6,7 +6,7 @@ import type {
 import { encodeStandaloneProgram } from "../../web/src/features/blockly/utils/standaloneProgram";
 import { readStandaloneStatus, writeStandaloneProgram } from "../../web/src/features/blockly/utils/writeStandaloneProgram";
 
-function fakeRuntime(initialStatus: number) {
+function fakeRuntime(initialStatus: number, capability: number | null = 1) {
   let listener: ((event: RuntimeInputReportEvent) => void) | undefined;
   let status = initialStatus;
   const commands: Uint8Array[] = [];
@@ -21,10 +21,11 @@ function fakeRuntime(initialStatus: number) {
     sendFeatureReport: vi.fn(async (_id: number, data: BufferSource) => {
       const bytes = new Uint8Array(data as Uint8Array).slice();
       commands.push(bytes);
+      if (bytes[5] === 0x25 && capability === null) return;
       if (bytes[5] === 0x22) status = status === 0x41 ? 0x42 : 0x41;
       const response = Uint8Array.from([
         0x55, 0x49, 0x41, 0x50, 1, bytes[5] | 0x80, bytes[6],
-        bytes[5] === 0x24 ? status : bytes[5] === 0x20 && initialStatus === 1 ? 1 : 0,
+        bytes[5] === 0x25 ? capability! : bytes[5] === 0x24 ? status : bytes[5] === 0x20 && initialStatus === 1 ? 1 : 0,
       ]);
       listener?.({ reportId: 0, data: new DataView(response.buffer) } as RuntimeInputReportEvent);
     }),
@@ -39,6 +40,45 @@ function fakeRuntime(initialStatus: number) {
 }
 
 describe("writeStandaloneProgram", () => {
+  it("対応問い合わせが無応答なら保存を始めず終了する", async () => {
+    vi.useFakeTimers();
+    try {
+      const fake = fakeRuntime(0x41, null);
+      const slot = encodeStandaloneProgram([{ type: "led", on: true, blockId: "led" }]);
+      slot[4] = 2;
+      const failed = expect(writeStandaloneProgram(fake.device, slot, () => undefined)).rejects.toThrow();
+      await vi.runAllTimersAsync();
+      await failed;
+      expect(fake.commands.map((command) => command[5])).toEqual([0x24, 0x25]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each([1, 0x51, 2, 0])("非対応・不正な応答(%i)では新形式のBEGINを送らない", async (capability) => {
+    const fake = fakeRuntime(0x41, capability);
+    const slot = encodeStandaloneProgram([{ type: "led", on: true, blockId: "led" }]);
+    slot[4] = 2; // Transfer negotiation fixture, not a version 2 encoder.
+    await expect(writeStandaloneProgram(fake.device, slot, () => undefined)).rejects.toThrow();
+    expect(fake.commands.map((command) => command[5])).toEqual([0x24, 0x25]);
+  });
+
+  it("新形式の対応を確認してから作品自身のversionでBEGINする", async () => {
+    const fake = fakeRuntime(0x41, 0x52);
+    const slot = encodeStandaloneProgram([{ type: "led", on: true, blockId: "led" }]);
+    slot[4] = 2;
+    await expect(writeStandaloneProgram(fake.device, slot, () => undefined)).resolves.toBe("B");
+    expect(fake.commands.map((command) => command[5])).toEqual([0x24, 0x25, 0x20, 0x21, 0x22, 0x24]);
+    expect(fake.commands[2][8]).toBe(2);
+  });
+
+  it("未知の作品形式は通信前に拒否する", async () => {
+    const fake = fakeRuntime(0x41, 0x5f);
+    const slot = encodeStandaloneProgram([{ type: "led", on: true, blockId: "led" }]);
+    slot[4] = 3;
+    await expect(writeStandaloneProgram(fake.device, slot, () => undefined)).rejects.toThrow("作品形式");
+    expect(fake.commands).toEqual([]);
+  });
   it("STATUSだけで旧ランタイムへの非対応を判定する", async () => {
     const fake = fakeRuntime(1);
     await expect(readStandaloneStatus(fake.device)).resolves.toEqual({
