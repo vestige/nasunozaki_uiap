@@ -1,6 +1,7 @@
 import * as Blockly from "blockly/core";
 
 export type ProgramValue =
+  | { type: "arithmetic"; op: "ADD" | "SUB"; left: ProgramValue; right: ProgramValue }
   | { type: "boolean"; value: boolean }
   | { type: "number"; value: number }
   | { type: "variable"; id: string }
@@ -9,6 +10,7 @@ export type ProgramValue =
   | { type: "logic"; op: "AND" | "OR"; left: ProgramValue; right: ProgramValue };
 
 export type ProgramInstruction =
+  | { type: "neoPixelSetValue"; pixel: ProgramValue; color: string; brightness: number; blockId: string }
   | { type: "setVariable"; id: string; value: ProgramValue; blockId: string }
   | { type: "if"; condition: ProgramValue; body: ProgramInstruction[]; elseBody: ProgramInstruction[]; blockId: string }
   | { type: "ifButtonPressed"; body: ProgramInstruction[]; blockId: string }
@@ -64,6 +66,15 @@ function compileChain(first: Blockly.Block | null): ProgramInstruction[] {
         brightness: clampNumber(block.getFieldValue("BRIGHTNESS"), 1, 100),
         blockId: block.id,
       });
+    } else if (block.type === "uiap_neopixel_set_value") {
+      const pixel = compileValue(block.getInputTargetBlock("PIXEL"));
+      if (pixel.type === "number" && (!Number.isInteger(pixel.value) || pixel.value < 1 || pixel.value > 8)) {
+        throw new Error("LED番号には1から8の整数を入れてください。");
+      }
+      const light = { color: normalizeColor(block.getFieldValue("COLOR")), brightness: clampNumber(block.getFieldValue("BRIGHTNESS"), 1, 100), blockId: block.id };
+      instructions.push(pixel.type === "number"
+        ? { type: "neoPixelSet", index: pixel.value - 1, ...light }
+        : { type: "neoPixelSetValue", pixel, ...light });
     } else if (block.type === "uiap_neopixel_set") {
       instructions.push({
         type: "neoPixelSet",
@@ -107,6 +118,10 @@ function compileChain(first: Blockly.Block | null): ProgramInstruction[] {
 
 function compileValue(block: Blockly.Block | null): ProgramValue {
   if (!block) throw new Error("値を入れていないブロックがあります。");
+  if (block.type === "uiap_arithmetic") return {
+    type: "arithmetic", op: block.getFieldValue("OP") as "ADD" | "SUB",
+    left: compileValue(block.getInputTargetBlock("LEFT")), right: compileValue(block.getInputTargetBlock("RIGHT")),
+  };
   if (block.type === "uiap_boolean") return { type: "boolean", value: block.getFieldValue("VALUE") === "TRUE" };
   if (block.type === "uiap_number") return { type: "number", value: Number(block.getFieldValue("VALUE")) };
   if (block.type === "uiap_variable_get") return { type: "variable", id: block.getFieldValue("VAR") };

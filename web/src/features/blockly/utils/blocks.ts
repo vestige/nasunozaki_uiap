@@ -8,6 +8,23 @@ export function registerUiapBlocks() {
   Blockly.setLocale(Ja as unknown as Record<string, string>);
   Blockly.common.defineBlocksWithJsonArray([
     {
+      type: "uiap_arithmetic", message0: "%1 %2 %3",
+      args0: [{ type: "input_value", name: "LEFT", check: "Number" },
+        { type: "field_dropdown", name: "OP", options: [["＋", "ADD"], ["−", "SUB"]] },
+        { type: "input_value", name: "RIGHT", check: "Number" }],
+      inputsInline: true, output: "Number", colour: 230,
+      tooltip: "整数を足したり引いたりします。めもの数字も使えます。",
+    },
+    {
+      type: "uiap_neopixel_set_value",
+      message0: "NeoPixelの %1 番を %2 で 明るさ %3 % で光らせる",
+      args0: [{ type: "input_value", name: "PIXEL", check: "Number" },
+        { type: "field_dropdown", name: "COLOR", options: neoPixelColorOptions() },
+        { type: "field_number", name: "BRIGHTNESS", value: 20, min: 1, max: 100, precision: 1 }],
+      inputsInline: true, previousStatement: null, nextStatement: null, colour: 330,
+      tooltip: "1から8の番号を入れます。めもの数字や計算も使えます。",
+    },
+    {
       type: "uiap_led",
       message0: "LEDを %1",
       args0: [
@@ -156,7 +173,13 @@ const category = (name: string, colour: string, types: string[]) => ({
   kind: "category" as const,
   name,
   colour,
-  contents: types.map((type) => ({ kind: "block" as const, type })),
+  contents: types.map((type) => ({ kind: "block" as const, type,
+    ...(type === "uiap_neopixel_set_value" ? { inputs: { PIXEL: { shadow: { type: "uiap_number", fields: { VALUE: 1 } } } } }
+      : type === "uiap_arithmetic" ? { inputs: {
+        LEFT: { shadow: { type: "uiap_number", fields: { VALUE: 0 } } },
+        RIGHT: { shadow: { type: "uiap_number", fields: { VALUE: 1 } } },
+      } } : {}),
+  })),
 });
 
 export function createUiapToolbox(options: { tactSwitch: boolean; neoPixel: boolean }): Blockly.utils.toolbox.ToolboxDefinition {
@@ -166,10 +189,10 @@ export function createUiapToolbox(options: { tactSwitch: boolean; neoPixel: bool
       category("きほん", "#b09a58", ["uiap_led", "uiap_wait"]),
       category("くりかえし", "#8557a4", ["uiap_repeat", "uiap_forever"]),
       category("もし・くらべる", "#547ea2", ["uiap_if", "uiap_boolean", "uiap_number", "uiap_compare", "uiap_logic", "uiap_not"]),
-      category("おぼえる", "#a25780", ["uiap_variable_set", "uiap_variable_get", "uiap_number"]),
+      category("おぼえる", "#a25780", ["uiap_variable_set", "uiap_variable_get", "uiap_number", "uiap_arithmetic"]),
       ...(options.tactSwitch || options.neoPixel ? [{ kind: "sep" as const }] : []),
       ...(options.tactSwitch ? [category("タクトスイッチ", "#65885d", ["uiap_if_button", "uiap_if_button_pressed"])] : []),
-      ...(options.neoPixel ? [category("NeoPixel", "#a25780", ["uiap_neopixel_fill", "uiap_neopixel_set", "uiap_neopixel_clear"])] : []),
+      ...(options.neoPixel ? [category("NeoPixel", "#a25780", ["uiap_neopixel_fill", "uiap_neopixel_set_value", "uiap_neopixel_clear"])] : []),
     ],
   };
 }

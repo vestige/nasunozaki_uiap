@@ -1,0 +1,104 @@
+{
+  "format": "uiapduino-blockly-project",
+  "version": 4,
+  "savedAt": "2026-10-07T00:00:00.000Z",
+  "extensions": {
+    "tactSwitch": false,
+    "neoPixel": true
+  },
+  "workspace": {
+    "variables": [
+      {
+        "id": "test-value",
+        "name": "チェック"
+      }
+    ],
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "uiap_variable_set",
+          "fields": {
+            "VAR": {
+              "id": "test-value"
+            }
+          },
+          "inputs": {
+            "VALUE": {
+              "block": {
+                "type": "uiap_number",
+                "fields": {
+                  "VALUE": 9
+                }
+              }
+            }
+          },
+          "next": {
+            "block": {
+              "type": "uiap_neopixel_fill",
+              "fields": {
+                "COLOR": "#00ff00",
+                "BRIGHTNESS": 20
+              },
+              "next": {
+                "block": {
+                  "type": "uiap_wait",
+                  "fields": {
+                    "MILLISECONDS": 2000
+                  },
+                  "next": {
+                    "block": {
+                      "type": "uiap_neopixel_set_value",
+                      "fields": {
+                        "COLOR": "#ff0000",
+                        "BRIGHTNESS": 20
+                      },
+                      "inputs": {
+                        "PIXEL": {
+                          "block": {
+                            "type": "uiap_variable_get",
+                            "fields": {
+                              "VAR": {
+                                "id": "test-value"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "uiap_neopixel_fill",
+                          "fields": {
+                            "COLOR": "#ff0000",
+                            "BRIGHTNESS": 20
+                          },
+                          "next": {
+                            "block": {
+                              "type": "uiap_forever",
+                              "inputs": {
+                                "DO": {
+                                  "block": {
+                                    "type": "uiap_wait",
+                                    "fields": {
+                                      "MILLISECONDS": 1000
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "x": 36,
+          "y": 36
+        }
+      ]
+    }
+  }
+}

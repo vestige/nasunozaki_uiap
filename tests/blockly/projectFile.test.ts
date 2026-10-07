@@ -17,7 +17,7 @@ describe("Blockly project file", () => {
       parseBlocklyProjectFile(stringifyBlocklyProjectFile(project)),
     ).toEqual(project);
     expect(project).toMatchObject({
-      version: 3,
+      version: 4,
       extensions: { tactSwitch: true, neoPixel: true },
     });
   });
@@ -30,7 +30,7 @@ describe("Blockly project file", () => {
       parseBlocklyProjectFile(
         JSON.stringify({
           format: "uiapduino-blockly-project",
-          version: 4,
+          version: 99,
           savedAt: savedAt.toISOString(),
           workspace,
         }),

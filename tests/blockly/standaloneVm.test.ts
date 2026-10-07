@@ -42,7 +42,34 @@ it("実際の論理確認作品をボード用C++で実行して8灯とも緑に
   expect(pixels).toEqual(Array.from({ length: 8 }, (_, i) => `N ${i + 1} 0 255 0 20`));
 });
 
-it.each(["safety-invalid-type", "safety-uninitialized"])("安全停止作品 %s は緑の後にエラー終了し赤を実行しない", name => {
+it.each([false, true])("形式3で光を順方向／逆方向に動かし端で折り返せる: %s", reverse => {
+  const result = run(example(`neopixel-${reverse ? "backward" : "forward"}`));
+  expect(result).toContain("VALID 1");
+  const lights = result.split("\n").filter(l => /^N [1-8] /.test(l));
+  expect(lights.length).toBeGreaterThanOrEqual(10);
+  expect(lights.slice(0, 10)).toEqual(Array.from({ length: 10 }, (_, i) => `N ${reverse ? 8 - i % 8 : 1 + i % 8} 0 255 0 20`));
+});
+
+it("形式3の桁あふれ・型不正・範囲外LED番号は後続LEDを実行しない", () => {
+  const number = (value: number) => [2, value & 255, value >>> 8 & 255, value >>> 16 & 255, value >>> 24 & 255];
+  for (const expr of [
+    [13, ...number(2147483647), ...number(1)], [14, ...number(-2147483648), ...number(1)],
+    [13, 1, 1, ...number(1)], number(0), number(9), [3, 0],
+  ]) {
+    expect(raw([0x31, ...expr, 0, 255, 0, 20, 1, 1, 0], 3)).toBe("VALID 1\nDONE 0\n");
+  }
+});
+
+it("形式2は新命令と新しい式を拒否し、形式3は正常な直接計算を実行する", () => {
+  const expression = [13, 2, 1, 0, 0, 0, 2, 2, 0, 0, 0];
+  const payload = [0x31, ...expression, 0, 255, 0, 20, 0];
+  expect(raw(payload, 2)).toContain("VALID 0");
+  expect(raw([0x20, 0, ...expression, 0], 2)).toContain("VALID 0");
+  expect(raw(payload, 3)).toBe("VALID 1\nN 3 0 255 0 20\nDONE 1\n");
+  for (let length = 0; length < payload.length; ++length) expect(raw(payload.slice(0, length), 3)).toContain("VALID 0");
+});
+
+it.each(["safety-invalid-type", "safety-uninitialized", "safety-pixel-range", "safety-arithmetic-overflow"])("安全停止作品 %s は緑の後にエラー終了し赤を実行しない", name => {
   expect(run(example(name))).toBe("VALID 1\nN 0 0 255 0 20\nDONE 0\n");
 });
 

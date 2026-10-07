@@ -40,6 +40,17 @@ function fakeRuntime(initialStatus: number, capability: number | null = 1) {
 }
 
 describe("writeStandaloneProgram", () => {
+  it("形式2のファームには加減算作品を送らず、形式3対応なら送れる", async () => {
+    const slot = encodeStandaloneProgram([{ type: "setVariable", id: "n", blockId: "sum", value: {
+      type: "arithmetic", op: "ADD", left: { type: "number", value: 1 }, right: { type: "number", value: 2 },
+    } }]);
+    const old = fakeRuntime(0x41, 0x52);
+    await expect(writeStandaloneProgram(old.device, slot, () => undefined)).rejects.toThrow("更新");
+    expect(old.commands.map(c => c[5])).toEqual([0x24, 0x25]);
+    const current = fakeRuntime(0x41, 0x53);
+    await expect(writeStandaloneProgram(current.device, slot, () => undefined)).resolves.toBe("B");
+    expect(current.commands.find(c => c[5] === 0x20)?.[8]).toBe(3);
+  });
   it("対応問い合わせが無応答なら保存を始めず終了する", async () => {
     vi.useFakeTimers();
     try {
@@ -75,7 +86,7 @@ describe("writeStandaloneProgram", () => {
   it("未知の作品形式は通信前に拒否する", async () => {
     const fake = fakeRuntime(0x41, 0x5f);
     const slot = encodeStandaloneProgram([{ type: "led", on: true, blockId: "led" }]);
-    slot[4] = 3;
+    slot[4] = 99;
     await expect(writeStandaloneProgram(fake.device, slot, () => undefined)).rejects.toThrow("作品形式");
     expect(fake.commands).toEqual([]);
   });

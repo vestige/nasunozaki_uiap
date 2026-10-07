@@ -146,25 +146,27 @@ function encodeInstructions(
         ...body,
       );
     } else if (instruction.type === "setVariable") {
-      context.version = 2;
+      context.version = Math.max(context.version, 2);
       bytes.push(0x20, variableIndex(instruction.id, context), ...encodeValue(instruction.value, context, 0));
     } else if (instruction.type === "if" || instruction.type === "ifButton" || instruction.type === "ifButtonPressed") {
-      context.version = 2;
+      context.version = Math.max(context.version, 2);
       const condition = instruction.type === "if" ? encodeValue(instruction.condition, context, 0) : [];
       const body = encodeInstructions(instruction.body, depth + 1, context);
       const otherwise = instruction.type === "ifButtonPressed" ? [] : encodeInstructions(instruction.elseBody, depth + 1, context);
       bytes.push(instruction.type === "if" ? 0x21 : instruction.type === "ifButton" ? 0x22 : 0x23,
         ...condition, body.length & 255, body.length >> 8, otherwise.length & 255, otherwise.length >> 8, ...body, ...otherwise);
     } else if (instruction.type === "neoPixelClear") {
-      context.version = 2;
+      context.version = Math.max(context.version, 2);
       bytes.push(0x32);
-    } else if (instruction.type === "neoPixelFill" || instruction.type === "neoPixelSet") {
-      context.version = 2;
+    } else if (instruction.type === "neoPixelFill" || instruction.type === "neoPixelSet" || instruction.type === "neoPixelSetValue") {
+      context.version = Math.max(context.version, instruction.type === "neoPixelSetValue" ? 3 : 2);
       if (!/^#[0-9a-f]{6}$/i.test(instruction.color)) throw new Error("NeoPixelの色が正しくありません。");
       assertIntegerInRange(instruction.brightness, 1, 100, "明るさ");
       if (instruction.type === "neoPixelSet") assertIntegerInRange(instruction.index, 0, 7, "LED番号");
       const color = Number.parseInt(instruction.color.slice(1), 16);
-      bytes.push(0x30, instruction.type === "neoPixelFill" ? 0 : instruction.index + 1,
+      const target = instruction.type === "neoPixelSetValue" ? [0x31, ...encodeValue(instruction.pixel, context, 0)]
+        : [0x30, instruction.type === "neoPixelFill" ? 0 : instruction.index + 1];
+      bytes.push(...target,
         (color >> 16) & 255, (color >> 8) & 255, color & 255, instruction.brightness);
     } else {
       throw new Error(
@@ -198,6 +200,11 @@ function encodeValue(value: ProgramValue, context: EncodingContext, depth: numbe
   }
   if (value.type === "variable") return [3, variableIndex(value.id, context)];
   if (value.type === "not") return [4, ...encodeValue(value.value, context, depth + 1)];
+  if (value.type === "arithmetic") {
+    context.version = 3;
+    if (value.op !== "ADD" && value.op !== "SUB") throw new Error("対応していない計算です。");
+    return [value.op === "ADD" ? 13 : 14, ...encodeValue(value.left, context, depth + 1), ...encodeValue(value.right, context, depth + 1)];
+  }
   const op = value.type === "compare"
     ? ({ EQ: 5, NEQ: 6, LT: 7, LTE: 8, GT: 9, GTE: 10 } as const)[value.op]
     : ({ AND: 11, OR: 12 } as const)[value.op];
