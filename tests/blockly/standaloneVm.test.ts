@@ -69,7 +69,7 @@ it("形式2は新命令と新しい式を拒否し、形式3は正常な直接�
   for (let length = 0; length < payload.length; ++length) expect(raw(payload.slice(0, length), 3)).toContain("VALID 0");
 });
 
-it.each(["safety-invalid-type", "safety-uninitialized"])("安全停止作品 %s は緑の後にエラー終了し赤を実行しない", name => {
+it.each(["safety-invalid-type", "safety-uninitialized", "safety-pixel-range", "safety-arithmetic-overflow"])("安全停止作品 %s は緑の後にエラー終了し赤を実行しない", name => {
   expect(run(example(name))).toBe("VALID 1\nN 0 0 255 0 20\nDONE 0\n");
 });
 
