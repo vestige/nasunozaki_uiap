@@ -3,14 +3,14 @@
   "board": "HID ProMicro CH32V003",
   "usb": "WebHID Only",
   "optimize": "Smallest (-Os) with LTO",
-  "source_sha256": "746924c21b7361ab407896cf846cab5303ded776d13f2a9cdcdfc100793db64d",
+  "source_sha256": "4a3cd141e035d2cf7080749c3cace314b3fdd6b12686bee51627c8e53e431476",
   "headers_sha256": {
-    "standalone_vm.h": "039be976bce06911c0daa83d3991eeb0d05ec49f3ef260a2af1b5b5c79197f3f",
+    "standalone_vm.h": "ee9ef0928e36df7c5693c4bc861c19b6c90fa180d099130d5789e86f8ac8d6a0",
     "standalone_button.h": "a40616ea459de4c4fa7b2421c68e10d5dfc63e4dfff3f1e075d7752002cbb29c"
   },
-  "standalone_formats": [1, 2],
-  "binary_size": 13820,
+  "standalone_formats": [1, 2, 3],
+  "binary_size": 14012,
   "static_ram_bytes": 428,
   "linker_sha256": "6577263ff0f284fe8095099116799dae818a136cbb59379899169ed3e90517ce",
-  "binary_sha256": "12f7b482a2989f98761ff79cd53f33fab2c5a2f917a4f91163da425c15d48738"
+  "binary_sha256": "3048cf6cf3654bf4960a8f432ab36523b622e8740ff50449b060990db2b6a208"
 }

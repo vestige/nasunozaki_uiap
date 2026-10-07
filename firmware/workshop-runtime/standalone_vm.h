@@ -19,7 +19,7 @@ class StandaloneVm {
     data_ = bytes;
     version_ = version;
     failed_ = false;
-    return (version == 1 || version == 2) && range(0, length, 0, true, false);
+    return (version >= 1 && version <= 3) && range(0, length, 0, true, false);
   }
 
   bool run(const volatile uint8_t* bytes, uint16_t length, uint8_t version, VmHost host) {
@@ -75,7 +75,7 @@ class StandaloneVm {
       p += 4;
       return true;
     }
-    if (op < 4 || op > 12) return fail();
+    if (op < 4 || op > (version_ >= 3 ? 14 : 12)) return fail();
     Value left, right;
     if (!expr(p, end, depth + 1, execute, left)) return false;
     if (op == 4) {
@@ -83,13 +83,20 @@ class StandaloneVm {
       out = {!left.number, 1};
       return true;
     }
-    const bool logical = op >= 11;
+    const bool logical = op == 11 || op == 12;
     if (execute && logical && left.type != 1) return fail();
     const bool skip = logical && ((op == 11 && !left.number) || (op == 12 && left.number));
     if (!expr(p, end, depth + 1, execute && !skip, right)) return false;
     if (!execute) return true;
     out.type = 1;
-    if (logical) {
+    if (op >= 13) {
+      if (left.type != 2 || right.type != 2) return fail();
+      int32_t result;
+      const bool overflow = op == 13 ? __builtin_add_overflow(left.number, right.number, &result)
+          : __builtin_sub_overflow(left.number, right.number, &result);
+      if (overflow) return fail();
+      out = {result, 2};
+    } else if (logical) {
       if (!skip && right.type != 1) return fail();
       out.number = skip ? left.number : right.number;
     } else if (op == 5 || op == 6) {
@@ -113,7 +120,7 @@ class StandaloneVm {
         if (!fits(p, 1, end) || data_[p] > 1) return fail();
         if (execute) host_.led(data_[p] != 0);
         ++p;
-        if (version_ == 2 && !pause(180, execute)) return false;
+        if (version_ >= 2 && !pause(180, execute)) return false;
       } else if (op == 2) {
         if (!fits(p, 2, end) || word(p) > 5000) return fail();
         const uint16_t ms = word(p); p += 2;
@@ -128,14 +135,14 @@ class StandaloneVm {
         if (!fits(p, 2, end)) return fail();
         const uint16_t len = word(p); p += 2;
         if (!fits(p, len, end) || (op == 0x11 && !len)) return fail();
-        if (version_ == 2 && !pause(180, execute)) return false;
+        if (version_ >= 2 && !pause(180, execute)) return false;
         do {
           if (!range(p, p + len, depth + 1, false, execute)) return false;
-          if (op == 0x11 && version_ == 2 && !pause(50, execute)) return false;
+          if (op == 0x11 && version_ >= 2 && !pause(50, execute)) return false;
         } while (execute && (op == 0x11 || --count));
         p += len;
       } else {
-        if (version_ != 2) return fail();
+        if (version_ < 2) return fail();
         if (op == 0x20) {
           if (!fits(p, 1, end) || data_[p] >= 16) return fail();
           const uint8_t id = data_[p++];
@@ -156,10 +163,18 @@ class StandaloneVm {
           p += yes;
           if (!range(p, p + no, depth + 1, false, execute && !condition.number)) return false;
           p += no;
-        } else if (op == 0x30) {
-          if (!fits(p, 5, end) || data_[p] > 8 || data_[p + 4] < 1 || data_[p + 4] > 100) return fail();
-          if (execute) host_.neo(data_[p], data_[p+1], data_[p+2], data_[p+3], data_[p+4]);
-          p += 5;
+        } else if (op == 0x30 || op == 0x31) {
+          Value index;
+          if (op == 0x31) {
+            if (version_ < 3 || !expr(p, end, 0, execute, index)) return fail();
+            if (execute && (index.type != 2 || index.number < 1 || index.number > 8)) return fail();
+          } else {
+            if (!fits(p, 1, end) || data_[p] > 8) return fail();
+            index = {data_[p++], 2};
+          }
+          if (!fits(p, 4, end) || data_[p + 3] < 1 || data_[p + 3] > 100) return fail();
+          if (execute) host_.neo(index.number, data_[p], data_[p+1], data_[p+2], data_[p+3]);
+          p += 4;
           if (!pause(180, execute)) return false;
         } else if (op == 0x32) {
           if (execute) host_.neo(0, 0, 0, 0, 100);

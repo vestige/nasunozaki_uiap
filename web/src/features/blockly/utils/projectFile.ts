@@ -1,4 +1,5 @@
 import type { BlocklyProjectFile } from "../types/project";
+import { migrateWorkspace } from "./migrateWorkspace";
 
 export const BLOCKLY_PROJECT_EXTENSION = ".uiap.json";
 
@@ -10,7 +11,7 @@ export function createBlocklyProjectFile(
 ): BlocklyProjectFile {
   return {
     format: "uiapduino-blockly-project",
-    version: 3,
+    version: 4,
     savedAt: savedAt.toISOString(),
     workspace,
     extensions: { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled },
@@ -32,7 +33,7 @@ export function parseBlocklyProjectFile(raw: string): BlocklyProjectFile {
   if (!isRecord(value) || value.format !== "uiapduino-blockly-project") {
     throw new Error("UIAPduinoのブロック作品ファイルではありません。");
   }
-  if (value.version !== 1 && value.version !== 2 && value.version !== 3) {
+  if (value.version !== 1 && value.version !== 2 && value.version !== 3 && value.version !== 4) {
     throw new Error("このバージョンの作品ファイルにはまだ対応していません。");
   }
   if (!("workspace" in value) || !isRecord(value.workspace)) {
@@ -42,7 +43,7 @@ export function parseBlocklyProjectFile(raw: string): BlocklyProjectFile {
     throw new Error("保存日時が正しくありません。");
   }
 
-  return value as BlocklyProjectFile;
+  return { ...value, workspace: migrateWorkspace(value.workspace) } as BlocklyProjectFile;
 }
 
 export function createBlocklyProjectFileName(savedAt = new Date()) {

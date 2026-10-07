@@ -39,6 +39,14 @@ async function runInstructions(
       if (!board.fillNeoPixels) throw new Error("この実行先ではNeoPixelを使えません。");
       await board.fillNeoPixels(instruction.color, instruction.brightness);
       await board.wait(180, signal);
+    } else if (instruction.type === "neoPixelSetValue") {
+      const pixel = evaluateValue(instruction.pixel, variables);
+      if (typeof pixel !== "number" || !Number.isInteger(pixel) || pixel < 1 || pixel > 8) {
+        throw new Error("LED番号には1から8の整数を入れてください。");
+      }
+      if (!board.setNeoPixel) throw new Error("この実行先ではNeoPixelを使えません。");
+      await board.setNeoPixel(pixel - 1, instruction.color, instruction.brightness);
+      await board.wait(180, signal);
     } else if (instruction.type === "neoPixelSet") {
       if (!board.setNeoPixel) throw new Error("この実行先ではNeoPixelを使えません。");
       await board.setNeoPixel(instruction.index, instruction.color, instruction.brightness);
@@ -99,6 +107,17 @@ function evaluateValue(value: ProgramValue, variables: Map<string, boolean | num
     return right;
   }
   const right = evaluateValue(value.right, variables);
+  if (value.type === "arithmetic") {
+    for (const operand of [left, right]) {
+      if (typeof operand !== "number" || !Number.isInteger(operand) || operand < -2147483648 || operand > 2147483647) {
+        throw new Error("足す・引くには、扱える範囲の整数を入れてください。");
+      }
+    }
+    if (value.op !== "ADD" && value.op !== "SUB") throw new Error("対応していない計算です。");
+    const result = value.op === "ADD" ? Number(left) + Number(right) : Number(left) - Number(right);
+    if (result < -2147483648 || result > 2147483647) throw new Error("計算結果が扱える整数の範囲を超えています。");
+    return result;
+  }
   if (value.op === "EQ") return left === right;
   if (value.op === "NEQ") return left !== right;
   if (typeof left !== "number" || typeof right !== "number") throw new Error("大小の比較には数字を入れてください。");
