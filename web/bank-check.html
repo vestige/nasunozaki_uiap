@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja"><meta charset="utf-8"><title>保存中断の実機確認</title>
+<body><h1>保存中断の実機確認（開発用）</h1>
+<p>現在の保存作品は残します。別bankへ一部だけ送信し、確定せずに待機します。その後USBを抜いて、元の作品が再開するか確認してください。</p>
+<button id="connect">検証用にボードへ接続</button>
+<button id="partial" disabled>一部だけ送信して待機</button>
+<pre id="log" role="status"></pre>
+<script type="module">
+import { WebHidRuntimeTransport } from './src/features/runtime/utils/webHidRuntimeTransport.ts';
+import { buildStandaloneUpdateStatus, buildStandaloneUpdateBegin, buildStandaloneUpdateData, parseStandaloneUpdateResponse } from './src/features/blockly/utils/standaloneUpdateProtocol.ts';
+import { encodeStandaloneProgram, crc16Ccitt } from './src/features/blockly/utils/standaloneProgram.ts';
+// Not a production entry point. Never COMMIT the intentionally partial upload.
+const log = document.querySelector('#log');
+const connect = document.querySelector('#connect');
+const partial = document.querySelector('#partial');
+let device;
+const report = text => { log.textContent += text + '\n'; };
+if (!import.meta.env.DEV) { connect.disabled = true; throw new Error('Development only'); }
+connect.onclick = async () => {
+  try {
+    [device] = await navigator.hid.requestDevice({filters:[{vendorId:0x1209,productId:0xd004}]});
+    if (!device) return;
+    if (!device.opened) await device.open();
+    report('接続しました'); partial.disabled = false;
+  } catch (error) { report(String(error)); }
+};
+partial.onclick = async () => {
+  partial.disabled = true; connect.disabled = true;
+  const transport = new WebHidRuntimeTransport(device);
+  const exchange = async message => {
+    await transport.send(message);
+    let timer;
+    try {
+      const response = await Promise.race([transport.receive(), new Promise((_,reject) => {
+        timer = setTimeout(() => reject(new Error('応答待ち時間超過。USBを抜き差ししてください')),10000);
+      })]);
+      return parseStandaloneUpdateResponse(response,message[5],message[6]);
+    } finally { clearTimeout(timer); }
+  };
+  try {
+    const status = await exchange(buildStandaloneUpdateStatus(0));
+    if (status !== 0x41 && status !== 0x42) throw new Error('復旧元の保存作品がないため中止');
+    report('更新前の有効bank: ' + (status === 0x41 ? 'A' : 'B'));
+    const slot = encodeStandaloneProgram([{type:'led',on:true,blockId:'partial-test'}]);
+    const length = 16 + slot[6] + (slot[7] << 8);
+    if (await exchange(buildStandaloneUpdateBegin(1,length,crc16Ccitt(slot.slice(0,length)),1)) !== 0) throw new Error('BEGIN失敗');
+    if (await exchange(buildStandaloneUpdateData(2,0,slot.slice(0,16))) !== 0) throw new Error('DATA失敗');
+    report('ヘッダ16バイトのみ送信済み。COMMITは送っていません。USBを抜き、ボタンを押さずに挿し直してください。');
+  } catch(error) { report(String(error)); }
+  finally { transport.dispose(); }
+};
+</script></body></html>
