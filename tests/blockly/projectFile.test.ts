@@ -7,6 +7,12 @@ import {
 } from "../../web/src/features/blockly/utils/projectFile";
 
 describe("Blockly project file", () => {
+  it("圧電スピーカーの準備タブも作品ファイルから復元できる", () => {
+    const project = createBlocklyProjectFile({ blocks: { blocks: [] } }, new Date("2026-10-10T00:00:00Z"), true, true, true);
+    expect(parseBlocklyProjectFile(stringifyBlocklyProjectFile(project))).toEqual(project);
+    expect(project.extensions).toEqual({ tactSwitch: true, neoPixel: true, piezo: true });
+  });
+
   const savedAt = new Date("2026-09-09T01:02:03.000Z");
   const workspace = { blocks: { languageVersion: 0, blocks: [] } };
 

@@ -10,6 +10,7 @@ import { BlocklyToolbar } from "./BlocklyToolbar";
 import { LedSimulator } from "./LedSimulator";
 import { TactSwitchWiringGuide } from "./TactSwitchWiringGuide";
 import { NeoPixelWiringGuide } from "./NeoPixelWiringGuide";
+import { PiezoSetupGuide } from "./PiezoSetupGuide";
 import { ProjectFileActions } from "./ProjectFileActions";
 import { ExecutionTargetSelector } from "./ExecutionTargetSelector";
 import { StandaloneProgramInstall } from "./StandaloneProgramInstall";
@@ -18,11 +19,11 @@ export function BlocklyStudio() {
   const client = useQueryClient();
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
   const toolboxVisibleRef = useRef(true);
-  const [activeEditorTab, setActiveEditorTab] = useState<"blocks" | "tactSwitch" | "neoPixel">("blocks");
+  const [activeEditorTab, setActiveEditorTab] = useState<"blocks" | "tactSwitch" | "neoPixel" | "piezo">("blocks");
   const [stepDisplay, setStepDisplay] = useState(false);
   const [toolboxVisible, setToolboxVisible] = useState(true);
   const { run, stop, led, button, neoPixels, executionTarget, runtimeDevice } = useBlocklyExecution(workspaceRef, stepDisplay);
-  const { program, editingError, tactSwitchExtension, neoPixelExtension, initialize, onChange,
+  const { program, editingError, tactSwitchExtension, neoPixelExtension, piezoExtension, initialize, onChange,
     exportProject, importProject, resetWorkspace, saveMessage, setExtension } = useBlocklyProject(workspaceRef, toolboxVisibleRef, stop);
   const mountWorkspace = useBlocklyWorkspace(workspaceRef, initialize, onChange, stop);
   return (
@@ -134,7 +135,18 @@ export function BlocklyStudio() {
                 <button type="button" className="btn btn-circle btn-ghost btn-xs" aria-label="NeoPixelを外す" onClick={() => { if (!window.confirm("NeoPixel拡張を外します。すでに置いたブロックは消えません。続けますか？")) return; setExtension("neoPixel", false); client.setQueryData(queryKeys.simulatorNeoPixels, Array<string>(8).fill("#000000"));   setActiveEditorTab("blocks"); }}>×</button>
               </div>
             ) : <button type="button" className="tab" onClick={() => { setExtension("neoPixel", true);   setActiveEditorTab("neoPixel"); }}>＋ NeoPixelを追加</button>}
+            {piezoExtension.data ? (
+              <div role="tab" aria-selected={activeEditorTab === "piezo"} className={`tab gap-1 ${activeEditorTab === "piezo" ? "tab-active" : ""}`}>
+                <button type="button" className="h-full" onClick={() => setActiveEditorTab("piezo")}>圧電スピーカー</button>
+                <button type="button" className="btn btn-circle btn-ghost btn-xs" aria-label="圧電スピーカーを外す" onClick={() => {
+                  if (!window.confirm("圧電スピーカーのタブを外します。続けますか？")) return;
+                  setExtension("piezo", false);
+                  setActiveEditorTab("blocks");
+                }}>×</button>
+              </div>
+            ) : <button type="button" className="tab" onClick={() => { setExtension("piezo", true); setActiveEditorTab("piezo"); }}>＋ 圧電スピーカーを追加</button>}
           </div>
+          {piezoExtension.data && activeEditorTab === "piezo" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><PiezoSetupGuide /></div>}
           {tactSwitchExtension.data && activeEditorTab === "tactSwitch" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><TactSwitchWiringGuide /></div>}
           {neoPixelExtension.data && activeEditorTab === "neoPixel" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><NeoPixelWiringGuide /></div>}
           <div className={`rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem] ${activeEditorTab !== "blocks" ? "hidden" : ""}`}>

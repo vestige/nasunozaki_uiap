@@ -17,6 +17,21 @@ const createStorage = () => {
 };
 
 describe("Blockly workspace persistence", () => {
+  it("圧電スピーカーの準備タブを保存し、追加・削除を復元できる", () => {
+    const storage = createStorage();
+    const workspace = { blocks: { languageVersion: 0, blocks: [] } };
+    saveBlocklyWorkspace(storage, workspace, true, true, true);
+    expect(loadBlocklySavedState(storage)).toEqual({ workspace, tactSwitchEnabled: true, neoPixelEnabled: true, piezoEnabled: true });
+    saveBlocklyWorkspace(storage, workspace, true, true, false);
+    expect(loadBlocklySavedState(storage)?.piezoEnabled).toBe(false);
+  });
+
+  it("圧電スピーカー情報がない旧作品では準備タブを追加しない", () => {
+    const storage = createStorage();
+    storage.setItem(BLOCKLY_STORAGE_KEY, JSON.stringify({ version: 5, workspace: { blocks: { blocks: [] } }, extensions: { neoPixel: true } }));
+    expect(loadBlocklySavedState(storage)).toMatchObject({ piezoEnabled: false, neoPixelEnabled: true });
+  });
+
   it("version付きJSONとして保存して復元する", () => {
     const storage = createStorage();
     const workspace = { blocks: { languageVersion: 0, blocks: [] } };
@@ -36,6 +51,7 @@ describe("Blockly workspace persistence", () => {
       workspace,
       tactSwitchEnabled: true,
       neoPixelEnabled: true,
+      piezoEnabled: false,
     });
   });
 

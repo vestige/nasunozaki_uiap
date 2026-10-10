@@ -197,6 +197,7 @@ Safari、Firefox、スマートフォンは現在対象外。Chromebookは実機
 
 ### 将来候補
 
+- [ ] 圧電スピーカーを追加する（#49）。[設計メモ](spec-piezo.md)を参照。最初は準備タブ、次に部品・PINと駆動方式を確定して音ブロックを実装する
 - [ ] 外付けLED用の安全な出力ポートと抵抗値を決める
 - [ ] サーボの電源、電流、PWM pin、安全角度を検証する
 - [ ] I2C OLEDのcontroller、address、library、packet分割を検証する
