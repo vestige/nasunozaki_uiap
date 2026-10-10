@@ -1,4 +1,4 @@
-import type { ProgramInstruction, ProgramValue } from "./program";
+import type { ProgramInstruction, ProgramValue } from "../types/program";
 import type { BoardAdapter, ExecutionObserver } from "../types/execution";
 
 const FOREVER_LOOP_INTERVAL_MS = 50;

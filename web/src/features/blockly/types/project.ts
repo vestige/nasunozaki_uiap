@@ -1,7 +1,9 @@
+import type { ProjectExtensions, ProjectVersion } from "./projectSchema";
+
 export type BlocklyProjectFile = {
   format: "uiapduino-blockly-project";
-  version: 1 | 2 | 3 | 4 | 5;
+  version: ProjectVersion;
   savedAt: string;
   workspace: Record<string, unknown>;
-  extensions?: { tactSwitch?: boolean; neoPixel?: boolean };
+  extensions?: ProjectExtensions;
 };

@@ -1,4 +1,4 @@
-import type { ProgramInstruction, ProgramValue } from "./program";
+import type { ProgramInstruction, ProgramValue } from "../types/program";
 
 export const STANDALONE_PROGRAM_SLOT_SIZE = 1024;
 export const STANDALONE_PROGRAM_HEADER_SIZE = 16;
