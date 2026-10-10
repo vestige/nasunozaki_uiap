@@ -1,6 +1,6 @@
 # UIAPduino コード開発・Web Build仕様
 
-更新日: 2026-09-12
+更新日: 2026-10-10
 
 ## 1. この文書の役割
 
@@ -41,11 +41,12 @@
 
 ## 3. Blocklyとの違い
 
-現在のBlocklyはネイティブbuildではなく、ブラウザ内で中間命令へ変換し、WebHID経由で教育用ランタイムへ逐次送信する方式である。
+現在のBlocklyはネイティブbuildではなく、ブラウザ内で中間命令へ変換する。「ためす」はWebHID経由で教育用ランタイムへ逐次送信し、「ボードにかきこむ」はbytecodeを通常接続で保存して単独実行する。どちらも作品ごとのC/C++コンパイルではない。現在の構成は[全体仕様](spec.md)、Web実装の責任分担は[設計メモ](web-responsibilities.md)を参照する。
 
 ```text
 現在のBlockly
 Blockly → 中間命令 → Browser Execution Engine → WebHID → 教育用ランタイム
+Blockly → 中間命令 → bytecode → WebHID → 作品保存 → ボード単独実行
 
 コード開発モード
 C/C++ → Web Build API → RISC-V compiler → .bin

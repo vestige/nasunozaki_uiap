@@ -1,5 +1,7 @@
 # Web側の責任分担（#56）
 
+全体仕様は[概要・TODO](spec.md)を参照する。本書はWeb実装の担当範囲と安全境界を扱い、ボード単独実行は[単独実行仕様](spec_standalone.md)、容量測定は[ファーム容量調査](firmware-capacity-investigation.md)に分ける。
+
 ボードのファーム・命令仕様・Flash配置は変更しない。Webのコード量や配信サイズと、ボードのランタイム容量は別である。
 
 ## Blockly
