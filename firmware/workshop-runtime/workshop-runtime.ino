@@ -35,9 +35,7 @@ constexpr uint8_t kUnsupportedCommand = 1;
 constexpr uint8_t kInvalidPayload = 2;
 constexpr uint8_t kDeviceError = 3;
 constexpr uint8_t kMagic[] = {0x55, 0x49, 0x41, 0x50};  // "UIAP"
-constexpr uint16_t kStandaloneSlotSize = 1024;
 constexpr uint8_t kStandaloneHeaderSize = 16;
-constexpr uint8_t kStandaloneVersion = 1;
 constexpr uint8_t kStandaloneMaxVersion = 3;
 constexpr uint8_t kStandaloneAutostart = 0x01;
 constexpr uint32_t kProgramBankA = 0x08003800;
@@ -53,19 +51,8 @@ bool standaloneProgramReady = false;
 uiap::StandaloneVm standaloneVm;
 uiap::StandaloneButton standaloneButtonState;
 
-// The browser replaces this entire slot in the compiled image. volatile keeps
-// the compiler from constant-folding the empty development image: the bytes in
-// flash can differ after a Blockly program has been embedded.
-const volatile uint8_t legacyStandaloneProgramSlot[kStandaloneSlotSize]
-    __attribute__((used, aligned(4), section(".rodata.uiap_program"))) = {
-        0x55, 0x49, 0x42, 0x50,  // "UIBP"
-        kStandaloneVersion,
-        0x00,                    // flags: empty image does not autostart
-        0x00, 0x00,              // payload length
-        0xff, 0xff,              // CRC-16/CCITT-FALSE of an empty payload
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
-const volatile uint8_t *standaloneProgramSlot = legacyStandaloneProgramSlot;
+// Programs live only in the two persistent banks, never inside the firmware image.
+const volatile uint8_t *standaloneProgramSlot = nullptr;
 uint8_t activeProgramBank = 0;
 bool programUpdateActive = false;
 bool programRestartPending = false;
@@ -138,6 +125,7 @@ uint16_t updateCrc16(const volatile uint8_t *bytes, uint16_t length) {
 }
 
 bool validateStandaloneProgram() {
+  if (standaloneProgramSlot == nullptr) return false;
   const uint8_t expectedMagic[] = {0x55, 0x49, 0x42, 0x50};
   for (uint8_t index = 0; index < sizeof(expectedMagic); index++) {
     if (standaloneProgramSlot[index] != expectedMagic[index]) return false;
@@ -149,9 +137,7 @@ bool validateStandaloneProgram() {
     if (standaloneProgramSlot[index] != 0) return false;
   }
   const uint16_t payloadLength = standaloneUint16(6);
-  const uint16_t slotSize = standaloneProgramSlot == legacyStandaloneProgramSlot
-      ? kStandaloneSlotSize : kBankProgramSize;
-  if (payloadLength == 0 || payloadLength > slotSize - kStandaloneHeaderSize) return false;
+  if (payloadLength == 0 || payloadLength > kBankProgramSize - kStandaloneHeaderSize) return false;
   if (standaloneUint16(8) != standaloneCrc16(kStandaloneHeaderSize, payloadLength)) return false;
   return standaloneVm.validate(standaloneProgramSlot + kStandaloneHeaderSize,
       payloadLength, standaloneProgramSlot[4]);
@@ -182,9 +168,9 @@ void selectStandaloneProgram() {
     standaloneProgramReady = true;
     return;
   }
-  standaloneProgramSlot = legacyStandaloneProgramSlot;
+  standaloneProgramSlot = nullptr;
   activeProgramBank = 0;
-  standaloneProgramReady = validateStandaloneProgram();
+  standaloneProgramReady = false;
 }
 
 bool standaloneService() {
