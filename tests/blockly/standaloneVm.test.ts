@@ -35,6 +35,41 @@ function example(name: string) {
   } finally { workspace.dispose(); }
 }
 
+it.each([null, { type: "number" as const, value: 8 }])("動的明るさの0・15・20・100を対象LEDへ出力する: %s", pixel => {
+  for (const value of [0, 15, 20, 100]) {
+    const program: ProgramInstruction[] = [{ type: "setVariable", id: "b", value: { type: "number", value }, blockId: "set" },
+      { type: "neoPixelLightValue", pixel, color: "#00ff00", brightness: { type: "variable", id: "b" }, blockId: "light" }];
+    expect(encodeStandaloneProgram(program)[4]).toBe(4);
+    expect(run(program)).toBe(`VALID 1\nN ${pixel ? 8 : 0} 0 ${value ? 255 : 0} 0 ${value || 1}\nDONE 1\n`);
+  }
+});
+
+it("不正な動的明るさは後続命令を実行せず、旧ファームは新命令を拒否する", () => {
+  for (const brightness of [{ type: "number", value: -1 }, { type: "number", value: 101 },
+    { type: "boolean", value: true }, { type: "variable", id: "unset" }] as ProgramValue[]) {
+    const program: ProgramInstruction[] = [{ type: "neoPixelLightValue", pixel: null, color: "#00ff00", brightness, blockId: "light" },
+      { type: "led", on: true, blockId: "later" }];
+    expect(run(program)).toBe("VALID 1\nDONE 0\n");
+    const slot = encodeStandaloneProgram(program);
+    expect(raw([...slot.slice(16, 16 + (slot[6] | slot[7] << 8))], 3)).toContain("VALID 0");
+  }
+});
+
+it("明るさの保存作品は15〜20%を順に出力して消灯する", () => {
+  const result = run(example("neopixel-brightness"));
+  expect(result.split("\n").filter(line => line.startsWith("N "))).toEqual([
+    ...Array.from({ length: 6 }, (_, i) => `N 0 0 255 0 ${15 + i}`), "N 0 0 0 0 100",
+  ]);
+  expect(result).toContain("DONE 1");
+});
+
+it("0%の保存作品は8番だけ消灯し、不正な明るさ作品は赤を実行しない", () => {
+  expect(run(example("neopixel-brightness-zero")).split("\n").filter(line => line.startsWith("N "))).toEqual([
+    "N 0 0 255 0 15", "N 8 0 0 0 1",
+  ]);
+  expect(run(example("safety-brightness-range"))).toBe("VALID 1\nN 0 0 255 0 15\nDONE 0\n");
+});
+
 it("実際の論理確認作品をボード用C++で実行して8灯とも緑になる", () => {
   const result = run(example("logic-check"));
   expect(result).toContain("VALID 1");

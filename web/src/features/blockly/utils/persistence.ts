@@ -4,7 +4,7 @@ export const BLOCKLY_STORAGE_KEY = "uiapduino:blockly-workspace:v1";
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 type SavedBlocklyWorkspace = {
-  version: 1 | 2 | 3 | 4;
+  version: 1 | 2 | 3 | 4 | 5;
   workspace: unknown;
   extensions?: { tactSwitch?: boolean; neoPixel?: boolean };
 };
@@ -22,7 +22,7 @@ export function saveBlocklyWorkspace(
   neoPixelEnabled = false,
 ) {
   const saved: SavedBlocklyWorkspace = {
-    version: 4,
+    version: 5,
     workspace,
     extensions: { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled },
   };
@@ -38,7 +38,7 @@ export function loadBlocklySavedState(storage: StorageLike): BlocklySavedState |
   if (!raw) return null;
   try {
     const saved = JSON.parse(raw) as Partial<SavedBlocklyWorkspace>;
-    if ((saved.version !== 1 && saved.version !== 2 && saved.version !== 3 && saved.version !== 4) || !saved.workspace) return null;
+    if ((saved.version !== 1 && saved.version !== 2 && saved.version !== 3 && saved.version !== 4 && saved.version !== 5) || !saved.workspace) return null;
     return {
       workspace: migrateWorkspace(saved.workspace),
       tactSwitchEnabled: saved.extensions?.tactSwitch === true || hasTactSwitchBlock(saved.workspace),

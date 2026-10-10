@@ -35,6 +35,20 @@ async function runInstructions(
     } else if (instruction.type === "led") {
       await board.setLed(instruction.on);
       await board.wait(180, signal);
+    } else if (instruction.type === "neoPixelLightValue") {
+      const brightness = evaluateValue(instruction.brightness, variables);
+      const pixel = instruction.pixel === null ? null : evaluateValue(instruction.pixel, variables);
+      if (typeof brightness !== "number" || !Number.isInteger(brightness) || brightness < 0 || brightness > 100) throw new Error("明るさには0から100の整数を入れてください。");
+      if (pixel !== null && (typeof pixel !== "number" || !Number.isInteger(pixel) || pixel < 1 || pixel > 8)) throw new Error("LED番号には1から8の整数を入れてください。");
+      const color = brightness === 0 ? "#000000" : instruction.color;
+      if (pixel === null) {
+        if (!board.fillNeoPixels) throw new Error("この実行先ではNeoPixelを使えません。");
+        await board.fillNeoPixels(color, brightness || 1);
+      } else {
+        if (!board.setNeoPixel) throw new Error("この実行先ではNeoPixelを使えません。");
+        await board.setNeoPixel(pixel - 1, color, brightness || 1);
+      }
+      await board.wait(180, signal);
     } else if (instruction.type === "neoPixelFill") {
       if (!board.fillNeoPixels) throw new Error("この実行先ではNeoPixelを使えません。");
       await board.fillNeoPixels(instruction.color, instruction.brightness);

@@ -118,6 +118,14 @@ function encodeInstructions(
       const otherwise = instruction.type === "ifButtonPressed" ? [] : encodeInstructions(instruction.elseBody, depth + 1, context);
       bytes.push(instruction.type === "if" ? 0x21 : instruction.type === "ifButton" ? 0x22 : 0x23,
         ...condition, body.length & 255, body.length >> 8, otherwise.length & 255, otherwise.length >> 8, ...body, ...otherwise);
+    } else if (instruction.type === "neoPixelLightValue") {
+      context.version = Math.max(context.version, 4);
+      if (!/^#[0-9a-f]{6}$/i.test(instruction.color)) throw new Error("NeoPixelの色が正しくありません。");
+      const color = Number.parseInt(instruction.color.slice(1), 16);
+      bytes.push(0x33, instruction.pixel === null ? 0 : 1,
+        ...(instruction.pixel === null ? [] : encodeValue(instruction.pixel, context, 0)),
+        color >> 16 & 255, color >> 8 & 255, color & 255,
+        ...encodeValue(instruction.brightness, context, 0));
     } else if (instruction.type === "neoPixelClear") {
       context.version = Math.max(context.version, 2);
       bytes.push(0x32);
@@ -164,7 +172,7 @@ function encodeValue(value: ProgramValue, context: EncodingContext, depth: numbe
   if (value.type === "variable") return [3, variableIndex(value.id, context)];
   if (value.type === "not") return [4, ...encodeValue(value.value, context, depth + 1)];
   if (value.type === "arithmetic") {
-    context.version = 3;
+    context.version = Math.max(context.version, 3);
     if (value.op !== "ADD" && value.op !== "SUB") throw new Error("対応していない計算です。");
     return [value.op === "ADD" ? 13 : 14, ...encodeValue(value.left, context, depth + 1), ...encodeValue(value.right, context, depth + 1)];
   }

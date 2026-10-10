@@ -10,6 +10,7 @@ export type ProgramValue =
   | { type: "logic"; op: "AND" | "OR"; left: ProgramValue; right: ProgramValue };
 
 export type ProgramInstruction =
+  | { type: "neoPixelLightValue"; pixel: ProgramValue | null; color: string; brightness: ProgramValue; blockId: string }
   | { type: "neoPixelSetValue"; pixel: ProgramValue; color: string; brightness: number; blockId: string }
   | { type: "setVariable"; id: string; value: ProgramValue; blockId: string }
   | { type: "if"; condition: ProgramValue; body: ProgramInstruction[]; elseBody: ProgramInstruction[]; blockId: string }
@@ -59,6 +60,16 @@ function compileChain(first: Blockly.Block | null): ProgramInstruction[] {
         on: block.getFieldValue("STATE") === "ON",
         blockId: block.id,
       });
+    } else if (block.type === "uiap_neopixel_fill_brightness" || block.type === "uiap_neopixel_set_brightness") {
+      const brightness = compileValue(block.getInputTargetBlock("BRIGHTNESS"));
+      if (brightness.type === "number" && (!Number.isInteger(brightness.value) || brightness.value < 0 || brightness.value > 100)) throw new Error("明るさには0から100の整数を入れてください。");
+      const pixel = block.type === "uiap_neopixel_set_brightness" ? compileValue(block.getInputTargetBlock("PIXEL")) : null;
+      if (pixel?.type === "number" && (!Number.isInteger(pixel.value) || pixel.value < 1 || pixel.value > 8)) throw new Error("LED番号には1から8の整数を入れてください。");
+      const light = { color: brightness.type === "number" && brightness.value === 0 ? "#000000" : normalizeColor(block.getFieldValue("COLOR")), blockId: block.id };
+      if (brightness.type === "number") {
+        const fixed = { ...light, brightness: brightness.value || 1 };
+        instructions.push(pixel === null ? { type: "neoPixelFill", ...fixed } : pixel.type === "number" ? { type: "neoPixelSet", index: pixel.value - 1, ...fixed } : { type: "neoPixelSetValue", pixel, ...fixed });
+      } else instructions.push({ type: "neoPixelLightValue", pixel, brightness, ...light });
     } else if (block.type === "uiap_neopixel_fill") {
       instructions.push({
         type: "neoPixelFill",

@@ -19,7 +19,7 @@ class StandaloneVm {
     data_ = bytes;
     version_ = version;
     failed_ = false;
-    return (version >= 1 && version <= 3) && range(0, length, 0, true, false);
+    return (version >= 1 && version <= 4) && range(0, length, 0, true, false);
   }
 
   bool run(const volatile uint8_t* bytes, uint16_t length, uint8_t version, VmHost host) {
@@ -175,6 +175,21 @@ class StandaloneVm {
           if (!fits(p, 4, end) || data_[p + 3] < 1 || data_[p + 3] > 100) return fail();
           if (execute) host_.neo(index.number, data_[p], data_[p+1], data_[p+2], data_[p+3]);
           p += 4;
+          if (!pause(180, execute)) return false;
+        } else if (op == 0x33) {
+          if (version_ < 4 || !fits(p, 1, end) || data_[p] > 1) return fail();
+          const bool single = data_[p++] != 0;
+          Value index = {0, 2}, brightness;
+          if (single && (!expr(p, end, 0, execute, index) || (execute && (index.type != 2 || index.number < 1 || index.number > 8)))) return fail();
+          if (!fits(p, 3, end)) return fail();
+          const uint16_t color = p;
+          p += 3;
+          if (!expr(p, end, 0, execute, brightness)) return fail();
+          if (execute) {
+            if (brightness.type != 2 || brightness.number < 0 || brightness.number > 100) return fail();
+            const bool dark = brightness.number == 0;
+            host_.neo(index.number, dark ? 0 : data_[color], dark ? 0 : data_[color+1], dark ? 0 : data_[color+2], dark ? 1 : brightness.number);
+          }
           if (!pause(180, execute)) return false;
         } else if (op == 0x32) {
           if (execute) host_.neo(0, 0, 0, 0, 100);
