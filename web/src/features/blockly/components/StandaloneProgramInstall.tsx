@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ProgramInstruction } from "../utils/program";
+import type { ProgramInstruction } from "../types/program";
 import { encodeStandaloneProgram } from "../utils/standaloneProgram";
 import { writeStandaloneProgram } from "../utils/writeStandaloneProgram";
 import type { RuntimeHidDevice } from "../../runtime/types/transport";

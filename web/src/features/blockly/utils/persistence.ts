@@ -1,12 +1,15 @@
 import { migrateWorkspace } from "./migrateWorkspace";
+import { detectWorkspaceExtensions } from "./workspaceExtensions";
+import { CURRENT_PROJECT_VERSION, isSupportedProjectVersion, type ProjectVersion, type ProjectExtensions } from "../types/projectSchema";
+export { hasTactSwitchBlock, hasNeoPixelBlock } from "./workspaceExtensions";
 export const BLOCKLY_STORAGE_KEY = "uiapduino:blockly-workspace:v1";
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 type SavedBlocklyWorkspace = {
-  version: 1 | 2 | 3 | 4 | 5;
+  version: ProjectVersion;
   workspace: unknown;
-  extensions?: { tactSwitch?: boolean; neoPixel?: boolean };
+  extensions?: ProjectExtensions;
 };
 
 export type BlocklySavedState = {
@@ -22,7 +25,7 @@ export function saveBlocklyWorkspace(
   neoPixelEnabled = false,
 ) {
   const saved: SavedBlocklyWorkspace = {
-    version: 5,
+    version: CURRENT_PROJECT_VERSION,
     workspace,
     extensions: { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled },
   };
@@ -38,23 +41,16 @@ export function loadBlocklySavedState(storage: StorageLike): BlocklySavedState |
   if (!raw) return null;
   try {
     const saved = JSON.parse(raw) as Partial<SavedBlocklyWorkspace>;
-    if ((saved.version !== 1 && saved.version !== 2 && saved.version !== 3 && saved.version !== 4 && saved.version !== 5) || !saved.workspace) return null;
+    if (!isSupportedProjectVersion(saved.version) || !saved.workspace) return null;
+    const detected = detectWorkspaceExtensions(saved.workspace);
     return {
       workspace: migrateWorkspace(saved.workspace),
-      tactSwitchEnabled: saved.extensions?.tactSwitch === true || hasTactSwitchBlock(saved.workspace),
-      neoPixelEnabled: saved.extensions?.neoPixel === true || hasNeoPixelBlock(saved.workspace),
+      tactSwitchEnabled: saved.extensions?.tactSwitch === true || detected.tactSwitch,
+      neoPixelEnabled: saved.extensions?.neoPixel === true || detected.neoPixel,
     };
   } catch {
     return null;
   }
-}
-
-export function hasTactSwitchBlock(workspace: unknown) {
-  return JSON.stringify(workspace).includes("uiap_if_button");
-}
-
-export function hasNeoPixelBlock(workspace: unknown) {
-  return JSON.stringify(workspace).includes("uiap_neopixel_");
 }
 
 export function clearBlocklyWorkspace(storage: StorageLike) {

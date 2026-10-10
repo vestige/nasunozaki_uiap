@@ -1,5 +1,6 @@
 import type * as Blockly from "blockly/core";
-import { compileWorkspace, type ProgramInstruction } from "./program";
+import { compileWorkspace } from "./program";
+import type { ProgramInstruction } from "../types/program";
 
 export type EditingProgram = {
   instructions: ProgramInstruction[];
