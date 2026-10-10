@@ -13,11 +13,12 @@ import { queryKeys } from "../../../query";
 
 type Props = {
   program: ProgramInstruction[];
+  getCurrentProgram: () => ProgramInstruction[];
   device: RuntimeHidDevice | null;
   disabled: boolean;
 };
 
-export function StandaloneProgramInstall({ program, device, disabled }: Props) {
+export function StandaloneProgramInstall({ program, getCurrentProgram, device, disabled }: Props) {
   const client = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -35,7 +36,9 @@ export function StandaloneProgramInstall({ program, device, disabled }: Props) {
   const install = async () => {
     let encoded: Uint8Array;
     try {
-      encoded = encodeStandaloneProgram(program);
+      const currentProgram = getCurrentProgram();
+      if (currentProgram.length === 0) throw new Error("動かすブロックを置いてください。");
+      encoded = encodeStandaloneProgram(currentProgram);
     } catch (error) {
       setMessage(errorMessage(error));
       return;

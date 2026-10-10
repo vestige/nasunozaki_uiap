@@ -8,6 +8,7 @@ import {
   uiapToolbox,
 } from "../utils/blocks";
 import { compileWorkspace, type ProgramInstruction } from "../utils/program";
+import { inspectEditingProgram } from "../utils/editingProgram";
 import { runProgram } from "../utils/execution";
 import { createStepDisplayObserver } from "../utils/stepDisplay";
 import { createBoardExecutionSession } from "../utils/executionSession";
@@ -55,6 +56,7 @@ export function BlocklyStudio() {
   );
   const [stepDisplay, setStepDisplay] = useState(false);
   const [toolboxVisible, setToolboxVisible] = useState(true);
+  const [editingError, setEditingError] = useState<string | null>(null);
   const program = useQuery<ProgramInstruction[]>({
     queryKey: queryKeys.blocklyProgram,
     queryFn: async () => [],
@@ -149,19 +151,17 @@ export function BlocklyStudio() {
       client.setQueryData(queryKeys.tactSwitchExtension, tactSwitchEnabled);
       client.setQueryData(queryKeys.neoPixelExtension, neoPixelEnabled);
       if (tactSwitchEnabled || neoPixelEnabled) updateWorkspaceToolbox(workspace, { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled }, toolboxVisibleRef.current);
-      client.setQueryData(
-        queryKeys.blocklyProgram,
-        compileWorkspace(workspace),
-      );
+      const restoredProgram = inspectEditingProgram(workspace);
+      client.setQueryData(queryKeys.blocklyProgram, restoredProgram.instructions);
+      setEditingError(restoredProgram.error);
       client.setQueryData<SaveStatus>(
         queryKeys.blocklySaveStatus,
         saved ? { kind: "restored" } : { kind: "saved", savedAt: "" },
       );
       const updateProgram = () => {
-        client.setQueryData(
-          queryKeys.blocklyProgram,
-          compileWorkspace(workspace),
-        );
+        const editedProgram = inspectEditingProgram(workspace);
+        client.setQueryData(queryKeys.blocklyProgram, editedProgram.instructions);
+        setEditingError(editedProgram.error);
         try {
           saveBlocklyWorkspace(
             window.localStorage,
@@ -196,11 +196,15 @@ export function BlocklyStudio() {
     mutationFn: async () => {
       const workspace = workspaceRef.current;
       if (!workspace) throw new Error("Blocklyを準備中です。");
+      // Validate the current workspace again at the action boundary, rather
+      // than relying on the timing of Blockly's queued change notifications.
+      const currentProgram = compileWorkspace(workspace);
+      if (currentProgram.length === 0) throw new Error("動かすブロックを置いてください。");
       const controller = new AbortController();
       abortRef.current = controller;
       appendLog("info", "BLOCKLY_RUN", "Blocklyプログラムを開始しました。", {
         target: executionTarget.data,
-        topLevelInstructions: program.data.length,
+        topLevelInstructions: currentProgram.length,
       });
       const session = createBoardExecutionSession({
         target: executionTarget.data,
@@ -223,7 +227,7 @@ export function BlocklyStudio() {
       let turnOff = false;
       try {
         await runProgram(
-          program.data,
+          currentProgram,
           session.board,
           controller.signal,
           createStepDisplayObserver(stepDisplay, (blockId) => {
@@ -306,10 +310,9 @@ export function BlocklyStudio() {
       client.setQueryData(queryKeys.neoPixelExtension, neoPixelEnabled);
       updateWorkspaceToolbox(workspace, { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled }, toolboxVisibleRef.current);
       saveBlocklyWorkspace(window.localStorage, project.workspace, tactSwitchEnabled, neoPixelEnabled);
-      client.setQueryData(
-        queryKeys.blocklyProgram,
-        compileWorkspace(workspace),
-      );
+      const importedProgram = inspectEditingProgram(workspace);
+      client.setQueryData(queryKeys.blocklyProgram, importedProgram.instructions);
+      setEditingError(importedProgram.error);
       return `${file.name} を開きました。`;
     },
   });
@@ -371,6 +374,7 @@ export function BlocklyStudio() {
             isRunning={run.isPending}
             stepDisplay={stepDisplay}
             canRun={
+              !editingError &&
               program.data.length > 0 &&
               (executionTarget.data === "simulator" ||
                 Boolean(runtimeDevice.data?.opened))
@@ -411,8 +415,13 @@ export function BlocklyStudio() {
             />
             <StandaloneProgramInstall
               program={program.data}
+              getCurrentProgram={() => {
+                const workspace = workspaceRef.current;
+                if (!workspace) throw new Error("Blocklyを準備中です。");
+                return compileWorkspace(workspace);
+              }}
               device={runtimeDevice.data}
-              disabled={run.isPending || importProject.isPending || exportProject.isPending}
+              disabled={Boolean(editingError) || run.isPending || importProject.isPending || exportProject.isPending}
             />
           </div>
         </div>
@@ -420,6 +429,7 @@ export function BlocklyStudio() {
       <p className="mb-5 max-w-3xl text-sm leading-6 text-base-content/70">
         画面やボードでためしたあと、作品を残すときは「ボードにかきこむ」を選びます。
       </p>
+      {editingError && <p role="status" className="mb-5 text-sm font-bold text-error">{editingError} 組み立て途中でも、作品は保存できます。</p>}
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="lg:col-span-2">
           <div className="tabs tabs-lift after:hidden" role="tablist" aria-label="Blocklyと配線ガイドの表示切り替え">
