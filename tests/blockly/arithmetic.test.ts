@@ -44,7 +44,7 @@ it("旧形式の固定番号をファイルと自動保存から移行し、形�
   try {
     Blockly.serialization.workspaces.load(migrated, workspace);
     const block = workspace.getTopBlocks()[0];
-    expect(block.type).toBe("uiap_neopixel_set_value");
+    expect(block.type).toBe("uiap_neopixel_set_brightness");
     expect(block.getInputTargetBlock("PIXEL")?.getFieldValue("VALUE")).toBe(8);
     const program = compileWorkspace(workspace);
     expect(program[0]).toMatchObject({ type: "neoPixelSet", index: 7 });

@@ -15,5 +15,15 @@ export function migrateWorkspace(value: unknown): unknown {
       PIXEL: { shadow: { type: "uiap_number", fields: { VALUE: pixel } } },
     };
   }
+  if (result.type === "uiap_neopixel_fill" || result.type === "uiap_neopixel_set_value") {
+    const fields = { ...(result.fields as Record<string, unknown> | undefined) };
+    const brightness = fields.BRIGHTNESS ?? 20;
+    delete fields.BRIGHTNESS;
+    result.type = result.type === "uiap_neopixel_fill" ? "uiap_neopixel_fill_brightness" : "uiap_neopixel_set_brightness";
+    result.fields = fields;
+    result.inputs = { ...(result.inputs as object | undefined),
+      BRIGHTNESS: { shadow: { type: "uiap_number", fields: { VALUE: brightness } } },
+    };
+  }
   return result;
 }

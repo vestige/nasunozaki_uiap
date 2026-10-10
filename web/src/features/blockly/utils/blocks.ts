@@ -8,6 +8,23 @@ export function registerUiapBlocks() {
   Blockly.setLocale(Ja as unknown as Record<string, string>);
   Blockly.common.defineBlocksWithJsonArray([
     {
+      type: "uiap_neopixel_fill_brightness",
+      message0: "NeoPixelを全部 %1 で 明るさ %2 % で光らせる",
+      args0: [{ type: "field_dropdown", name: "COLOR", options: neoPixelColorOptions() },
+        { type: "input_value", name: "BRIGHTNESS", check: "Number" }],
+      inputsInline: true, previousStatement: null, nextStatement: null, colour: 330,
+      tooltip: "明るさは0から100%。ふだんは15から20%が目安です。0%で消えます。",
+    },
+    {
+      type: "uiap_neopixel_set_brightness",
+      message0: "NeoPixelの %1 番を %2 で 明るさ %3 % で光らせる",
+      args0: [{ type: "input_value", name: "PIXEL", check: "Number" },
+        { type: "field_dropdown", name: "COLOR", options: neoPixelColorOptions() },
+        { type: "input_value", name: "BRIGHTNESS", check: "Number" }],
+      inputsInline: true, previousStatement: null, nextStatement: null, colour: 330,
+      tooltip: "番号は1から8。明るさはふだん15から20%が目安です。0%でそのLEDが消えます。",
+    },
+    {
       type: "uiap_arithmetic", message0: "%1 %2 %3",
       args0: [{ type: "input_value", name: "LEFT", check: "Number" },
         { type: "field_dropdown", name: "OP", options: [["＋", "ADD"], ["−", "SUB"]] },
@@ -174,7 +191,10 @@ const category = (name: string, colour: string, types: string[]) => ({
   name,
   colour,
   contents: types.map((type) => ({ kind: "block" as const, type,
-    ...(type === "uiap_neopixel_set_value" ? { inputs: { PIXEL: { shadow: { type: "uiap_number", fields: { VALUE: 1 } } } } }
+    ...(type === "uiap_neopixel_fill_brightness" || type === "uiap_neopixel_set_brightness" ? { inputs: {
+      BRIGHTNESS: { shadow: { type: "uiap_number", fields: { VALUE: 20 } } },
+      ...(type === "uiap_neopixel_set_brightness" ? { PIXEL: { shadow: { type: "uiap_number", fields: { VALUE: 1 } } } } : {}),
+    } } : type === "uiap_neopixel_set_value" ? { inputs: { PIXEL: { shadow: { type: "uiap_number", fields: { VALUE: 1 } } } } }
       : type === "uiap_arithmetic" ? { inputs: {
         LEFT: { shadow: { type: "uiap_number", fields: { VALUE: 0 } } },
         RIGHT: { shadow: { type: "uiap_number", fields: { VALUE: 1 } } },
@@ -192,7 +212,7 @@ export function createUiapToolbox(options: { tactSwitch: boolean; neoPixel: bool
       category("おぼえる", "#a25780", ["uiap_variable_set", "uiap_variable_get", "uiap_number", "uiap_arithmetic"]),
       ...(options.tactSwitch || options.neoPixel ? [{ kind: "sep" as const }] : []),
       ...(options.tactSwitch ? [category("タクトスイッチ", "#65885d", ["uiap_if_button", "uiap_if_button_pressed"])] : []),
-      ...(options.neoPixel ? [category("NeoPixel", "#a25780", ["uiap_neopixel_fill", "uiap_neopixel_set_value", "uiap_neopixel_clear"])] : []),
+      ...(options.neoPixel ? [category("NeoPixel", "#a25780", ["uiap_neopixel_fill_brightness", "uiap_neopixel_set_brightness", "uiap_neopixel_clear"])] : []),
     ],
   };
 }

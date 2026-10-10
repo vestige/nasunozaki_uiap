@@ -67,6 +67,8 @@ core `1.2.14`のWebHID Only用USB構成は、実データ34 bytesに対して全
 
 ## ブラウザから実機へ書き込む
 
+2026-10-10 / #54: 明るさの式入力を単独実行形式4で扱います。0〜100%の整数に対応し、普段の目安は15〜20%。0%は指定対象を消灯し、不正な明るさは安全停止します。bin13,256 bytes（空き1,080 bytes）、静的RAM432 bytes。15〜20%の変数作品、再給電、8番だけ0%で消灯、範囲外101%で全消灯を実機確認しました。詳細は[`docs/spec-neopixel-brightness.md`](../../docs/spec-neopixel-brightness.md)を参照してください。
+
 公開ページに完成済みファームウェアを用意しています。利用者のPCにArduino CLI、Arduino IDE、ボードcoreをインストールする必要はありません。PC版ChromeまたはEdgeのWebHIDを使います。
 
 1. 必要なプログラムや保存した復旧用binを先に保管する
