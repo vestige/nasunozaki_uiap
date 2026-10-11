@@ -41,8 +41,31 @@ body { margin: 0; min-width: 0; font-family: "Hiragino Kaku Gothic ProN", "Yu Go
 /* Blockly renders each flyout scrollbar beside its SVG, outside its hidden container. */
 .blockly-workspace .blocklyFlyout[style*="display: none"] + .blocklyFlyoutScrollbar { display: none !important; }
 .blockly-workspace--toolbox-hidden .blocklyFlyoutScrollbar { display: none !important; }
+/* Keep the workspace keyboard-focus cue, but soften Blockly's large blue frame.
+   Only workspace rings are affected; block and color-control focus stays clear.
+   Blockly injects its own CSS later, so these scoped overrides are explicit. */
+.blockly-workspace .blocklyKeyboardNavigation .blocklyWorkspace:is(:has(.blocklyActiveFocus), .blocklyActiveFocus, .blocklyShowingDropDownDiv, .blocklyShowingWidgetDiv) .blocklyWorkspaceFocusRing,
+.blockly-workspace .blocklyKeyboardNavigation .blocklyWorkspace.blocklyActiveFocus .blocklyWorkspaceSelectionRing,
+.blockly-workspace .blocklyKeyboardNavigation .blocklyWorkspaceSelectionRing.blocklyActiveFocus {
+  stroke: #58778c !important;
+  stroke-width: 2px !important;
+}
 pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }
+/* Blockly owns the popup outside React; keep its controls scoped here. */
+.uiap-color-picker { width: 260px; max-width: calc(100vw - 48px); padding: 12px; color: #193247; font-family: sans-serif; }
+.uiap-color-preview { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-weight: bold; }
+.uiap-color-swatch { width: 42px; height: 32px; border: 2px solid #193247; border-radius: 8px; }
+.uiap-color-presets { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; margin-bottom: 14px; }
+.uiap-color-presets button { width: 25px; height: 30px; border: 1px solid #74828c; border-radius: 6px; cursor: pointer; }
+.uiap-color-presets button[aria-pressed="true"] { outline: 2px solid #193247; outline-offset: 2px; }
+.uiap-color-picker label { display: block; margin: 12px 0; font-size: 14px; font-weight: bold; }
+.uiap-color-picker input[type="range"] { display: block; width: 100%; height: 26px; margin-top: 6px; border: 1px solid #74828c; border-radius: 12px; appearance: none; cursor: pointer; }
+.uiap-color-hue { background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); }
+.uiap-color-picker input[type="range"]::-webkit-slider-thumb { appearance: none; width: 14px; height: 32px; border: 2px solid #193247; border-radius: 6px; background: white; }
+.uiap-color-picker input[type="range"]::-moz-range-thumb { width: 12px; height: 28px; border: 2px solid #193247; border-radius: 6px; background: white; }
+.uiap-color-picker :focus-visible { outline: 3px solid #007dac; outline-offset: 3px; }
+.uiap-color-done { display: block; margin-left: auto; padding: 6px 14px; border: 2px solid #193247; border-radius: 8px; font-weight: bold; background: white; cursor: pointer; }

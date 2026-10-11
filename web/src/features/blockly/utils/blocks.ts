@@ -1,11 +1,13 @@
 import * as Blockly from "blockly/core";
 import * as Ja from "blockly/msg/ja";
+import { registerColorBarField } from "./colorField";
 
 let registered = false;
 
 export function registerUiapBlocks() {
   if (registered) return;
   Blockly.setLocale(Ja as unknown as Record<string, string>);
+  registerColorBarField();
   Blockly.common.defineBlocksWithJsonArray([
     {
       type: "uiap_tone", message0: "%1 を %2 ミリ秒ならす %3",
@@ -21,7 +23,7 @@ export function registerUiapBlocks() {
     {
       type: "uiap_neopixel_fill_brightness",
       message0: "NeoPixelを全部 %1 で 明るさ %2 % で光らせる",
-      args0: [{ type: "field_dropdown", name: "COLOR", options: neoPixelColorOptions() },
+      args0: [{ type: "field_uiap_color", name: "COLOR", color: "#ff0000" },
         { type: "input_value", name: "BRIGHTNESS", check: "Number" }],
       inputsInline: true, previousStatement: null, nextStatement: null, colour: 330,
       tooltip: "明るさは0から100%。ふだんは15から20%が目安です。0%で消えます。",
@@ -30,7 +32,7 @@ export function registerUiapBlocks() {
       type: "uiap_neopixel_set_brightness",
       message0: "NeoPixelの %1 番を %2 で 明るさ %3 % で光らせる",
       args0: [{ type: "input_value", name: "PIXEL", check: "Number" },
-        { type: "field_dropdown", name: "COLOR", options: neoPixelColorOptions() },
+        { type: "field_uiap_color", name: "COLOR", color: "#ff0000" },
         { type: "input_value", name: "BRIGHTNESS", check: "Number" }],
       inputsInline: true, previousStatement: null, nextStatement: null, colour: 330,
       tooltip: "番号は1から8。明るさはふだん15から20%が目安です。0%でそのLEDが消えます。",
@@ -47,7 +49,7 @@ export function registerUiapBlocks() {
       type: "uiap_neopixel_set_value",
       message0: "NeoPixelの %1 番を %2 で 明るさ %3 % で光らせる",
       args0: [{ type: "input_value", name: "PIXEL", check: "Number" },
-        { type: "field_dropdown", name: "COLOR", options: neoPixelColorOptions() },
+        { type: "field_uiap_color", name: "COLOR", color: "#ff0000" },
         { type: "field_number", name: "BRIGHTNESS", value: 20, min: 1, max: 100, precision: 1 }],
       inputsInline: true, previousStatement: null, nextStatement: null, colour: 330,
       tooltip: "1から8の番号を入れます。めもの数字や計算も使えます。",
@@ -164,7 +166,7 @@ export function registerUiapBlocks() {
       type: "uiap_neopixel_fill",
       message0: "NeoPixelを全部 %1 で 明るさ %2 % で光らせる",
       args0: [
-        { type: "field_dropdown", name: "COLOR", options: neoPixelColorOptions() },
+        { type: "field_uiap_color", name: "COLOR", color: "#ff0000" },
         { type: "field_number", name: "BRIGHTNESS", value: 20, min: 1, max: 100, precision: 1 },
       ],
       previousStatement: null,
@@ -177,7 +179,7 @@ export function registerUiapBlocks() {
       message0: "NeoPixelの %1 番を %2 で 明るさ %3 % で光らせる",
       args0: [
         { type: "field_number", name: "PIXEL", value: 1, min: 1, max: 8, precision: 1 },
-        { type: "field_dropdown", name: "COLOR", options: neoPixelColorOptions() },
+        { type: "field_uiap_color", name: "COLOR", color: "#ff0000" },
         { type: "field_number", name: "BRIGHTNESS", value: 20, min: 1, max: 100, precision: 1 },
       ],
       previousStatement: null,
@@ -200,16 +202,3 @@ export function registerUiapBlocks() {
 // Keep existing import paths compatible.
 export { createUiapToolbox, uiapToolbox } from "./toolbox";
 export { starterProgram } from "../samples/starterProgram";
-
-function neoPixelColorOptions(): [string, string][] {
-  return [
-    ["赤", "#ff0000"],
-    ["オレンジ", "#ff8000"],
-    ["黄", "#ffff00"],
-    ["緑", "#00ff00"],
-    ["水色", "#00ffff"],
-    ["青", "#0000ff"],
-    ["紫", "#8000ff"],
-    ["白", "#ffffff"],
-  ];
-}
