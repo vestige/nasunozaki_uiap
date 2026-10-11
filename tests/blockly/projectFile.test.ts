@@ -23,7 +23,7 @@ describe("Blockly project file", () => {
       parseBlocklyProjectFile(stringifyBlocklyProjectFile(project)),
     ).toEqual(project);
     expect(project).toMatchObject({
-      version: 6,
+      version: 7,
       extensions: { tactSwitch: true, neoPixel: true },
     });
   });

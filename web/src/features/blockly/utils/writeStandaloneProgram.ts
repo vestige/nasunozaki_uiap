@@ -57,7 +57,7 @@ export async function writeStandaloneProgram(
   }
   const bytes = encodedSlot.slice(0, length);
   const formatVersion = encodedSlot[4];
-  if (formatVersion !== 1 && formatVersion !== 2 && formatVersion !== 3 && formatVersion !== 4 && formatVersion !== 5) {
+  if (formatVersion !== 1 && formatVersion !== 2 && formatVersion !== 3 && formatVersion !== 4 && formatVersion !== 5 && formatVersion !== 6) {
     throw new Error("この作品形式には対応していません。");
   }
   const transport = new WebHidRuntimeTransport(device);

@@ -1,9 +1,11 @@
+import type { NeoPixelPreview } from "../utils/neoPixelPreview";
+
 type Props = {
   ledOn: boolean;
   buttonPressed: boolean;
   extensionEnabled: boolean;
   neoPixelEnabled: boolean;
-  neoPixels: string[];
+  neoPixels: NeoPixelPreview[];
   onButtonChange(pressed: boolean): void;
 };
 
@@ -34,14 +36,16 @@ export function LedSimulator({
             </p>
           </div>
           {neoPixelEnabled && (
-            <div className="rounded-box border border-neutral-content/20 bg-black/20 px-3 py-3">
-              <p className="text-[10px] font-black tracking-wider text-neutral-content/60">NEOPIXEL</p>
-              <p className="mb-2 text-[10px] font-bold text-neutral-content/60">D8 / PC6</p>
+            <div className="rounded-box border border-slate-300 bg-white px-3 py-3 text-slate-800">
+              <p className="text-[10px] font-black tracking-wider text-slate-600">NEOPIXEL</p>
+              <p className="mb-2 text-[10px] font-bold text-slate-600">D8 / PC6</p>
               <div className="grid gap-1.5" role="img" aria-label="8個のNeoPixelシミュレーター">
-                {neoPixels.map((color, index) => (
+                {neoPixels.map(({ color, brightness }, index) => (
                   <div key={index} className="flex items-center justify-center gap-2">
                     <span className="w-3 text-right text-[10px] font-bold">{index + 1}</span>
-                    <span className="h-6 w-10 rounded border-2 border-white/25 transition" style={{ backgroundColor: color, boxShadow: color === "#000000" ? "none" : `0 0 12px ${color}` }} aria-label={`${index + 1}番 ${color === "#000000" ? "消灯" : color}`} />
+                    <span className="relative h-6 w-10 rounded border-2 border-slate-400 transition" style={{ backgroundColor: brightness === 0 ? "#e2e8f0" : color, boxShadow: brightness === 0 ? "none" : `0 0 ${2 + brightness / 10}px ${color}` }} aria-label={`${index + 1}番 ${brightness === 0 ? "消灯" : `${color} 明るさ${brightness}%`}`}>
+                      <span className="absolute inset-x-0 bottom-0 rounded-sm bg-white/90 text-[8px] font-bold leading-tight text-slate-800" aria-hidden="true">{brightness === 0 ? "―" : `${brightness}%`}</span>
+                    </span>
                   </div>
                 ))}
               </div>

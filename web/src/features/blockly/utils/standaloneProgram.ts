@@ -66,7 +66,12 @@ function encodeInstructions(
 
   const bytes: number[] = [];
   for (const instruction of instructions) {
-    if (instruction.type === "tone") {
+    if (instruction.type === "neoPixelColorValue") {
+      context.version = Math.max(context.version, 6);
+      bytes.push(0x34, instruction.pixel === null ? 0 : 1,
+        ...(instruction.pixel === null ? [] : encodeValue(instruction.pixel, context, 0)),
+        ...encodeValue(instruction.color, context, 0), ...encodeValue(instruction.brightness, context, 0));
+    } else if (instruction.type === "tone") {
       context.version = Math.max(context.version, 5);
       const note = [262, 294, 330, 349, 392, 440, 494, 523].indexOf(instruction.frequency);
       assertIntegerInRange(instruction.milliseconds, 100, 5000, "音の長さ");
@@ -175,6 +180,12 @@ function encodeValue(value: ProgramValue, context: EncodingContext, depth: numbe
   // short-circuit semantics. Large truth-table examples need not waste stack.
   if (value.type === "logic") value = balanceLogic(value);
   if (depth > 8) throw new Error("値ブロックの入れ子は8段までにしてください。");
+  if (value.type === "color") {
+    context.version = Math.max(context.version, 6);
+    if (!/^#[0-9a-f]{6}$/i.test(value.value)) throw new Error("色をたしかめてください。");
+    const rgb = parseInt(value.value.slice(1), 16);
+    return [15, rgb >> 16 & 255, rgb >> 8 & 255, rgb & 255];
+  }
   if (value.type === "boolean") return [1, value.value ? 1 : 0];
   if (value.type === "number") {
     assertIntegerInRange(value.value, -2147483648, 2147483647, "数字（整数）");

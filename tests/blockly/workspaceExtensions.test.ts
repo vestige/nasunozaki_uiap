@@ -24,7 +24,7 @@ describe("workspace extension detection", () => {
 
 describe("project version policy", () => {
   it("既存バージョンを維持し、未知の形式を拒否する", () => {
-    for (const version of [1, 2, 3, 4, 5, CURRENT_PROJECT_VERSION]) expect(isSupportedProjectVersion(version)).toBe(true);
-    for (const version of [0, 7, "5", undefined]) expect(isSupportedProjectVersion(version)).toBe(false);
+    for (const version of [1, 2, 3, 4, 5, 6, CURRENT_PROJECT_VERSION]) expect(isSupportedProjectVersion(version)).toBe(true);
+    for (const version of [0, 8, "5", undefined]) expect(isSupportedProjectVersion(version)).toBe(false);
   });
 });

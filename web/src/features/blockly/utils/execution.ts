@@ -28,7 +28,7 @@ async function runInstructions(
   board: BoardAdapter,
   signal: AbortSignal,
   observer: ExecutionObserver,
-  variables: Map<string, boolean | number>,
+  variables: Map<string, boolean | number | string>,
 ): Promise<void> {
   for (const instruction of instructions) {
     assertRunning(signal);
@@ -51,6 +51,22 @@ async function runInstructions(
       if (await board.consumeButtonPress()) await runInstructions(instruction.body, board, signal, observer, variables);
     } else if (instruction.type === "led") {
       await board.setLed(instruction.on);
+      await board.wait(180, signal);
+    } else if (instruction.type === "neoPixelColorValue") {
+      const color = evaluateValue(instruction.color, variables);
+      const brightness = evaluateValue(instruction.brightness, variables);
+      const pixel = instruction.pixel === null ? null : evaluateValue(instruction.pixel, variables);
+      if (typeof color !== "string" || !/^#[0-9a-f]{6}$/.test(color)) throw new Error("色のブロックを入れてください。");
+      if (typeof brightness !== "number" || !Number.isInteger(brightness) || brightness < 0 || brightness > 100) throw new Error("明るさには0から100の整数を入れてください。");
+      if (pixel !== null && (typeof pixel !== "number" || !Number.isInteger(pixel) || pixel < 1 || pixel > 8)) throw new Error("LED番号には1から8の整数を入れてください。");
+      const output = brightness === 0 ? "#000000" : color;
+      if (pixel === null) {
+        if (!board.fillNeoPixels) throw new Error("この実行先ではNeoPixelを使えません。");
+        await board.fillNeoPixels(output, brightness || 1);
+      } else {
+        if (!board.setNeoPixel) throw new Error("この実行先ではNeoPixelを使えません。");
+        await board.setNeoPixel(pixel - 1, output, brightness || 1);
+      }
       await board.wait(180, signal);
     } else if (instruction.type === "neoPixelLightValue") {
       const brightness = evaluateValue(instruction.brightness, variables);
@@ -117,7 +133,11 @@ async function runInstructions(
   }
 }
 
-function evaluateValue(value: ProgramValue, variables: Map<string, boolean | number>): boolean | number {
+function evaluateValue(value: ProgramValue, variables: Map<string, boolean | number | string>): boolean | number | string {
+  if (value.type === "color") {
+    if (!/^#[0-9a-f]{6}$/i.test(value.value)) throw new Error("色をたしかめてください。");
+    return value.value.toLowerCase();
+  }
   if (value.type === "boolean" || value.type === "number") return value.value;
   if (value.type === "variable") {
     if (!variables.has(value.id)) throw new Error("値を入れていない変数があります。");

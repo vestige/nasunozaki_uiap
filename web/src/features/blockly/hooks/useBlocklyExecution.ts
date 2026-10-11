@@ -10,6 +10,7 @@ import type { ExecutionTarget } from "../types/execution";
 import type { RuntimeHidDevice } from "../../runtime/types/transport";
 import { createDiagnosticLogEntry, type DiagnosticLogEntry } from "../../../diagnosticLog";
 import { queryKeys } from "../../../query";
+import { neoPixelPreview, clearedNeoPixelPreview, type NeoPixelPreview } from "../utils/neoPixelPreview";
 
 export function useBlocklyExecution(workspaceRef: RefObject<Blockly.WorkspaceSvg | null>, stepDisplay: boolean) {
   const client = useQueryClient();
@@ -30,10 +31,10 @@ export function useBlocklyExecution(workspaceRef: RefObject<Blockly.WorkspaceSvg
     enabled: false,
   });
 
-  const neoPixels = useQuery<string[]>({
+  const neoPixels = useQuery<NeoPixelPreview[]>({
     queryKey: queryKeys.simulatorNeoPixels,
-    queryFn: async () => createClearedNeoPixels(),
-    initialData: createClearedNeoPixels(),
+    queryFn: async () => clearedNeoPixelPreview(),
+    initialData: clearedNeoPixelPreview(),
     enabled: false,
   });
 
@@ -89,13 +90,13 @@ export function useBlocklyExecution(workspaceRef: RefObject<Blockly.WorkspaceSvg
           client.setQueryData(queryKeys.simulatorLed, on);
         },
         setSimulatorNeoPixel: (index, color, brightness) => {
-          client.setQueryData<string[]>(queryKeys.simulatorNeoPixels, (current = createClearedNeoPixels()) => current.map((value, pixel) => pixel === index ? applyBrightness(color, brightness) : value));
+          client.setQueryData<NeoPixelPreview[]>(queryKeys.simulatorNeoPixels, (current = clearedNeoPixelPreview()) => current.map((value, pixel) => pixel === index ? neoPixelPreview(color, brightness) : value));
         },
         fillSimulatorNeoPixels: (color, brightness) => {
-          client.setQueryData(queryKeys.simulatorNeoPixels, Array(8).fill(applyBrightness(color, brightness)));
+          client.setQueryData(queryKeys.simulatorNeoPixels, Array.from({ length: 8 }, () => neoPixelPreview(color, brightness)));
         },
         clearSimulatorNeoPixels: () => {
-          client.setQueryData(queryKeys.simulatorNeoPixels, createClearedNeoPixels());
+          client.setQueryData(queryKeys.simulatorNeoPixels, clearedNeoPixelPreview());
         },
         getSimulatorButton: () =>
           client.getQueryData<boolean>(queryKeys.simulatorButton) ?? false,
@@ -160,13 +161,4 @@ export function useBlocklyExecution(workspaceRef: RefObject<Blockly.WorkspaceSvg
 }
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
-}
-function createClearedNeoPixels() {
-  return Array<string>(8).fill("#000000");
-}
-
-function applyBrightness(color: string, brightness: number) {
-  const scale = Math.min(100, Math.max(1, brightness)) / 100;
-  const channels = [1, 3, 5].map((offset) => Math.round(Number.parseInt(color.slice(offset, offset + 2), 16) * scale));
-  return `#${channels.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
 }

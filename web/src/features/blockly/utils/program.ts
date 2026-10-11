@@ -13,7 +13,10 @@ export function compileWorkspace(
 function compileChain(first: Blockly.Block | null): ProgramInstruction[] {
   const instructions: ProgramInstruction[] = [];
   for (let block = first; block; block = block.getNextBlock()) {
-    if (block.type === "uiap_tone") {
+    if (block.type === "uiap_neopixel_fill_color" || block.type === "uiap_neopixel_set_color") {
+      instructions.push({ type: "neoPixelColorValue", pixel: block.type === "uiap_neopixel_set_color" ? compileValue(block.getInputTargetBlock("PIXEL")) : null,
+        color: compileValue(block.getInputTargetBlock("COLOR")), brightness: compileValue(block.getInputTargetBlock("BRIGHTNESS")), blockId: block.id });
+    } else if (block.type === "uiap_tone") {
       const frequency = Number(block.getFieldValue("NOTE"));
       const milliseconds = Number(block.getFieldValue("MILLISECONDS"));
       const mode = block.getFieldValue("MODE");
@@ -102,6 +105,11 @@ function compileChain(first: Blockly.Block | null): ProgramInstruction[] {
 
 function compileValue(block: Blockly.Block | null): ProgramValue {
   if (!block) throw new Error("値を入れていないブロックがあります。");
+  if (block.type === "uiap_color") {
+    const value = block.getFieldValue("COLOR");
+    if (typeof value !== "string" || !/^#[0-9a-f]{6}$/i.test(value)) throw new Error("色をたしかめてください。");
+    return { type: "color", value: value.toLowerCase() };
+  }
   if (block.type === "uiap_arithmetic") return {
     type: "arithmetic", op: block.getFieldValue("OP") as "ADD" | "SUB",
     left: compileValue(block.getInputTargetBlock("LEFT")), right: compileValue(block.getInputTargetBlock("RIGHT")),
