@@ -1,4 +1,7 @@
 export type BoardAdapter = {
+  prepareTone?(): Promise<void>;
+  playTone?(frequency: number, milliseconds: number): void | Promise<void>;
+  stopTone?(): void | Promise<void>;
   setLed(on: boolean): void | Promise<void>;
   setNeoPixel?(index: number, color: string, brightness: number): void | Promise<void>;
   fillNeoPixels?(color: string, brightness: number): void | Promise<void>;

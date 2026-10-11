@@ -11,6 +11,7 @@ import { DebouncedButton } from "./buttonDebounce";
 type Options = {
   target: ExecutionTarget;
   runtimeDevice: RuntimeHidDevice | null;
+  usesTone?: boolean;
   setSimulatorLed(on: boolean): void;
   setSimulatorNeoPixel(index: number, color: string, brightness: number): void;
   fillSimulatorNeoPixels(color: string, brightness: number): void;
@@ -21,6 +22,7 @@ type Options = {
 export function createBoardExecutionSession({
   target,
   runtimeDevice,
+  usesTone = false,
   setSimulatorLed,
   setSimulatorNeoPixel,
   fillSimulatorNeoPixels,
@@ -59,7 +61,15 @@ export function createBoardExecutionSession({
 
   const transport = new WebHidRuntimeTransport(runtimeDevice);
   const runtimeBoard = new RuntimeBoardAdapter(transport);
+  let tonePrepared = false;
   const board = {
+    prepareTone: async () => {
+      await runtimeBoard.prepareTone();
+      tonePrepared = true;
+      await runtimeBoard.stopTone();
+    },
+    playTone: (frequency: number, milliseconds: number) => runtimeBoard.playTone(frequency, milliseconds),
+    stopTone: () => runtimeBoard.stopTone(),
     setLed: (on: boolean) => runtimeBoard.setLed(on),
     setNeoPixel: (index: number, color: string, brightness: number) => runtimeBoard.setNeoPixel(index, color, brightness),
     fillNeoPixels: (color: string, brightness: number) => runtimeBoard.fillNeoPixels(color, brightness),
@@ -83,7 +93,10 @@ export function createBoardExecutionSession({
     board,
     async close(turnOff) {
       try {
-        if (turnOff && !disconnected && runtimeDevice.opened) {
+        if (usesTone && tonePrepared && !disconnected && runtimeDevice.opened) {
+          try { await board.stopTone(); } catch { /* Firmware expires the finite tone even if HID fails. */ }
+        }
+        if (turnOff && (!usesTone || tonePrepared) && !disconnected && runtimeDevice.opened) {
           try {
             await board.setLed(false);
           } catch {

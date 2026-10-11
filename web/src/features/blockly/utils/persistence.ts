@@ -16,6 +16,7 @@ export type BlocklySavedState = {
   workspace: unknown;
   tactSwitchEnabled: boolean;
   neoPixelEnabled: boolean;
+  piezoEnabled: boolean;
 };
 
 export function saveBlocklyWorkspace(
@@ -23,11 +24,12 @@ export function saveBlocklyWorkspace(
   workspace: unknown,
   tactSwitchEnabled = false,
   neoPixelEnabled = false,
+  piezoEnabled = false,
 ) {
   const saved: SavedBlocklyWorkspace = {
     version: CURRENT_PROJECT_VERSION,
     workspace,
-    extensions: { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled },
+    extensions: { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled, piezo: piezoEnabled },
   };
   storage.setItem(BLOCKLY_STORAGE_KEY, JSON.stringify(saved));
 }
@@ -47,6 +49,7 @@ export function loadBlocklySavedState(storage: StorageLike): BlocklySavedState |
       workspace: migrateWorkspace(saved.workspace),
       tactSwitchEnabled: saved.extensions?.tactSwitch === true || detected.tactSwitch,
       neoPixelEnabled: saved.extensions?.neoPixel === true || detected.neoPixel,
+      piezoEnabled: saved.extensions?.piezo === true || detected.piezo,
     };
   } catch {
     return null;

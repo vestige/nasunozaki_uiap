@@ -33,6 +33,7 @@ export const queryKeys = {
   simulatorButton: ["blockly", "simulator-button"] as const,
   tactSwitchExtension: ["blockly", "tact-switch-extension"] as const,
   neoPixelExtension: ["blockly", "neopixel-extension"] as const,
+  piezoExtension: ["blockly", "piezo-extension"] as const,
   simulatorNeoPixels: ["blockly", "simulator-neopixels"] as const,
   simulatorBlock: ["blockly", "simulator-block"] as const,
   blocklySaveStatus: ["blockly", "save-status"] as const,

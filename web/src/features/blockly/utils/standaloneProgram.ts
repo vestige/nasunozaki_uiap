@@ -66,7 +66,18 @@ function encodeInstructions(
 
   const bytes: number[] = [];
   for (const instruction of instructions) {
-    if (instruction.type === "led") {
+    if (instruction.type === "tone") {
+      context.version = Math.max(context.version, 5);
+      const note = [262, 294, 330, 349, 392, 440, 494, 523].indexOf(instruction.frequency);
+      assertIntegerInRange(instruction.milliseconds, 100, 5000, "音の長さ");
+      if (note < 0 || instruction.milliseconds % 100 !== 0 || typeof instruction.wait !== "boolean") {
+        throw new Error("音の高さや長さが正しくありません。");
+      }
+      bytes.push(0x40, note, instruction.milliseconds / 100, instruction.wait ? 1 : 0);
+    } else if (instruction.type === "stopTone") {
+      context.version = Math.max(context.version, 5);
+      bytes.push(0x41);
+    } else if (instruction.type === "led") {
       bytes.push(STANDALONE_OPCODE_SET_LED, instruction.on ? 1 : 0);
     } else if (instruction.type === "wait") {
       assertIntegerInRange(

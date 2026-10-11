@@ -11,7 +11,7 @@ const neoPixelSimulator = {
   clearSimulatorNeoPixels: () => undefined,
 };
 
-function respondingRuntimeDevice() {
+function respondingRuntimeDevice(toneCapable = false) {
   let listener: ((event: RuntimeInputReportEvent) => void) | undefined;
   const payloads: number[] = [];
   const commands: number[] = [];
@@ -39,7 +39,7 @@ function respondingRuntimeDevice() {
               1,
               message[5] | 0x80,
               message[6],
-              0,
+              message[5] === 0x33 ? (toneCapable ? 0x61 : 1) : 0,
             ]).buffer,
           ),
         } as RuntimeInputReportEvent),
@@ -56,6 +56,26 @@ function respondingRuntimeDevice() {
 }
 
 describe("board execution session", () => {
+  it.each([false, true])("音は正常終了／停止時も消音してlistenerを外す: %s", async turnOff => {
+    const fake = respondingRuntimeDevice(true);
+    const session = createBoardExecutionSession({ target: "uiapduino", runtimeDevice: fake.device, usesTone: true,
+      setSimulatorLed() {}, ...neoPixelSimulator, getSimulatorButton: () => false });
+    await session.board.prepareTone!();
+    await session.board.playTone!(440, 500);
+    await session.close(turnOff);
+    expect(fake.commands).toEqual([0x33, 0x32, 0x30, 0x31, 0x32, ...(turnOff ? [0x01, 0x15] : [])]);
+    expect(fake.hasListener()).toBe(false);
+  });
+
+  it("旧ファームで音を拒否した終了処理も出力を変更しない", async () => {
+    const fake = respondingRuntimeDevice();
+    const session = createBoardExecutionSession({ target: "uiapduino", runtimeDevice: fake.device, usesTone: true,
+      setSimulatorLed() {}, ...neoPixelSimulator, getSimulatorButton: () => false });
+    await expect(session.board.prepareTone!()).rejects.toThrow("音に未対応");
+    await session.close(true);
+    expect(fake.commands).toEqual([0x33]);
+    expect(fake.hasListener()).toBe(false);
+  });
   it("応答がない場合も終了処理は有限時間で終わりlistenerを外す", async () => {
     vi.useFakeTimers();
     try {

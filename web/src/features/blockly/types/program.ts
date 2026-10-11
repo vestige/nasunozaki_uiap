@@ -8,6 +8,8 @@ export type ProgramValue =
   | { type: "logic"; op: "AND" | "OR"; left: ProgramValue; right: ProgramValue };
 
 export type ProgramInstruction =
+  | { type: "tone"; frequency: number; milliseconds: number; wait: boolean; blockId: string }
+  | { type: "stopTone"; blockId: string }
   | { type: "neoPixelLightValue"; pixel: ProgramValue | null; color: string; brightness: ProgramValue; blockId: string }
   | { type: "neoPixelSetValue"; pixel: ProgramValue; color: string; brightness: number; blockId: string }
   | { type: "setVariable"; id: string; value: ProgramValue; blockId: string }

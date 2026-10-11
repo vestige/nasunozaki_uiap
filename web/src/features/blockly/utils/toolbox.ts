@@ -16,7 +16,7 @@ const category = (name: string, colour: string, types: string[]) => ({
   })),
 });
 
-export function createUiapToolbox(options: { tactSwitch: boolean; neoPixel: boolean }): Blockly.utils.toolbox.ToolboxDefinition {
+export function createUiapToolbox(options: { tactSwitch: boolean; neoPixel: boolean; piezo?: boolean }): Blockly.utils.toolbox.ToolboxDefinition {
   return {
     kind: "categoryToolbox",
     contents: [
@@ -24,9 +24,10 @@ export function createUiapToolbox(options: { tactSwitch: boolean; neoPixel: bool
       category("くりかえし", "#8557a4", ["uiap_repeat", "uiap_forever"]),
       category("もし・くらべる", "#547ea2", ["uiap_if", "uiap_boolean", "uiap_number", "uiap_compare", "uiap_logic", "uiap_not"]),
       category("おぼえる", "#a25780", ["uiap_variable_set", "uiap_variable_get", "uiap_number", "uiap_arithmetic"]),
-      ...(options.tactSwitch || options.neoPixel ? [{ kind: "sep" as const }] : []),
+      ...(options.tactSwitch || options.neoPixel || options.piezo ? [{ kind: "sep" as const }] : []),
       ...(options.tactSwitch ? [category("タクトスイッチ", "#65885d", ["uiap_if_button", "uiap_if_button_pressed"])] : []),
       ...(options.neoPixel ? [category("NeoPixel", "#a25780", ["uiap_neopixel_fill_brightness", "uiap_neopixel_set_brightness", "uiap_neopixel_clear"])] : []),
+      ...(options.piezo ? [category("音", "#b56b43", ["uiap_tone", "uiap_stop_tone"])] : []),
     ],
   };
 }

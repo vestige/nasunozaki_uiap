@@ -38,7 +38,7 @@ export function useBlocklyWorkspace(
 
 export function updateWorkspaceToolbox(
   workspace: Blockly.WorkspaceSvg,
-  options: { tactSwitch: boolean; neoPixel: boolean },
+  options: { tactSwitch: boolean; neoPixel: boolean; piezo?: boolean },
   visible: boolean,
 ) {
   workspace.updateToolbox(createUiapToolbox(options));

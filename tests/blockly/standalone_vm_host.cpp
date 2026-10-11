@@ -19,10 +19,13 @@ static void neo(uint8_t i, uint8_t r, uint8_t g, uint8_t b, uint8_t brightness) 
   std::cout << "N " << unsigned(i) << ' ' << unsigned(r) << ' ' << unsigned(g)
     << ' ' << unsigned(b) << ' ' << unsigned(brightness) << '\n';
 }
+static void tone(uint8_t note, uint8_t duration) {
+  std::cout << "T " << unsigned(note) << ' ' << unsigned(duration) << '\n';
+}
 int main(int argc, char** argv) {
   if (argc > 1 && std::string(argv[1]) == "reset") {
     uiap::StandaloneVm vm;
-    const uiap::VmHost host = {service, waitMs, button, led, neo};
+    const uiap::VmHost host = {service, waitMs, button, led, neo, tone};
     const uint8_t set[] = {0x20, 0, 1, 1, 0};
     const uint8_t get[] = {0x20, 1, 3, 0, 0};
     assert(vm.run(set, sizeof(set), 2, host));
@@ -56,7 +59,7 @@ int main(int argc, char** argv) {
   const uint8_t version = data[0];
   std::cout << "VALID " << vm.validate(data.data() + 1, data.size() - 1, version) << '\n';
   if (argc == 1 || std::string(argv[1]) != "validate") {
-    const bool ok = vm.run(data.data() + 1, data.size() - 1, version, {service, waitMs, button, led, neo});
+    const bool ok = vm.run(data.data() + 1, data.size() - 1, version, {service, waitMs, button, led, neo, tone});
     std::cout << "DONE " << ok << '\n';
   }
 }

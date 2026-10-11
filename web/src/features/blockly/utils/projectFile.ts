@@ -9,13 +9,14 @@ export function createBlocklyProjectFile(
   savedAt = new Date(),
   tactSwitchEnabled = false,
   neoPixelEnabled = false,
+  piezoEnabled = false,
 ): BlocklyProjectFile {
   return {
     format: "uiapduino-blockly-project",
     version: CURRENT_PROJECT_VERSION,
     savedAt: savedAt.toISOString(),
     workspace,
-    extensions: { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled },
+    extensions: { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled, piezo: piezoEnabled },
   };
 }
 

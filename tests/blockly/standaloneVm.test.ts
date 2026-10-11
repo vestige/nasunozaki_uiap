@@ -35,6 +35,39 @@ function example(name: string) {
   } finally { workspace.dispose(); }
 }
 
+it("ボタンと音と光の確認作品を保存形式5で実行できる", () => {
+  const program = example("piezo-button-light");
+  expect(encodeStandaloneProgram(program)[4]).toBe(5);
+  const result = run(program);
+  expect(result).toContain("VALID 1");
+  expect(result).toContain("T 5 20");
+  expect(result).toContain("N 0 0 255 0 15");
+  expect(result).toContain("T 0 0");
+});
+
+it("保存した音は次へ進む・待つ・置き換え・停止を実行できる", () => {
+  expect(run(example("piezo-led-preview"))).toBe("VALID 1\nT 5 20\nL 1\nN 0 0 255 0 15\nDONE 0\n");
+  // The host cancels 500ms waits, making cancellation observable without hardware.
+  const tone: ProgramInstruction = { type: "tone", frequency: 440, milliseconds: 500, wait: false, blockId: "tone" };
+  expect(run([tone, { ...tone, frequency: 523, milliseconds: 100, wait: true }, { type: "stopTone", blockId: "stop" }]))
+    .toBe("VALID 1\nT 5 5\nT 7 1\nT 0 0\nDONE 1\n");
+  expect(run([{ ...tone, wait: true }, { type: "led", on: true, blockId: "later" }]))
+    .toBe("VALID 1\nT 5 5\nDONE 0\n");
+});
+
+it("不正な音・未対応の保存形式は全体検証で出力前に拒否する", () => {
+  for (const payload of [[0x40], [0x40, 8, 1, 0], [0x40, 0, 0, 0], [0x40, 0, 51, 0], [0x40, 0, 1, 2]]) {
+    expect(raw([1, 1, ...payload, 0], 5)).toBe("VALID 0\nDONE 0\n");
+  }
+  expect(raw([0x40, 0, 1, 0, 0], 4)).toBe("VALID 0\nDONE 0\n");
+  expect(raw([0x41, 0], 4)).toBe("VALID 0\nDONE 0\n");
+  expect(raw([0x41, 0], 6)).toBe("VALID 0\nDONE 0\n");
+});
+
+it.each([99, 101, 5001, NaN])("保存時にも不正な音の長さを拒否する: %s", milliseconds => {
+  expect(() => encodeStandaloneProgram([{ type: "tone", frequency: 440, milliseconds, wait: true, blockId: "tone" }])).toThrow();
+});
+
 it.each([null, { type: "number" as const, value: 8 }])("動的明るさの0・15・20・100を対象LEDへ出力する: %s", pixel => {
   for (const value of [0, 15, 20, 100]) {
     const program: ProgramInstruction[] = [{ type: "setVariable", id: "b", value: { type: "number", value }, blockId: "set" },

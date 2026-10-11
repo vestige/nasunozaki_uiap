@@ -46,14 +46,23 @@ export function useBlocklyProject(
     enabled: false,
   });
 
+  const piezoExtension = useQuery<boolean>({
+    queryKey: queryKeys.piezoExtension,
+    queryFn: async () => false,
+    initialData: false,
+    enabled: false,
+  });
+
   const initialize = useCallback((workspace: Blockly.WorkspaceSvg) => {
     const saved = loadBlocklySavedState(window.localStorage);
     const tactSwitchEnabled = saved?.tactSwitchEnabled ?? false;
     const neoPixelEnabled = saved?.neoPixelEnabled ?? false;
+    const piezoEnabled = saved?.piezoEnabled ?? false;
     Blockly.serialization.workspaces.load(saved?.workspace ?? starterProgram, workspace);
     client.setQueryData(queryKeys.tactSwitchExtension, tactSwitchEnabled);
     client.setQueryData(queryKeys.neoPixelExtension, neoPixelEnabled);
-    if (tactSwitchEnabled || neoPixelEnabled) updateWorkspaceToolbox(workspace, { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled }, toolboxVisibleRef.current);
+    client.setQueryData(queryKeys.piezoExtension, saved?.piezoEnabled ?? false);
+    if (tactSwitchEnabled || neoPixelEnabled || piezoEnabled) updateWorkspaceToolbox(workspace, { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled, piezo: piezoEnabled }, toolboxVisibleRef.current);
     const restoredProgram = inspectEditingProgram(workspace);
     client.setQueryData(queryKeys.blocklyProgram, restoredProgram.instructions);
     setEditingError(restoredProgram.error);
@@ -73,6 +82,7 @@ export function useBlocklyProject(
         Blockly.serialization.workspaces.save(workspace),
         client.getQueryData<boolean>(queryKeys.tactSwitchExtension) ?? false,
         client.getQueryData<boolean>(queryKeys.neoPixelExtension) ?? false,
+        client.getQueryData<boolean>(queryKeys.piezoExtension) ?? false,
       );
       client.setQueryData<SaveStatus>(queryKeys.blocklySaveStatus, {
         kind: "saved",
@@ -94,6 +104,7 @@ export function useBlocklyProject(
         new Date(),
         tactSwitchExtension.data,
         neoPixelExtension.data,
+        piezoExtension.data,
       );
       downloadTextFile(
         createBlocklyProjectFileName(new Date(project.savedAt)),
@@ -122,8 +133,10 @@ export function useBlocklyProject(
       const neoPixelEnabled = project.extensions?.neoPixel === true || detected.neoPixel;
       client.setQueryData(queryKeys.tactSwitchExtension, tactSwitchEnabled);
       client.setQueryData(queryKeys.neoPixelExtension, neoPixelEnabled);
-      updateWorkspaceToolbox(workspace, { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled }, toolboxVisibleRef.current);
-      saveBlocklyWorkspace(window.localStorage, project.workspace, tactSwitchEnabled, neoPixelEnabled);
+      const piezoEnabled = project.extensions?.piezo === true || detected.piezo;
+      client.setQueryData(queryKeys.piezoExtension, piezoEnabled);
+      updateWorkspaceToolbox(workspace, { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled, piezo: piezoEnabled }, toolboxVisibleRef.current);
+      saveBlocklyWorkspace(window.localStorage, project.workspace, tactSwitchEnabled, neoPixelEnabled, piezoEnabled);
       const importedProgram = inspectEditingProgram(workspace);
       client.setQueryData(queryKeys.blocklyProgram, importedProgram.instructions);
       setEditingError(importedProgram.error);
@@ -151,17 +164,19 @@ export function useBlocklyProject(
           ? `${saveStatus.data.savedAt} に自動保存しました`
           : "このブラウザへ自動保存します";
 
-  const setExtension = (extension: "tactSwitch" | "neoPixel", enabled: boolean) => {
-    client.setQueryData(extension === "tactSwitch" ? queryKeys.tactSwitchExtension : queryKeys.neoPixelExtension, enabled);
+  const setExtension = (extension: "tactSwitch" | "neoPixel" | "piezo", enabled: boolean) => {
+    const key = extension === "tactSwitch" ? queryKeys.tactSwitchExtension : extension === "neoPixel" ? queryKeys.neoPixelExtension : queryKeys.piezoExtension;
+    client.setQueryData(key, enabled);
     const tact = client.getQueryData<boolean>(queryKeys.tactSwitchExtension) ?? false;
     const neo = client.getQueryData<boolean>(queryKeys.neoPixelExtension) ?? false;
+    const piezo = client.getQueryData<boolean>(queryKeys.piezoExtension) ?? false;
     const workspace = workspaceRef.current;
     if (workspace) {
-      updateWorkspaceToolbox(workspace, { tactSwitch: tact, neoPixel: neo }, toolboxVisibleRef.current);
+      updateWorkspaceToolbox(workspace, { tactSwitch: tact, neoPixel: neo, piezo }, toolboxVisibleRef.current);
       onChange(workspace);
     }
   };
-  return { program, editingError, tactSwitchExtension, neoPixelExtension, initialize, onChange,
+  return { program, editingError, tactSwitchExtension, neoPixelExtension, piezoExtension, initialize, onChange,
     exportProject, importProject, resetWorkspace, saveMessage, setExtension };
 }
 function downloadTextFile(fileName: string, contents: string) {

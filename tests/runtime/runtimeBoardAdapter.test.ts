@@ -17,6 +17,40 @@ function fakeTransport(responses: Uint8Array[]): RuntimeTransport & {
 }
 
 describe("RuntimeBoardAdapter", () => {
+  it("音の対応確認後に高さ・長さを送り、停止できる", async () => {
+    const transport = fakeTransport([response(0, 0x61, 0x33), response(1, 0, 0x30), response(2, 0, 0x31), response(3, 0, 0x32)]);
+    const adapter = new RuntimeBoardAdapter(transport);
+    await adapter.playTone(440, 500);
+    await adapter.stopTone();
+    expect(transport.sent.map(message => [message[5], message[7]])).toEqual([[0x33, 0], [0x30, 5], [0x31, 5], [0x32, 0]]);
+  });
+
+  it("旧ファームへ発音・停止命令を送らない", async () => {
+    const transport = fakeTransport([response(0, 1, 0x33)]);
+    const adapter = new RuntimeBoardAdapter(transport);
+    await expect(adapter.playTone(262, 100)).rejects.toThrow("音に未対応");
+    await adapter.stopTone();
+    expect(transport.sent.map(message => message[5])).toEqual([0x33]);
+  });
+
+  it.each([[0, 500], [4000, 500], [440, 0], [440, 5001], [440, 150], [440, NaN]])("不正な音は通信前に拒否する: %s/%s", async (frequency, milliseconds) => {
+    const transport = fakeTransport([]);
+    await expect(new RuntimeBoardAdapter(transport).playTone(frequency, milliseconds)).rejects.toThrow("高さや長さ");
+    expect(transport.sent).toEqual([]);
+  });
+
+  it("音の対応確認でも古い応答を無視して対応する応答を待つ", async () => {
+    const transport = fakeTransport([response(0, 0x61, 0x01), response(255, 0x61, 0x33), response(0, 0x61, 0x33)]);
+    await new RuntimeBoardAdapter(transport).prepareTone();
+    expect(transport.sent).toHaveLength(1);
+  });
+
+  it("音の対応確認で壊れた応答を受けたら発音しない", async () => {
+    const transport = fakeTransport([new Uint8Array(3)]);
+    await expect(new RuntimeBoardAdapter(transport).playTone(440, 500)).rejects.toThrow();
+    expect(transport.sent).toHaveLength(1);
+  });
+
   it("LED命令を送り、同じsequenceの成功応答を待つ", async () => {
     const transport = fakeTransport([response(0)]);
     const adapter = new RuntimeBoardAdapter(transport);
