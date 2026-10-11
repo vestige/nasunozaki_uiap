@@ -20,7 +20,7 @@ class StandaloneVm {
     data_ = bytes;
     version_ = version;
     failed_ = false;
-    return (version >= 1 && version <= 5) && range(0, length, 0, true, false);
+    return (version >= 1 && version <= 6) && range(0, length, 0, true, false);
   }
 
   bool run(const volatile uint8_t* bytes, uint16_t length, uint8_t version, VmHost host) {
@@ -31,7 +31,7 @@ class StandaloneVm {
   }
 
  private:
-  struct Value { int32_t number; uint8_t type; }; // 0 unset, 1 boolean, 2 integer
+  struct Value { int32_t number; uint8_t type; }; // 0 unset, 1 boolean, 2 integer, 3 RGB color
   Value vars_[16];
   const volatile uint8_t* data_ = nullptr;
   VmHost host_{};
@@ -53,6 +53,13 @@ class StandaloneVm {
     if (depth > 8 || !fits(p, 1, end)) return fail();
     const uint8_t op = data_[p++];
     out = {0, 0};
+    if (op == 15) {
+      if (version_ < 6 || !fits(p, 3, end)) return fail();
+      out = {static_cast<int32_t>((static_cast<uint32_t>(data_[p]) << 16) |
+          (static_cast<uint32_t>(data_[p+1]) << 8) | data_[p+2]), 3};
+      p += 3;
+      return true;
+    }
     if (op == 1 || op == 3) {
       if (!fits(p, 1, end)) return fail();
       const uint8_t n = data_[p++];
@@ -187,6 +194,18 @@ class StandaloneVm {
           if (!fits(p, 4, end) || data_[p + 3] < 1 || data_[p + 3] > 100) return fail();
           if (execute) host_.neo(index.number, data_[p], data_[p+1], data_[p+2], data_[p+3]);
           p += 4;
+          if (!pause(180, execute)) return false;
+        } else if (op == 0x34) {
+          if (version_ < 6 || !fits(p, 1, end) || data_[p] > 1) return fail();
+          const bool single = data_[p++] != 0;
+          Value index = {0, 2}, color, brightness;
+          if (single && (!expr(p, end, 0, execute, index) || (execute && (index.type != 2 || index.number < 1 || index.number > 8)))) return fail();
+          if (!expr(p, end, 0, execute, color) || !expr(p, end, 0, execute, brightness)) return fail();
+          if (execute) {
+            if (color.type != 3 || brightness.type != 2 || brightness.number < 0 || brightness.number > 100) return fail();
+            const uint32_t rgb = brightness.number ? static_cast<uint32_t>(color.number) : 0;
+            host_.neo(index.number, rgb >> 16, rgb >> 8, rgb, brightness.number ? brightness.number : 1);
+          }
           if (!pause(180, execute)) return false;
         } else if (op == 0x33) {
           if (version_ < 4 || !fits(p, 1, end) || data_[p] > 1) return fail();

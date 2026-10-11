@@ -44,7 +44,7 @@ it("音ブロックを作品形式6で保存・復元し、拡張フラグがな
     block.nextConnection!.connect(stop.previousConnection!);
     const state = Blockly.serialization.workspaces.save(workspace);
     const project = parseBlocklyProjectFile(stringifyBlocklyProjectFile(createBlocklyProjectFile(state)));
-    expect(project.version).toBe(6);
+    expect(project.version).toBe(7);
     workspace.clear();
     Blockly.serialization.workspaces.load(project.workspace, workspace);
     expect(compileWorkspace(workspace)).toMatchObject([{ ...tone, blockId: expect.any(String), wait: false }, { type: "stopTone" }]);

@@ -9,6 +9,7 @@ import { useBlocklyProject } from "../hooks/useBlocklyProject";
 import { useBlocklyWorkspace, setWorkspaceToolboxVisible } from "../hooks/useBlocklyWorkspace";
 import { BlocklyToolbar } from "./BlocklyToolbar";
 import { LedSimulator } from "./LedSimulator";
+import { clearedNeoPixelPreview } from "../utils/neoPixelPreview";
 import { TactSwitchWiringGuide } from "./TactSwitchWiringGuide";
 import { NeoPixelWiringGuide } from "./NeoPixelWiringGuide";
 import { PiezoSetupGuide } from "./PiezoSetupGuide";
@@ -136,7 +137,7 @@ export function BlocklyStudio() {
             {neoPixelExtension.data ? (
               <div role="tab" aria-selected={activeEditorTab === "neoPixel"} className={`tab gap-1 ${activeEditorTab === "neoPixel" ? "tab-active" : ""}`}>
                 <button type="button" className="h-full" onClick={() => setActiveEditorTab("neoPixel")}>NeoPixel</button>
-                <button type="button" className="btn btn-circle btn-ghost btn-xs" aria-label="NeoPixelを外す" onClick={() => { if (!window.confirm("NeoPixel拡張を外します。すでに置いたブロックは消えません。続けますか？")) return; setExtension("neoPixel", false); client.setQueryData(queryKeys.simulatorNeoPixels, Array<string>(8).fill("#000000"));   setActiveEditorTab("blocks"); }}>×</button>
+                <button type="button" className="btn btn-circle btn-ghost btn-xs" aria-label="NeoPixelを外す" onClick={() => { if (!window.confirm("NeoPixel拡張を外します。すでに置いたブロックは消えません。続けますか？")) return; setExtension("neoPixel", false); client.setQueryData(queryKeys.simulatorNeoPixels, clearedNeoPixelPreview());   setActiveEditorTab("blocks"); }}>×</button>
               </div>
             ) : <button type="button" className="tab" onClick={() => { setExtension("neoPixel", true);   setActiveEditorTab("neoPixel"); }}>＋ NeoPixelを追加</button>}
             {piezoExtension.data ? (

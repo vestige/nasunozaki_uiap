@@ -45,6 +45,42 @@ it("ボタンと音と光の確認作品を保存形式5で実行できる", () 
   expect(result).toContain("T 0 0");
 });
 
+it("色変数はRGB型を保ち全灯と個別に渡せる", () => {
+  const program: ProgramInstruction[] = [
+    { type: "setVariable", id: "c", value: { type: "color", value: "#123456" }, blockId: "c" },
+    { type: "neoPixelColorValue", pixel: null, color: { type: "variable", id: "c" }, brightness: { type: "number", value: 15 }, blockId: "all" },
+    { type: "neoPixelColorValue", pixel: { type: "number", value: 8 }, color: { type: "variable", id: "c" }, brightness: { type: "number", value: 0 }, blockId: "one" },
+  ];
+  expect(run(program)).toBe("VALID 1\nN 0 18 52 86 15\nN 8 0 0 0 1\nDONE 1\n");
+  const slot = encodeStandaloneProgram(program);
+  expect(raw([...slot.slice(16, 16 + (slot[6] | slot[7] << 8))], 5)).toBe("VALID 0\nDONE 0\n");
+});
+
+it("色をおぼえる確認作品は2色を3回切り替えて消す", () => {
+  expect(run(example("neopixel-color-memory"))).toBe("VALID 1\n" +
+    "N 0 53 167 255 15\nN 0 255 102 136 15\n".repeat(3) + "N 0 0 0 0 100\nDONE 1\n");
+});
+
+it("個別色の確認作品は8番だけ変え、安全停止作品は後続の赤を実行しない", () => {
+  expect(run(example("neopixel-color-single"))).toBe("VALID 1\nN 0 53 167 255 15\nN 8 255 102 136 15\nN 0 0 0 0 100\nDONE 1\n");
+  expect(run(example("safety-color-type"))).toBe("VALID 1\nN 0 0 255 0 15\nDONE 0\n");
+});
+
+it("色の等価比較・異なる型・禁止演算を単独実行でも区別する", () => {
+  const color: ProgramValue = { type: "color", value: "#123456" };
+  for (const [op, right, succeeds] of [["EQ", color, true], ["NEQ", { type: "number", value: 0x123456 }, true], ["EQ", { type: "number", value: 0x123456 }, false]] as const) {
+    const program: ProgramInstruction[] = [{ type: "if", condition: { type: "compare", op, left: color, right }, body: [{ type: "led", on: true, blockId: "yes" }], elseBody: [], blockId: "if" }];
+    expect(run(program)).toBe(`VALID 1\n${succeeds ? "L 1\n" : ""}DONE 1\n`);
+  }
+  expect(run([{ type: "setVariable", id: "bad", value: { type: "arithmetic", op: "ADD", left: color, right: { type: "number", value: 1 } }, blockId: "bad" }])).toBe("VALID 1\nDONE 0\n");
+  expect(raw([0x20, 0, 15, 1, 2, 0], 6)).toBe("VALID 0\nDONE 0\n"); // Truncated RGB/end.
+});
+
+it.each([{ type: "number", value: 1 }, { type: "boolean", value: true }, { type: "variable", id: "unset" }] as ProgramValue[])("色の誤入力は0%でも後続LEDを実行しない: %s", color => {
+  expect(run([{ type: "neoPixelColorValue", pixel: null, color, brightness: { type: "number", value: 0 }, blockId: "bad" },
+    { type: "led", on: true, blockId: "later" }])).toBe("VALID 1\nDONE 0\n");
+});
+
 it("保存した音は次へ進む・待つ・置き換え・停止を実行できる", () => {
   expect(run(example("piezo-led-preview"))).toBe("VALID 1\nT 5 20\nL 1\nN 0 0 255 0 15\nDONE 0\n");
   // The host cancels 500ms waits, making cancellation observable without hardware.
@@ -61,7 +97,7 @@ it("不正な音・未対応の保存形式は全体検証で出力前に拒否�
   }
   expect(raw([0x40, 0, 1, 0, 0], 4)).toBe("VALID 0\nDONE 0\n");
   expect(raw([0x41, 0], 4)).toBe("VALID 0\nDONE 0\n");
-  expect(raw([0x41, 0], 6)).toBe("VALID 0\nDONE 0\n");
+  expect(raw([0x41, 0], 7)).toBe("VALID 0\nDONE 0\n");
 });
 
 it.each([99, 101, 5001, NaN])("保存時にも不正な音の長さを拒否する: %s", milliseconds => {

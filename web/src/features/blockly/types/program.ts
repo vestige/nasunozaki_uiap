@@ -1,4 +1,5 @@
 export type ProgramValue =
+  | { type: "color"; value: string }
   | { type: "arithmetic"; op: "ADD" | "SUB"; left: ProgramValue; right: ProgramValue }
   | { type: "boolean"; value: boolean }
   | { type: "number"; value: number }
@@ -8,6 +9,7 @@ export type ProgramValue =
   | { type: "logic"; op: "AND" | "OR"; left: ProgramValue; right: ProgramValue };
 
 export type ProgramInstruction =
+  | { type: "neoPixelColorValue"; pixel: ProgramValue | null; color: ProgramValue; brightness: ProgramValue; blockId: string }
   | { type: "tone"; frequency: number; milliseconds: number; wait: boolean; blockId: string }
   | { type: "stopTone"; blockId: string }
   | { type: "neoPixelLightValue"; pixel: ProgramValue | null; color: string; brightness: ProgramValue; blockId: string }
