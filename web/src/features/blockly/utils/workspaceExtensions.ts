@@ -1,6 +1,6 @@
 // Inspect block types, not arbitrary strings in variable names or comments.
 export function detectWorkspaceExtensions(workspace: unknown) {
-  const extensions = { tactSwitch: false, neoPixel: false };
+  const extensions = { tactSwitch: false, neoPixel: false, piezo: false };
   const pending: unknown[] = [workspace];
   const visited = new Set<object>();
   while (pending.length) {
@@ -13,6 +13,7 @@ export function detectWorkspaceExtensions(workspace: unknown) {
     }
     const node = value as Record<string, unknown>;
     if (node.type === "uiap_if_button" || node.type === "uiap_if_button_pressed") extensions.tactSwitch = true;
+    if (node.type === "uiap_tone" || node.type === "uiap_stop_tone") extensions.piezo = true;
     if (typeof node.type === "string" && node.type.startsWith("uiap_neopixel_")) extensions.neoPixel = true;
     pending.push(...Object.values(node));
   }

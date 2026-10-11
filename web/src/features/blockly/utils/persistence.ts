@@ -49,7 +49,7 @@ export function loadBlocklySavedState(storage: StorageLike): BlocklySavedState |
       workspace: migrateWorkspace(saved.workspace),
       tactSwitchEnabled: saved.extensions?.tactSwitch === true || detected.tactSwitch,
       neoPixelEnabled: saved.extensions?.neoPixel === true || detected.neoPixel,
-      piezoEnabled: saved.extensions?.piezo === true,
+      piezoEnabled: saved.extensions?.piezo === true || detected.piezo,
     };
   } catch {
     return null;

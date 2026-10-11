@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type * as Blockly from "blockly/core";
 import { compileWorkspace } from "../utils/program";
+import { hasToneInstructions } from "../utils/execution";
 import { queryKeys } from "../../../query";
 import { useBlocklyExecution } from "../hooks/useBlocklyExecution";
 import { useBlocklyProject } from "../hooks/useBlocklyProject";
@@ -22,7 +23,7 @@ export function BlocklyStudio() {
   const [activeEditorTab, setActiveEditorTab] = useState<"blocks" | "tactSwitch" | "neoPixel" | "piezo">("blocks");
   const [stepDisplay, setStepDisplay] = useState(false);
   const [toolboxVisible, setToolboxVisible] = useState(true);
-  const { run, stop, led, button, neoPixels, executionTarget, runtimeDevice } = useBlocklyExecution(workspaceRef, stepDisplay);
+  const { run, stop, led, button, neoPixels, executionTarget, runtimeDevice, soundEnabled, setSoundEnabled } = useBlocklyExecution(workspaceRef, stepDisplay);
   const { program, editingError, tactSwitchExtension, neoPixelExtension, piezoExtension, initialize, onChange,
     exportProject, importProject, resetWorkspace, saveMessage, setExtension } = useBlocklyProject(workspaceRef, toolboxVisibleRef, stop);
   const mountWorkspace = useBlocklyWorkspace(workspaceRef, initialize, onChange, stop);
@@ -85,6 +86,9 @@ export function BlocklyStudio() {
             onStop={stop}
             onReset={resetWorkspace}
           />
+          {(piezoExtension.data || hasToneInstructions(program.data)) && <label className="flex items-center gap-2 text-sm font-bold">
+            <input type="checkbox" className="checkbox checkbox-sm" checked={soundEnabled} disabled={run.isPending} onChange={(event) => setSoundEnabled(event.target.checked)} />画面の音をオンにする
+          </label>}
           <div className="flex min-w-0 flex-wrap items-start justify-end gap-2">
             <ProjectFileActions
               disabled={
@@ -139,7 +143,7 @@ export function BlocklyStudio() {
               <div role="tab" aria-selected={activeEditorTab === "piezo"} className={`tab gap-1 ${activeEditorTab === "piezo" ? "tab-active" : ""}`}>
                 <button type="button" className="h-full" onClick={() => setActiveEditorTab("piezo")}>圧電スピーカー</button>
                 <button type="button" className="btn btn-circle btn-ghost btn-xs" aria-label="圧電スピーカーを外す" onClick={() => {
-                  if (!window.confirm("圧電スピーカーのタブを外します。続けますか？")) return;
+                  if (!window.confirm("圧電スピーカーのタブを外します。すでに置いたブロックは消えません。続けますか？")) return;
                   setExtension("piezo", false);
                   setActiveEditorTab("blocks");
                 }}>×</button>

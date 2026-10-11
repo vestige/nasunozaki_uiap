@@ -8,6 +8,17 @@ export function registerUiapBlocks() {
   Blockly.setLocale(Ja as unknown as Record<string, string>);
   Blockly.common.defineBlocksWithJsonArray([
     {
+      type: "uiap_tone", message0: "%1 を %2 ミリ秒ならす %3",
+      args0: [
+        { type: "field_dropdown", name: "NOTE", options: [["ド", "262"], ["レ", "294"], ["ミ", "330"], ["ファ", "349"], ["ソ", "392"], ["ラ", "440"], ["シ", "494"], ["高いド", "523"]] },
+        { type: "field_number", name: "MILLISECONDS", value: 500, min: 100, max: 5000, precision: 100 },
+        { type: "field_dropdown", name: "MODE", options: [["おわるまでまつ", "WAIT"], ["次へすすむ", "NEXT"]] },
+      ],
+      inputsInline: true, previousStatement: null, nextStatement: null, colour: 20,
+      tooltip: "次へすすむを選ぶと、音を鳴らしながら光も動かせます。新しい音を鳴らすと、前の音は止まります。",
+    },
+    { type: "uiap_stop_tone", message0: "音をとめる", previousStatement: null, nextStatement: null, colour: 20, tooltip: "鳴っている音を止めます。" },
+    {
       type: "uiap_neopixel_fill_brightness",
       message0: "NeoPixelを全部 %1 で 明るさ %2 % で光らせる",
       args0: [{ type: "field_dropdown", name: "COLOR", options: neoPixelColorOptions() },

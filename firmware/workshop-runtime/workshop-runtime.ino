@@ -1,4 +1,5 @@
 #include <WebHID.h>
+#include <PWMmin.h>
 #include "standalone_vm.h"
 #include "standalone_button.h"
 #include <ch32v00x_flash.h>
@@ -15,6 +16,40 @@ constexpr uint8_t kMessageSize = 8;
 constexpr uint8_t kVersion = 1;
 constexpr uint8_t kSetLed = 0x01;
 constexpr uint8_t kReadButton = 0x02;
+constexpr uint8_t kToneNote = 0x30;
+constexpr uint8_t kTonePlay = 0x31;
+constexpr uint8_t kToneStop = 0x32;
+constexpr uint8_t kToneCapabilities = 0x33;
+constexpr uint8_t kTonePin = 6;  // D6 / PC4 / TIM1 CH4, via 1k ohm to piezo.
+constexpr uint16_t kToneNotes[] = {262, 294, 330, 349, 392, 440, 494, 523};
+uint8_t toneNote = 0;
+bool toneActive = false;
+uint32_t toneStarted = 0;
+uint16_t toneDuration = 0;
+
+void stopTone() {
+  Pwm_stop(kTonePin);
+  digitalWrite(kTonePin, LOW);
+  pinMode(kTonePin, OUTPUT);
+  toneActive = false;
+}
+
+void serviceTone() {
+  // Hardware PWM does not depend on USB/NeoPixel interrupt timing. The main
+  // loop owns the finite lifetime; subtraction also handles millis() wrap.
+  if (toneActive && static_cast<uint32_t>(millis() - toneStarted) >= toneDuration) stopTone();
+}
+
+// Shared by interactive commands and stored bytecode; no blocking tone().
+void standaloneTone(uint8_t note, uint8_t duration) {
+  stopTone();
+  if (!duration) return;
+  Pwm_freq_TIM1(kToneNotes[note]);
+  Pwm_write(kTonePin, 128);
+  toneDuration = static_cast<uint16_t>(duration) * 100u;
+  toneStarted = millis();
+  toneActive = true;
+}
 constexpr uint8_t kNeoRed = 0x10;
 constexpr uint8_t kNeoGreen = 0x11;
 constexpr uint8_t kNeoBlue = 0x12;
@@ -36,7 +71,7 @@ constexpr uint8_t kInvalidPayload = 2;
 constexpr uint8_t kDeviceError = 3;
 constexpr uint8_t kMagic[] = {0x55, 0x49, 0x41, 0x50};  // "UIAP"
 constexpr uint8_t kStandaloneHeaderSize = 16;
-constexpr uint8_t kStandaloneMaxVersion = 4;
+constexpr uint8_t kStandaloneMaxVersion = 5;
 constexpr uint8_t kStandaloneAutostart = 0x01;
 constexpr uint32_t kProgramBankA = 0x08003800;
 constexpr uint32_t kProgramBankB = 0x08003c00;
@@ -209,12 +244,15 @@ void standaloneNeo(uint8_t index, uint8_t r, uint8_t g, uint8_t b, uint8_t brigh
 
 void executeStandaloneRange(uint16_t start, uint16_t end) {
   const uiap::VmHost host = {standaloneService, standaloneWait, standaloneButton,
-      standaloneLed, standaloneNeo};
+      standaloneLed, standaloneNeo, standaloneTone};
   standaloneVm.run(standaloneProgramSlot + start, end - start,
       standaloneProgramSlot[4], host);
 }
 
 void sendResponse(uint8_t command, uint8_t sequence, uint8_t status) {
+  // READ_BUTTON uses 1 for pressed, not an error. Other error responses
+  // silence an active tone; capability replies are outside the status range.
+  if (status > 0 && status <= kDeviceError && !(command == kReadButton && status == 1)) stopTone();
   uint8_t response[kMessageSize] = {
       kMagic[0], kMagic[1], kMagic[2], kMagic[3],
       kVersion, static_cast<uint8_t>(command | kResponse), sequence, status,
@@ -228,6 +266,7 @@ bool programHalfword(uint32_t address, uint16_t value) {
 }
 
 void stopStandaloneOutputs() {
+  stopTone();
   standaloneProgramReady = false;
   digitalWrite(LED_BUILTIN, LOW);
   pixels.clear();
@@ -372,6 +411,28 @@ void handleMessage(const uint8_t *message, uint8_t length) {
     sendResponse(command, sequence, digitalRead(kButtonPin) == LOW ? 1 : 0);
     return;
   }
+  if (command == kToneCapabilities) {
+    sendResponse(command, sequence, message[7] == 0 ? 0x61 : kInvalidPayload);
+    return;
+  }
+  if (command == kToneNote || command == kTonePlay || command == kToneStop) {
+    const uint8_t value = message[7];
+    if ((command == kToneNote && value > 7) ||
+        (command == kTonePlay && (value < 1 || value > 50)) ||
+        (command == kToneStop && value != 0) || programUpdateActive) {
+      stopTone();
+      sendResponse(command, sequence, kInvalidPayload);
+      return;
+    }
+    if (command == kToneNote) toneNote = value;
+    else if (command == kToneStop) stopTone();
+    else {
+      if (standaloneProgramReady) stopStandaloneOutputs();
+      standaloneTone(toneNote, value);
+    }
+    sendResponse(command, sequence, kOk);
+    return;
+  }
   if (command == kProgramCapabilities) {
     // Read-only: do not stop execution or modify flash. Advertise only formats
     // implemented by both the validator and interpreter.
@@ -462,6 +523,7 @@ void handleMessage(const uint8_t *message, uint8_t length) {
 }
 
 void serviceWebHid() {
+  serviceTone();
   if (!WebHID.available()) return;
   uint8_t message[32] = {0};
   const uint8_t length = WebHID.recv(message, sizeof(message));
@@ -470,6 +532,7 @@ void serviceWebHid() {
 }  // namespace
 
 void setup() {
+  stopTone();
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
   pinMode(kButtonPin, INPUT_PULLUP);

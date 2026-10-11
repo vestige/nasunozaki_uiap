@@ -13,7 +13,15 @@ export function compileWorkspace(
 function compileChain(first: Blockly.Block | null): ProgramInstruction[] {
   const instructions: ProgramInstruction[] = [];
   for (let block = first; block; block = block.getNextBlock()) {
-    if (block.type === "uiap_variable_set") {
+    if (block.type === "uiap_tone") {
+      const frequency = Number(block.getFieldValue("NOTE"));
+      const milliseconds = Number(block.getFieldValue("MILLISECONDS"));
+      const mode = block.getFieldValue("MODE");
+      if (![262, 294, 330, 349, 392, 440, 494, 523].includes(frequency) || !Number.isInteger(milliseconds) || milliseconds < 100 || milliseconds > 5000 || !["WAIT", "NEXT"].includes(mode)) throw new Error("音の高さや長さをたしかめてください。");
+      instructions.push({ type: "tone", frequency, milliseconds, wait: mode === "WAIT", blockId: block.id });
+    } else if (block.type === "uiap_stop_tone") {
+      instructions.push({ type: "stopTone", blockId: block.id });
+    } else if (block.type === "uiap_variable_set") {
       instructions.push({ type: "setVariable", id: block.getFieldValue("VAR"), value: compileValue(block.getInputTargetBlock("VALUE")), blockId: block.id });
     } else if (block.type === "uiap_if") {
       instructions.push({ type: "if", condition: compileValue(block.getInputTargetBlock("CONDITION")), body: compileChain(block.getInputTargetBlock("DO")), elseBody: compileChain(block.getInputTargetBlock("ELSE")), blockId: block.id });

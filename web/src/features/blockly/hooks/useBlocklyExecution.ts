@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type * as Blockly from "blockly/core";
 import { compileWorkspace } from "../utils/program";
-import { runProgram } from "../utils/execution";
+import { runProgram, hasToneInstructions } from "../utils/execution";
+import { createBrowserTone } from "../utils/browserTone";
 import { createStepDisplayObserver } from "../utils/stepDisplay";
 import { createBoardExecutionSession } from "../utils/executionSession";
 import type { ExecutionTarget } from "../types/execution";
@@ -13,6 +14,7 @@ import { queryKeys } from "../../../query";
 export function useBlocklyExecution(workspaceRef: RefObject<Blockly.WorkspaceSvg | null>, stepDisplay: boolean) {
   const client = useQueryClient();
   const abortRef = useRef<AbortController | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(false);
   useEffect(() => () => { abortRef.current?.abort(); }, []);
   const led = useQuery<boolean>({
     queryKey: queryKeys.simulatorLed,
@@ -72,6 +74,7 @@ export function useBlocklyExecution(workspaceRef: RefObject<Blockly.WorkspaceSvg
       // than relying on the timing of Blockly's queued change notifications.
       const currentProgram = compileWorkspace(workspace);
       if (currentProgram.length === 0) throw new Error("動かすブロックを置いてください。");
+      const usesSound = hasToneInstructions(currentProgram);
       const controller = new AbortController();
       abortRef.current = controller;
       appendLog("info", "BLOCKLY_RUN", "Blocklyプログラムを開始しました。", {
@@ -81,6 +84,7 @@ export function useBlocklyExecution(workspaceRef: RefObject<Blockly.WorkspaceSvg
       const session = createBoardExecutionSession({
         target: executionTarget.data,
         runtimeDevice: runtimeDevice.data,
+        usesTone: usesSound,
         setSimulatorLed: (on) => {
           client.setQueryData(queryKeys.simulatorLed, on);
         },
@@ -97,7 +101,13 @@ export function useBlocklyExecution(workspaceRef: RefObject<Blockly.WorkspaceSvg
           client.getQueryData<boolean>(queryKeys.simulatorButton) ?? false,
       });
       let turnOff = false;
+      const tone = usesSound && executionTarget.data === "simulator" ? createBrowserTone(soundEnabled) : null;
+      if (tone) {
+        session.board.playTone = tone.play;
+        session.board.stopTone = tone.stop;
+      }
       try {
+        await tone?.ready(controller.signal);
         await runProgram(
           currentProgram,
           session.board,
@@ -111,7 +121,8 @@ export function useBlocklyExecution(workspaceRef: RefObject<Blockly.WorkspaceSvg
         turnOff = true;
         throw error;
       } finally {
-        await session.close(turnOff || controller.signal.aborted);
+        try { await tone?.close(); }
+        finally { await session.close(turnOff || controller.signal.aborted); }
       }
     },
     onSuccess: () => {
@@ -145,7 +156,7 @@ export function useBlocklyExecution(workspaceRef: RefObject<Blockly.WorkspaceSvg
   }, [client, workspaceRef]);
 
 
-  return { run, stop, led, button, neoPixels, executionTarget, runtimeDevice };
+  return { run, stop, led, button, neoPixels, executionTarget, runtimeDevice, soundEnabled, setSoundEnabled };
 }
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);

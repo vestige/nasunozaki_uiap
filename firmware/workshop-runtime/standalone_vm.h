@@ -11,6 +11,7 @@ struct VmHost {
   bool (*button)(bool consume);
   void (*led)(bool);
   void (*neo)(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
+  void (*tone)(uint8_t note, uint8_t duration); // 100ms units; zero stops.
 };
 
 class StandaloneVm {
@@ -19,7 +20,7 @@ class StandaloneVm {
     data_ = bytes;
     version_ = version;
     failed_ = false;
-    return (version >= 1 && version <= 4) && range(0, length, 0, true, false);
+    return (version >= 1 && version <= 5) && range(0, length, 0, true, false);
   }
 
   bool run(const volatile uint8_t* bytes, uint16_t length, uint8_t version, VmHost host) {
@@ -143,7 +144,18 @@ class StandaloneVm {
         p += len;
       } else {
         if (version_ < 2) return fail();
-        if (op == 0x20) {
+        if (op == 0x40 || op == 0x41) {
+          if (version_ < 5) return fail();
+          if (op == 0x41) {
+            if (execute) host_.tone(0, 0);
+          } else {
+            if (!fits(p, 3, end) || data_[p] > 7 || !data_[p+1] || data_[p+1] > 50 || data_[p+2] > 1) return fail();
+            const uint8_t duration = data_[p+1], wait = data_[p+2];
+            if (execute) host_.tone(data_[p], duration);
+            p += 3;
+            if (wait && !pause(static_cast<uint16_t>(duration) * 100u, execute)) return false;
+          }
+        } else if (op == 0x20) {
           if (!fits(p, 1, end) || data_[p] >= 16) return fail();
           const uint8_t id = data_[p++];
           Value value;

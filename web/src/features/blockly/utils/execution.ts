@@ -9,7 +9,18 @@ export async function runProgram(
   signal: AbortSignal,
   observer: ExecutionObserver = {},
 ): Promise<void> {
+  // Reject unsupported sound before any preceding LED/HID command is sent.
+  if (hasToneInstructions(instructions)) {
+    if (!board.playTone || !board.stopTone) throw new Error("この実行先では音を使えません。");
+    await board.prepareTone?.();
+  }
   await runInstructions(instructions, board, signal, observer, new Map());
+}
+
+export function hasToneInstructions(instructions: ProgramInstruction[]): boolean {
+  return instructions.some((instruction) => instruction.type === "tone" || instruction.type === "stopTone"
+    || ("body" in instruction && hasToneInstructions(instruction.body))
+    || ("elseBody" in instruction && hasToneInstructions(instruction.elseBody)));
 }
 
 async function runInstructions(
@@ -23,7 +34,13 @@ async function runInstructions(
     assertRunning(signal);
     observer.onInstruction?.(instruction.blockId);
 
-    if (instruction.type === "setVariable") {
+    if (instruction.type === "tone") {
+      if (!Number.isInteger(instruction.frequency) || instruction.frequency < 262 || instruction.frequency > 523 || !Number.isInteger(instruction.milliseconds) || instruction.milliseconds < 100 || instruction.milliseconds > 5000) throw new Error("音の高さや長さをたしかめてください。");
+      await board.playTone!(instruction.frequency, instruction.milliseconds);
+      if (instruction.wait) await board.wait(instruction.milliseconds, signal);
+    } else if (instruction.type === "stopTone") {
+      await board.stopTone!();
+    } else if (instruction.type === "setVariable") {
       variables.set(instruction.id, evaluateValue(instruction.value, variables));
     } else if (instruction.type === "if") {
       const condition = evaluateValue(instruction.condition, variables);

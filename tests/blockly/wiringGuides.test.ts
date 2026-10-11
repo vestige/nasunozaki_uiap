@@ -3,8 +3,20 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { TactSwitchWiringGuide } from "../../web/src/features/blockly/components/TactSwitchWiringGuide";
 import { NeoPixelWiringGuide } from "../../web/src/features/blockly/components/NeoPixelWiringGuide";
+import { PiezoSetupGuide } from "../../web/src/features/blockly/components/PiezoSetupGuide";
 
 describe("wiring guides", () => {
+  it("shows the non-polar piezo on separate breadboard rows with D6 and a series resistor", () => {
+    const html = renderToStaticMarkup(createElement(PiezoSetupGuide));
+    expect(html).toContain("ブレッドボード");
+    expect(html).toContain("PC4 / D6");
+    expect(html).toContain("1kΩ");
+    expect(html).toContain("つながっていない別々の横一列");
+    expect(html).toContain("足の向きはどちらでもOK");
+    expect(html).not.toContain("プラス側");
+    expect(html).not.toContain("＋");
+    expect(html.match(/配線する前に、USBを抜いてください。/g)).toHaveLength(1);
+  });
   it("keeps the tact switch instructions and pin labels together", () => {
     const html = renderToStaticMarkup(createElement(TactSwitchWiringGuide));
     expect(html).toContain("中央の溝");

@@ -1,0 +1,26 @@
+{
+  "format": "uiapduino-blockly-project",
+  "version": 6,
+  "savedAt": "2026-10-11T00:00:00.000Z",
+  "extensions": { "piezo": true, "neoPixel": true },
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [{
+        "type": "uiap_led", "x": 35, "y": 35,
+        "fields": { "STATE": "ON" },
+        "next": { "block": {
+          "type": "uiap_neopixel_fill_brightness", "fields": { "COLOR": "#00ff00" },
+          "inputs": { "BRIGHTNESS": { "shadow": { "type": "uiap_number", "fields": { "VALUE": 15 } } } },
+          "next": { "block": {
+            "type": "uiap_forever",
+            "inputs": { "DO": { "block": {
+              "type": "uiap_tone",
+              "fields": { "NOTE": "440", "MILLISECONDS": 5000, "MODE": "WAIT" }
+            } } }
+          } }
+        } }
+      }]
+    }
+  }
+}

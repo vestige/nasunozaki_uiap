@@ -40,6 +40,15 @@ function fakeRuntime(initialStatus: number, capability: number | null = 1) {
 }
 
 describe("writeStandaloneProgram", () => {
+  it("音は形式4では消去を始めず、形式5で保存できる", async () => {
+    const slot = encodeStandaloneProgram([{ type: "tone", frequency: 440, milliseconds: 500, wait: false, blockId: "tone" }]);
+    const old = fakeRuntime(0x41, 0x54);
+    await expect(writeStandaloneProgram(old.device, slot, () => undefined)).rejects.toThrow("更新");
+    expect(old.commands.map(c => c[5])).toEqual([0x24, 0x25]);
+    const current = fakeRuntime(0x41, 0x55);
+    await expect(writeStandaloneProgram(current.device, slot, () => undefined)).resolves.toBe("B");
+    expect(current.commands.find(c => c[5] === 0x20)?.[8]).toBe(5);
+  });
   it("動的明るさは形式3ではBEGINせず、形式4で保存できる", async () => {
     const slot = encodeStandaloneProgram([{ type: "neoPixelLightValue", pixel: null, color: "#00ff00", brightness: { type: "number", value: 15 }, blockId: "brightness" }]);
     const old = fakeRuntime(0x41, 0x53);

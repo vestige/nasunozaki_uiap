@@ -10,6 +10,10 @@ import {
   parseButtonStateResponse,
   parseRuntimeResponse,
   RUNTIME_COMMAND_READ_BUTTON,
+  RUNTIME_COMMAND_TONE_NOTE,
+  RUNTIME_COMMAND_TONE_PLAY,
+  RUNTIME_COMMAND_TONE_STOP,
+  RUNTIME_COMMAND_TONE_CAPABILITIES,
   RUNTIME_COMMAND_SET_LED,
   RUNTIME_COMMAND_NEO_APPLY,
   RUNTIME_COMMAND_NEO_BLUE,
@@ -25,6 +29,7 @@ const DEFAULT_TIMEOUT_MS = 1_000;
 const DEFAULT_MAX_IGNORED_RESPONSES = 8;
 
 export class RuntimeBoardAdapter implements BoardAdapter {
+  private toneSupported: boolean | null = null;
   private sequence = 0;
   private readonly responseTimeoutMs: number;
   private readonly maxIgnoredResponses: number;
@@ -41,6 +46,37 @@ export class RuntimeBoardAdapter implements BoardAdapter {
   async setLed(on: boolean) {
     const sequence = this.nextSequence();
     await this.sendAndWait(buildSetLedMessage(sequence, on), RUNTIME_COMMAND_SET_LED, sequence, "LED");
+  }
+
+  async prepareTone() {
+    if (this.toneSupported === null) {
+      const sequence = this.nextSequence();
+      await this.transport.send(buildRuntimeCommandMessage(sequence, RUNTIME_COMMAND_TONE_CAPABILITIES, 0));
+      for (let ignored = 0; ignored <= this.maxIgnoredResponses; ignored++) {
+        const bytes = await withRuntimeResponseTimeout(this.transport.receive(), this.responseTimeoutMs);
+        // Validate the common envelope, not the capability value as a status.
+        const envelope = bytes.slice();
+        envelope[7] = 0;
+        const response = parseRuntimeResponse(envelope);
+        if (response.command !== RUNTIME_COMMAND_TONE_CAPABILITIES || response.sequence !== sequence) continue;
+        this.toneSupported = bytes[7] === 0x61;
+        break;
+      }
+    }
+    if (!this.toneSupported) throw new Error("このボードは音に未対応です。新しいランタイムを書き込んでください。");
+  }
+
+  async playTone(frequency: number, milliseconds: number) {
+    const note = [262, 294, 330, 349, 392, 440, 494, 523].indexOf(frequency);
+    if (note < 0 || !Number.isInteger(milliseconds) || milliseconds < 100 || milliseconds > 5000 || milliseconds % 100 !== 0) throw new Error("音の高さや長さをたしかめてください。");
+    await this.prepareTone();
+    await this.sendCommand(RUNTIME_COMMAND_TONE_NOTE, note, "音の高さ");
+    await this.sendCommand(RUNTIME_COMMAND_TONE_PLAY, milliseconds / 100, "音の開始");
+  }
+
+  async stopTone() {
+    // Never send a new command to an old runtime, including in cleanup.
+    if (this.toneSupported === true) await this.sendCommand(RUNTIME_COMMAND_TONE_STOP, 0, "音の停止");
   }
 
   async fillNeoPixels(color: string, brightness: number) {

@@ -22,7 +22,7 @@ export function WiringGuideLayout({ titleId, title, summary, diagram, steps, det
       <p className="mt-1 text-sm leading-6 text-base-content/70">{summary}</p>
 
       <p role="note" className="alert alert-warning mt-4 text-sm font-bold">
-        {wiringReady ? "配線する前に、USBを抜いてください。" : "まだつながないでね。配線図と音のブロックは準備中です。"}
+        {wiringReady ? "配線する前に、USBを抜いてください。" : "まだつながないでね。ボードで音を鳴らすための配線は準備中です。"}
       </p>
 
       <div className="mt-5 grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_17rem]">

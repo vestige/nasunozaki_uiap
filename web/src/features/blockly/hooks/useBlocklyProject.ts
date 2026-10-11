@@ -57,11 +57,12 @@ export function useBlocklyProject(
     const saved = loadBlocklySavedState(window.localStorage);
     const tactSwitchEnabled = saved?.tactSwitchEnabled ?? false;
     const neoPixelEnabled = saved?.neoPixelEnabled ?? false;
+    const piezoEnabled = saved?.piezoEnabled ?? false;
     Blockly.serialization.workspaces.load(saved?.workspace ?? starterProgram, workspace);
     client.setQueryData(queryKeys.tactSwitchExtension, tactSwitchEnabled);
     client.setQueryData(queryKeys.neoPixelExtension, neoPixelEnabled);
     client.setQueryData(queryKeys.piezoExtension, saved?.piezoEnabled ?? false);
-    if (tactSwitchEnabled || neoPixelEnabled) updateWorkspaceToolbox(workspace, { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled }, toolboxVisibleRef.current);
+    if (tactSwitchEnabled || neoPixelEnabled || piezoEnabled) updateWorkspaceToolbox(workspace, { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled, piezo: piezoEnabled }, toolboxVisibleRef.current);
     const restoredProgram = inspectEditingProgram(workspace);
     client.setQueryData(queryKeys.blocklyProgram, restoredProgram.instructions);
     setEditingError(restoredProgram.error);
@@ -132,9 +133,9 @@ export function useBlocklyProject(
       const neoPixelEnabled = project.extensions?.neoPixel === true || detected.neoPixel;
       client.setQueryData(queryKeys.tactSwitchExtension, tactSwitchEnabled);
       client.setQueryData(queryKeys.neoPixelExtension, neoPixelEnabled);
-      const piezoEnabled = project.extensions?.piezo === true;
+      const piezoEnabled = project.extensions?.piezo === true || detected.piezo;
       client.setQueryData(queryKeys.piezoExtension, piezoEnabled);
-      updateWorkspaceToolbox(workspace, { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled }, toolboxVisibleRef.current);
+      updateWorkspaceToolbox(workspace, { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled, piezo: piezoEnabled }, toolboxVisibleRef.current);
       saveBlocklyWorkspace(window.localStorage, project.workspace, tactSwitchEnabled, neoPixelEnabled, piezoEnabled);
       const importedProgram = inspectEditingProgram(workspace);
       client.setQueryData(queryKeys.blocklyProgram, importedProgram.instructions);
@@ -168,9 +169,10 @@ export function useBlocklyProject(
     client.setQueryData(key, enabled);
     const tact = client.getQueryData<boolean>(queryKeys.tactSwitchExtension) ?? false;
     const neo = client.getQueryData<boolean>(queryKeys.neoPixelExtension) ?? false;
+    const piezo = client.getQueryData<boolean>(queryKeys.piezoExtension) ?? false;
     const workspace = workspaceRef.current;
     if (workspace) {
-      updateWorkspaceToolbox(workspace, { tactSwitch: tact, neoPixel: neo }, toolboxVisibleRef.current);
+      updateWorkspaceToolbox(workspace, { tactSwitch: tact, neoPixel: neo, piezo }, toolboxVisibleRef.current);
       onChange(workspace);
     }
   };
