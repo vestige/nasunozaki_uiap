@@ -18,7 +18,7 @@ def main() -> None:
         actual = hashlib.sha256((SOURCE / name).read_bytes()).hexdigest()
         if actual != build_info[key]:
             raise ValueError(f"{name} does not match build-info.json; rebuild the runtime")
-    for name in ("standalone_vm.h", "standalone_button.h"):
+    for name in ("standalone_vm.h", "standalone_button.h", "runtime_clock.h"):
         actual = hashlib.sha256((SOURCE / name).read_bytes()).hexdigest()
         if actual != build_info.get("headers_sha256", {}).get(name):
             raise ValueError(f"{name} does not match build-info.json; rebuild the runtime")
@@ -30,6 +30,7 @@ def main() -> None:
             (SOURCE / "workshop-runtime.ino", "workshop-runtime/workshop-runtime.ino"),
             (SOURCE / "standalone_vm.h", "workshop-runtime/standalone_vm.h"),
             (SOURCE / "standalone_button.h", "workshop-runtime/standalone_button.h"),
+            (SOURCE / "runtime_clock.h", "workshop-runtime/runtime_clock.h"),
             (SOURCE / "uiap_standalone.ld", "workshop-runtime/uiap_standalone.ld"),
             (SOURCE / "workshop-runtime.bin", "workshop-runtime/workshop-runtime.bin"),
             (SOURCE / "build-info.json", "workshop-runtime/build-info.json"),

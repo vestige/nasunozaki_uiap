@@ -10,6 +10,8 @@ Blocklyの安全な中間命令をUIAPduinoで実行するための、最小教�
 
 ## 対象環境
 
+2026-10-11 / #52: coreを変更せず、ランタイム内の時刻計算を`runtime_clock.h`へ分離しました。48MHz SysTickのミリ秒と端数を保持し、汎用64bit除算への依存を除去。bin12,108 / 14,336 bytes（空き2,228 bytes）、静的RAM440 bytesです。作品形式1〜5・二重bank・安全検証は維持。音・スイッチ・NeoPixel、約2分後の動作、作品保存・再給電・実行中更新、不正明るさでの安全停止を実機確認しました。main loop専用で約89.5秒以内ごとの時刻読み取りが必要です。精密な時間計測、長時間耐久、スタック高水位は未測定。詳細は[容量調査](../../docs/firmware-capacity-investigation.md)を参照。
+
 - UIAPduino HID Arduino core `1.2.14`
 - Board: `HID ProMicro CH32V003`
 - USB: `WebHID Only`

@@ -2,6 +2,7 @@
 #include <PWMmin.h>
 #include "standalone_vm.h"
 #include "standalone_button.h"
+#include "runtime_clock.h"
 #include <ch32v00x_flash.h>
 #define NEOPIXELMIN_MAX_LEDS 8
 #define NEOPIXELMIN_ATOMIC
@@ -12,6 +13,9 @@
 #endif
 
 namespace {
+static_assert(F_CPU == 48000000u, "RuntimeClock requires 48MHz SysTick");
+uiap::RuntimeClock runtimeClock;
+uint32_t runtimeMillis() { return runtimeClock.update(SysTick->CNT); }
 constexpr uint8_t kMessageSize = 8;
 constexpr uint8_t kVersion = 1;
 constexpr uint8_t kSetLed = 0x01;
@@ -37,7 +41,8 @@ void stopTone() {
 void serviceTone() {
   // Hardware PWM does not depend on USB/NeoPixel interrupt timing. The main
   // loop owns the finite lifetime; subtraction also handles millis() wrap.
-  if (toneActive && static_cast<uint32_t>(millis() - toneStarted) >= toneDuration) stopTone();
+  const uint32_t now = runtimeMillis(); // Sample even when no tone is active.
+  if (toneActive && static_cast<uint32_t>(now - toneStarted) >= toneDuration) stopTone();
 }
 
 // Shared by interactive commands and stored bytecode; no blocking tone().
@@ -47,7 +52,7 @@ void standaloneTone(uint8_t note, uint8_t duration) {
   Pwm_freq_TIM1(kToneNotes[note]);
   Pwm_write(kTonePin, 128);
   toneDuration = static_cast<uint16_t>(duration) * 100u;
-  toneStarted = millis();
+  toneStarted = runtimeMillis();
   toneActive = true;
 }
 constexpr uint8_t kNeoRed = 0x10;
@@ -214,17 +219,17 @@ bool standaloneService() {
 }
 
 bool standaloneWait(uint16_t ms) {
-  const uint32_t start = millis();
+  const uint32_t start = runtimeMillis();
   do {
     if (!standaloneService()) return false;
-    if (static_cast<uint32_t>(millis() - start) >= ms) break;
+    if (static_cast<uint32_t>(runtimeMillis() - start) >= ms) break;
     delay(1);
   } while (true);
   return true;
 }
 
 bool standaloneButton(bool consume) {
-  const bool pressed = standaloneButtonState.update(digitalRead(kButtonPin) == LOW, millis());
+  const bool pressed = standaloneButtonState.update(digitalRead(kButtonPin) == LOW, runtimeMillis());
   return consume ? standaloneButtonState.consume() : pressed;
 }
 
