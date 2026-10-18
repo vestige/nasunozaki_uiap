@@ -13,6 +13,7 @@ import {
   buildStandaloneUpdateData,
   buildStandaloneUpdateStatus,
   buildStandaloneCapabilities,
+  buildStandaloneBeginDiagnostics,
   standaloneSupportedVersion,
   parseStandaloneUpdateResponse,
   STANDALONE_UPDATE_COMMAND_ABORT,
@@ -25,7 +26,7 @@ import {
 
 const MAX_BANK_PROGRAM_SIZE = 1008;
 export type StandaloneWriteTrace = (event: string, details: Record<string, string | number | boolean>) => void;
-const commandNames: Record<number, string> = { 0x24: "STATUS", 0x25: "CAPABILITIES", 0x20: "BEGIN", 0x21: "DATA", 0x22: "COMMIT", 0x23: "ABORT" };
+const commandNames: Record<number, string> = { 0x24: "STATUS", 0x25: "CAPABILITIES", 0x26: "BEGIN_DIAGNOSTICS", 0x20: "BEGIN", 0x21: "DATA", 0x22: "COMMIT", 0x23: "ABORT" };
 
 export async function readStandaloneStatus(device: RuntimeHidDevice) {
   if (device.vendorId !== 0x1209 || device.productId !== 0xd004 || !device.opened) {
@@ -177,6 +178,15 @@ export async function writeStandaloneProgram(
   } catch (error) {
     const failedPhase = phase;
     let recovery = "未実施";
+    if (failedPhase === "BEGIN" && beginMayBeActive) {
+      resetReceiver();
+      try {
+        const snapshot = await exchange(buildStandaloneBeginDiagnostics(next()));
+        trace("BEGIN_STATE", { raw: snapshot, supported: snapshot >= 0x10,
+          stage: snapshot >> 4 & 7, updateActive: Boolean(snapshot & 0x80),
+          responseQueued: Boolean(snapshot & 8), txBusy: Boolean(snapshot & 4), result: snapshot & 3 });
+      } catch { trace("BEGIN_STATE", { supported: false, error: "診断応答を確認できません" }); }
+    }
     if (commitMayBeApplied) {
       resetReceiver();
       try {

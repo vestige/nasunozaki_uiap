@@ -10,6 +10,7 @@ export const STANDALONE_UPDATE_COMMAND_COMMIT = 0x22;
 export const STANDALONE_UPDATE_COMMAND_ABORT = 0x23;
 export const STANDALONE_UPDATE_COMMAND_STATUS = 0x24;
 export const STANDALONE_UPDATE_COMMAND_CAPABILITIES = 0x25;
+export const STANDALONE_UPDATE_COMMAND_BEGIN_DIAGNOSTICS = 0x26;
 export const STANDALONE_UPDATE_DATA_SIZE = 22;
 
 const MAGIC = [0x55, 0x49, 0x41, 0x50] as const; // "UIAP"
@@ -68,6 +69,10 @@ export function buildStandaloneUpdateStatus(sequence: number) {
 
 export function buildStandaloneCapabilities(sequence: number) {
   return buildMessage(sequence, STANDALONE_UPDATE_COMMAND_CAPABILITIES, []);
+}
+
+export function buildStandaloneBeginDiagnostics(sequence: number) {
+  return buildMessage(sequence, STANDALONE_UPDATE_COMMAND_BEGIN_DIAGNOSTICS, []);
 }
 
 // Capability replies use 0x50 + maximum supported format version. Legacy

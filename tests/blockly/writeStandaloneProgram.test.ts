@@ -104,11 +104,12 @@ describe("writeStandaloneProgram", () => {
       const trace = vi.fn();
       const failed = writeStandaloneProgram(fake.device, slot, () => {}, trace).then(() => "unexpected success", error => String(error));
       await vi.runAllTimersAsync();
-      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x20, 0x23]);
+      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x20, 0x26, 0x23]);
       expect(fake.updating).toBe(false);
       expect(await failed).toMatch(/BEGIN:.*更新状態の解除を確認/);
       expect(fake.listeners).toBe(0);
       expect(trace.mock.calls.some(([event, details]) => event === "FAILED" && details.command === "BEGIN")).toBe(true);
+      expect(trace.mock.calls.some(([event, details]) => event === "BEGIN_STATE" && details.stage === 6 && details.updateActive && details.responseQueued && !details.txBusy)).toBe(true);
       await expect(writeStandaloneProgram(fake.device, slot, () => {})).resolves.toBe("B");
       expect(fake.listeners).toBe(0);
     } finally { vi.useRealTimers(); }
