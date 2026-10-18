@@ -2,6 +2,7 @@
 """Package the Arduino sketch for download from the static site."""
 
 from pathlib import Path
+import argparse
 import hashlib
 import json
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
@@ -13,6 +14,9 @@ PUBLIC = ROOT / "web" / "public"
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="Validate release inputs without writing distribution files")
+    args = parser.parse_args()
     build_info = json.loads((SOURCE / "build-info.json").read_text())
     for name, key in (("workshop-runtime.ino", "source_sha256"), ("uiap_standalone.ld", "linker_sha256"), ("workshop-runtime.bin", "binary_sha256")):
         actual = hashlib.sha256((SOURCE / name).read_bytes()).hexdigest()
@@ -22,6 +26,9 @@ def main() -> None:
         actual = hashlib.sha256((SOURCE / name).read_bytes()).hexdigest()
         if actual != build_info.get("headers_sha256", {}).get(name):
             raise ValueError(f"{name} does not match build-info.json; rebuild the runtime")
+    if args.check:
+        print("Workshop runtime release inputs verified")
+        return
     (PUBLIC / "workshop-runtime.bin").write_bytes((SOURCE / "workshop-runtime.bin").read_bytes())
     (PUBLIC / "workshop-runtime.json").write_text(json.dumps(build_info, ensure_ascii=False, indent=2) + "\n")
     with ZipFile(DESTINATION, "w") as archive:

@@ -10,7 +10,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verify:release": "python3 ../scripts/package-workshop-runtime.py && npm run build && npm test"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.102.8",
