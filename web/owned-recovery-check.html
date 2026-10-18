@@ -13,6 +13,10 @@
 <p>別の画面で実行・かきこみをしていないことを確認してください。確認済みの作品を残し、反対側の保存先で、かきこみの開始だけを行います。途中データの確定・自動解除はしません。</p>
 <button id="connect">ボードへ接続</button>
 <button id="interrupt" disabled>中断状態を作る</button>
+<h2>複数タブの同時保存テスト</h2>
+<p>こちらはボードを変更しません。このページでロック中に、同じサイトのブロック画面から保存すると、通信前に案内が出ることを確認します。</p>
+<button id="hold">同時保存テスト開始（最大60秒）</button>
+<button id="release" disabled>テスト終了・ロック解除</button>
 <p>作成後はUSBを抜かずに30秒待って、<a href="./">ブロックの画面</a>で保存を試します。</p>
 <pre id="log" role="status" aria-live="polite"></pre>
 <script type="module">
@@ -24,11 +28,31 @@ import { withStandaloneWriteLock } from './src/features/blockly/utils/standalone
 import { beginInterruptedOwnedUpdate } from './src/dev/interruptedOwnedUpdate.ts';
 
 const connect = document.querySelector('#connect'), interrupt = document.querySelector('#interrupt'), log = document.querySelector('#log');
+const hold = document.querySelector('#hold'), release = document.querySelector('#release');
 const report = message => { log.textContent += new Date().toISOString() + ' ' + message + '\n'; };
 let device;
 if (!import.meta.env.DEV || !['localhost', '127.0.0.1'].includes(location.hostname)) {
-  connect.disabled = true; throw new Error('Local development only');
+  connect.disabled = true; hold.disabled = true; throw new Error('Local development only');
 }
+let releaseLock;
+hold.onclick = async () => {
+  hold.disabled = true; connect.disabled = true; interrupt.disabled = true;
+  let timer;
+  try {
+    await withStandaloneWriteLock(() => new Promise(resolve => {
+      releaseLock = resolve; release.disabled = false;
+      report('保存のロック中です。ボードへ命令は送っていません。別タブのブロック画面で保存を試してください。');
+      timer = setTimeout(resolve, 60000);
+    }));
+    report('保存のロックを解除しました。通常の保存を試せます。');
+  } catch (error) { report(String(error)); }
+  finally {
+    clearTimeout(timer); releaseLock = undefined;
+    release.disabled = true; hold.disabled = false;
+    connect.disabled = Boolean(device?.opened); interrupt.disabled = !device?.opened;
+  }
+};
+release.onclick = () => { release.disabled = true; releaseLock?.(); };
 connect.onclick = async () => {
   connect.disabled = true;
   try { device = await requestUiapRuntimeDevice(); interrupt.disabled = false; report('接続しました。まだ変更していません。'); }
