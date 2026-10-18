@@ -11,14 +11,24 @@
 <h1>中断した保存からの復帰確認</h1>
 <p>ローカル開発用です。保存済みの作品があるボードでのみ使ってください。</p>
 <p>別の画面で実行・かきこみをしていないことを確認してください。確認済みの作品を残し、反対側の保存先で、かきこみの開始だけを行います。途中データの確定・自動解除はしません。</p>
-<button id="connect">ボードへ接続</button>
+<button id="connect" disabled>ボードへ接続</button>
 <button id="interrupt" disabled>中断状態を作る</button>
 <h2>複数タブの同時保存テスト</h2>
 <p>こちらはボードを変更しません。このページでロック中に、同じサイトのブロック画面から保存すると、通信前に案内が出ることを確認します。</p>
-<button id="hold">同時保存テスト開始（最大60秒）</button>
+<p id="lock-status" role="status" aria-live="polite" style="padding:12px;background:white;border:2px solid #162638">検証画面を読み込んでいます…（#69 v2）</p>
+<button id="hold" disabled>同時保存テスト開始（最大60秒）</button>
 <button id="release" disabled>テスト終了・ロック解除</button>
 <p>作成後はUSBを抜かずに30秒待って、<a href="./">ブロックの画面</a>で保存を試します。</p>
 <pre id="log" role="status" aria-live="polite"></pre>
+<script>
+  // Module-load errors must be visible before any controls are enabled.
+  const showStartupError = message => {
+    document.querySelector('#lock-status').textContent = '検証画面のエラー: ' + message + '。ページを再読み込みしてください。';
+    document.querySelectorAll('button').forEach(button => { button.disabled = true; });
+  };
+  window.addEventListener('error', event => showStartupError(event.message || event.target?.src || '読み込み失敗'), true);
+  window.addEventListener('unhandledrejection', event => showStartupError(String(event.reason)));
+</script>
 <script type="module">
 import { requestUiapRuntimeDevice } from './src/features/runtime/utils/runtimeDevice.ts';
 import { WebHidRuntimeTransport } from './src/features/runtime/utils/webHidRuntimeTransport.ts';
@@ -26,28 +36,32 @@ import { withRuntimeResponseTimeout } from './src/features/runtime/utils/runtime
 import { buildOwnedUpdateMessage, buildStandaloneUpdateStatus, parseStandaloneUpdateResponse, OWNED_BEGIN } from './src/features/blockly/utils/standaloneUpdateProtocol.ts';
 import { withStandaloneWriteLock } from './src/features/blockly/utils/standaloneWriteLock.ts';
 import { beginInterruptedOwnedUpdate } from './src/dev/interruptedOwnedUpdate.ts';
+import { startStandaloneLockCheck } from './src/dev/standaloneLockCheck.ts';
 
 const connect = document.querySelector('#connect'), interrupt = document.querySelector('#interrupt'), log = document.querySelector('#log');
 const hold = document.querySelector('#hold'), release = document.querySelector('#release');
+const lockStatus = document.querySelector('#lock-status');
 const report = message => { log.textContent += new Date().toISOString() + ' ' + message + '\n'; };
 let device;
 if (!import.meta.env.DEV || !['localhost', '127.0.0.1'].includes(location.hostname)) {
   connect.disabled = true; hold.disabled = true; throw new Error('Local development only');
 }
 let releaseLock;
+lockStatus.textContent = '準備できました。「同時保存テスト開始」を押してください。（#69 v2）';
+connect.disabled = false; hold.disabled = false;
 hold.onclick = async () => {
   hold.disabled = true; connect.disabled = true; interrupt.disabled = true;
-  let timer;
   try {
-    await withStandaloneWriteLock(() => new Promise(resolve => {
-      releaseLock = resolve; release.disabled = false;
-      report('保存のロック中です。ボードへ命令は送っていません。別タブのブロック画面で保存を試してください。');
-      timer = setTimeout(resolve, 60000);
-    }));
-    report('保存のロックを解除しました。通常の保存を試せます。');
+    const check = startStandaloneLockCheck({ report: (state, message) => {
+      lockStatus.textContent = message; report(message);
+      hold.textContent = state === 'held' ? '保存のロック中' : state === 'requesting' ? 'ロック取得を確認中…' : '同時保存テスト開始（最大60秒）';
+      release.disabled = state !== 'held';
+    }});
+    releaseLock = check.release;
+    await check.done;
   } catch (error) { report(String(error)); }
   finally {
-    clearTimeout(timer); releaseLock = undefined;
+    releaseLock = undefined;
     release.disabled = true; hold.disabled = false;
     connect.disabled = Boolean(device?.opened); interrupt.disabled = !device?.opened;
   }
