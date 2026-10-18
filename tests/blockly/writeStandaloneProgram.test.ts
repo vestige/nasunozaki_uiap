@@ -40,7 +40,7 @@ function fakeRuntime(initialStatus: number, capability: number | null = 1, optio
       if (bytes[5] === 0x22) { status = status === 0x41 ? 0x42 : 0x41; updating = false; }
       const response = Uint8Array.from([
         0x55, 0x49, 0x41, 0x50, 1, bytes[5] | 0x80, bytes[6],
-        bytes[5] === 0x26 ? options.beginSnapshot ?? 1 : bytes[5] === 0x25 ? capability! : bytes[5] === 0x24 ? status : bytes[5] === 0x20 && initialStatus === 1 ? 1 : result,
+        bytes[5] === 0x44 ? 1 : bytes[5] === 0x26 ? options.beginSnapshot ?? 1 : bytes[5] === 0x25 ? capability! : bytes[5] === 0x24 ? status : bytes[5] === 0x20 && initialStatus === 1 ? 1 : result,
       ]);
       lastResponse = response.slice();
       const dropIndex = drops.indexOf(bytes[5]);
@@ -72,7 +72,7 @@ describe("writeStandaloneProgram", () => {
     const error = await writeStandaloneProgram(fake.device, slot, () => {}).catch(error => error);
     expect(error).toBeInstanceOf(StandaloneBeginRejectedError);
     expect(error.status).toBe(2);
-    expect(fake.commands.map(command => command[5])).toEqual([0x24, 0x20]);
+    expect(fake.commands.map(command => command[5])).toEqual([0x24, 0x44, 0x20]);
     expect(fake.updating).toBe(true);
     expect(fake.listeners).toBe(0);
     const reconnected = fakeRuntime(0x41, 0x56);
@@ -83,7 +83,7 @@ describe("writeStandaloneProgram", () => {
     const fake = fakeRuntime(0x41, 0x56, { beginStatus: status });
     const slot = encodeStandaloneProgram([{ type: "led", on: true, blockId: "led" }]);
     await expect(writeStandaloneProgram(fake.device, slot, () => {})).rejects.toMatchObject({ name: "StandaloneBeginRejectedError", status });
-    expect(fake.commands.map(command => command[5])).toEqual([0x24, 0x20]);
+    expect(fake.commands.map(command => command[5])).toEqual([0x24, 0x44, 0x20]);
     expect(fake.updating).toBe(false);
     expect(fake.listeners).toBe(0);
   });
@@ -106,7 +106,7 @@ describe("writeStandaloneProgram", () => {
       const result = writeStandaloneProgram(fake.device, slot, () => {}, trace).then(bank => ({ bank }), error => ({ error }));
       await vi.runAllTimersAsync();
       expect(await result).toEqual({ bank: "B" });
-      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x20, 0x21, 0x22, 0x24]);
+      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x44, 0x20, 0x21, 0x22, 0x24]);
       expect(fake.featureReads).toBe(3);
       expect(trace.mock.calls.filter(([event]) => event === "FEATURE_RESPONSE")).toHaveLength(3);
       expect(fake.listeners).toBe(0);
@@ -135,7 +135,7 @@ describe("writeStandaloneProgram", () => {
       const trace = vi.fn();
       const failed = writeStandaloneProgram(fake.device, slot, () => {}, trace).then(() => "unexpected success", error => String(error));
       await vi.runAllTimersAsync();
-      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x20, 0x26, 0x23]);
+      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x44, 0x20, 0x26, 0x23]);
       expect(fake.updating).toBe(false);
       expect(await failed).toMatch(/BEGIN:.*更新状態の解除を確認/);
       expect(fake.listeners).toBe(0);
@@ -168,7 +168,7 @@ describe("writeStandaloneProgram", () => {
       const result = writeStandaloneProgram(fake.device, slot, () => {}).then(bank => ({ bank }), error => ({ error }));
       await vi.runAllTimersAsync();
       await expect(result).resolves.toEqual({ bank: "B" });
-      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x20, 0x21, 0x22, 0x24]);
+      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x44, 0x20, 0x21, 0x22, 0x24]);
       expect(fake.listeners).toBe(0);
     } finally { vi.useRealTimers(); }
   });
@@ -181,7 +181,7 @@ describe("writeStandaloneProgram", () => {
       const result = writeStandaloneProgram(fake.device, slot, () => {}).catch(error => String(error));
       await vi.runAllTimersAsync();
       expect(await result).toMatch(/COMMIT:.*保存結果を確認できません/);
-      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x20, 0x21, 0x22, 0x24]);
+      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x44, 0x20, 0x21, 0x22, 0x24]);
       expect(fake.listeners).toBe(0);
     } finally { vi.useRealTimers(); }
   });
@@ -251,8 +251,8 @@ describe("writeStandaloneProgram", () => {
     const slot = encodeStandaloneProgram([{ type: "led", on: true, blockId: "led" }]);
     slot[4] = 2;
     await expect(writeStandaloneProgram(fake.device, slot, () => undefined)).resolves.toBe("B");
-    expect(fake.commands.map((command) => command[5])).toEqual([0x24, 0x25, 0x20, 0x21, 0x22, 0x24]);
-    expect(fake.commands[2][8]).toBe(2);
+    expect(fake.commands.map((command) => command[5])).toEqual([0x24, 0x25, 0x44, 0x20, 0x21, 0x22, 0x24]);
+    expect(fake.commands.find(command => command[5] === 0x20)?.[8]).toBe(2);
   });
 
   it("未知の作品形式は通信前に拒否する", async () => {
@@ -278,9 +278,9 @@ describe("writeStandaloneProgram", () => {
 
     await expect(writeStandaloneProgram(fake.device, slot, progress)).resolves.toBe("A");
 
-    expect(fake.commands.map((command) => command[5])).toEqual([0x24, 0x20, 0x21, 0x22, 0x24]);
+    expect(fake.commands.map((command) => command[5])).toEqual([0x24, 0x44, 0x20, 0x21, 0x22, 0x24]);
     expect(fake.commands.every((command) => command.length === 32)).toBe(true);
-    expect(fake.commands.map((command) => command[6])).toEqual([0, 1, 2, 3, 4]);
+    expect(fake.commands.map((command) => command[6])).toEqual([0, 1, 2, 3, 4, 5]);
     expect(progress).toHaveBeenLastCalledWith(100);
   });
 

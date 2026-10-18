@@ -3,6 +3,7 @@ import { WebHidRuntimeTransport } from "../../runtime/utils/webHidRuntimeTranspo
 import { withRuntimeResponseTimeout } from "../../runtime/utils/runtimeTiming";
 import { RuntimeDiagnosticError } from "../../runtime/utils/runtimeDiagnostic";
 import { withStandaloneWriteLock } from "./standaloneWriteLock";
+import { prepareOwnedUpdate, readOwnedUpdateSnapshot, StandaloneRecoveryRequiredError, StandaloneRecoveryCancelledError, type StandaloneRecoveryOptions } from "./ownedStandaloneUpdate";
 import {
   crc16Ccitt,
   STANDALONE_PROGRAM_HEADER_SIZE,
@@ -23,6 +24,7 @@ import {
   STANDALONE_UPDATE_COMMAND_DATA,
   STANDALONE_UPDATE_COMMAND_STATUS,
   STANDALONE_UPDATE_DATA_SIZE,
+  buildOwnedUpdateMessage, OWNED_BEGIN, OWNED_DATA, OWNED_COMMIT, OWNED_ABORT, OWNED_STATE, OWNED_RECOVER, OWNED_UPDATE_DATA_SIZE,
 } from "./standaloneUpdateProtocol";
 
 const MAX_BANK_PROGRAM_SIZE = 1008;
@@ -33,7 +35,7 @@ export class StandaloneBeginRejectedError extends Error {
   }
 }
 export type StandaloneWriteTrace = (event: string, details: Record<string, string | number | boolean>) => void;
-const commandNames: Record<number, string> = { 0x24: "STATUS", 0x25: "CAPABILITIES", 0x26: "BEGIN_DIAGNOSTICS", 0x20: "BEGIN", 0x21: "DATA", 0x22: "COMMIT", 0x23: "ABORT" };
+const commandNames: Record<number, string> = { 0x24: "STATUS", 0x25: "CAPABILITIES", 0x26: "BEGIN_DIAGNOSTICS", 0x20: "BEGIN", 0x21: "DATA", 0x22: "COMMIT", 0x23: "ABORT", [OWNED_BEGIN]: "OWNED_BEGIN", [OWNED_DATA]: "OWNED_DATA", [OWNED_COMMIT]: "OWNED_COMMIT", [OWNED_ABORT]: "OWNED_ABORT", [OWNED_STATE]: "OWNED_STATE", [OWNED_RECOVER]: "OWNED_RECOVER" };
 
 export async function readStandaloneStatus(device: RuntimeHidDevice) {
   if (device.vendorId !== 0x1209 || device.productId !== 0xd004 || !device.opened) {
@@ -57,8 +59,9 @@ export async function writeStandaloneProgram(
   encodedSlot: Uint8Array,
   onProgress: (percent: number) => void,
   trace: StandaloneWriteTrace = () => {},
+  recoveryOptions: StandaloneRecoveryOptions = {},
 ) {
-  return withStandaloneWriteLock(() => performStandaloneWrite(device, encodedSlot, onProgress, trace));
+  return withStandaloneWriteLock(() => performStandaloneWrite(device, encodedSlot, onProgress, trace, recoveryOptions));
 }
 
 async function performStandaloneWrite(
@@ -66,6 +69,7 @@ async function performStandaloneWrite(
   encodedSlot: Uint8Array,
   onProgress: (percent: number) => void,
   trace: StandaloneWriteTrace,
+  recoveryOptions: StandaloneRecoveryOptions,
 ) {
   if (device.vendorId !== 0x1209 || device.productId !== 0xd004 || !device.opened) {
     throw new Error("通常接続のUIAPduinoを接続してください。");
@@ -87,6 +91,7 @@ async function performStandaloneWrite(
   let commitMayBeApplied = false;
   let before = 0;
   let phase = "STATUS";
+  let owner: number[] | null = null;
   const resetReceiver = () => {
     // A timeout races receive(), but does not cancel its pending FIFO entry.
     // Retire it before recovery, or it will swallow the recovery response.
@@ -101,8 +106,8 @@ async function performStandaloneWrite(
     const started = Date.now();
     let sent = false;
     trace("SEND", { command: name, sequence: expectedSequence, bytes: message.length,
-      ...(command === 0x20 ? { formatVersion: message[8], programLength: message[9] | message[10] << 8 } : {}),
-      ...(command === 0x21 ? { offset: message[8] | message[9] << 8 } : {}) });
+      ...([0x20, OWNED_BEGIN].includes(command) ? { formatVersion: message[command === OWNED_BEGIN ? 16 : 8], programLength: message[command === OWNED_BEGIN ? 17 : 9] | message[command === OWNED_BEGIN ? 18 : 10] << 8 } : {}),
+      ...([0x21, OWNED_DATA].includes(command) ? { offset: message[command === OWNED_DATA ? 16 : 8] | message[command === OWNED_DATA ? 17 : 9] << 8 } : {}) });
     try {
       await transport.send(message);
       sent = true;
@@ -117,7 +122,9 @@ async function performStandaloneWrite(
           continue;
         }
         const status = parseStandaloneUpdateResponse(response, command, expectedSequence);
-        trace("RESPONSE", { command: name, sequence: expectedSequence, status, elapsedMs: Date.now() - started });
+        trace("RESPONSE", { command: name, sequence: expectedSequence,
+          status: command === OWNED_STATE && message[8] >= 1 && message[8] <= 8 ? "owner-byte" : status,
+          elapsedMs: Date.now() - started });
         return status;
       }
       throw new Error("UIAPduinoから対応する応答を受け取れませんでした。");
@@ -125,7 +132,7 @@ async function performStandaloneWrite(
       // Flash can finish while its interrupt Input Report is lost. The core
       // retains that same 8-byte response for read-only HID GET_REPORT.
       // Never replay a mutating command to obtain its ACK.
-      if (sent && [0x20, 0x21, 0x22].includes(command) &&
+      if (sent && [0x20, 0x21, 0x22, OWNED_BEGIN, OWNED_DATA, OWNED_COMMIT].includes(command) &&
           error instanceof RuntimeDiagnosticError && error.code === "RESPONSE_TIMEOUT") {
         resetReceiver();
         trace("FEATURE_READ", { command: name, sequence: expectedSequence });
@@ -148,6 +155,8 @@ async function performStandaloneWrite(
     }
   };
   const next = () => (sequence++ & 0xff);
+  const ownedExchange = (command: number, payload: number[], timeoutMs?: number) =>
+    exchange(buildOwnedUpdateMessage(next(), command, payload), timeoutMs);
 
   try {
     before = await exchange(buildStandaloneUpdateStatus(next()));
@@ -164,9 +173,11 @@ async function performStandaloneWrite(
         throw new Error("この作品を使うには、最初にボードの教育用ランタイムを更新してください。");
       }
     }
+    owner = await prepareOwnedUpdate(ownedExchange, recoveryOptions);
     // Delivery is uncertain until an ACK arrives, not until send() resolves.
     beginMayBeActive = true;
-    const begin = await exchange(buildStandaloneUpdateBegin(
+    const begin = owner ? await ownedExchange(OWNED_BEGIN, [...owner, formatVersion,
+      length & 0xff, length >> 8, crc16Ccitt(bytes) & 0xff, crc16Ccitt(bytes) >> 8], 10_000) : await exchange(buildStandaloneUpdateBegin(
       next(), length, crc16Ccitt(bytes), formatVersion,
     ), 10_000);
     if (begin !== 0) {
@@ -175,18 +186,29 @@ async function performStandaloneWrite(
       throw new StandaloneBeginRejectedError(begin);
     }
 
-    for (let offset = 0; offset < length; offset += STANDALONE_UPDATE_DATA_SIZE) {
-      const chunk = bytes.slice(offset, offset + STANDALONE_UPDATE_DATA_SIZE);
-      const result = await exchange(buildStandaloneUpdateData(next(), offset, chunk));
+    const chunkSize = owner ? OWNED_UPDATE_DATA_SIZE : STANDALONE_UPDATE_DATA_SIZE;
+    for (let offset = 0; offset < length; offset += chunkSize) {
+      const chunk = bytes.slice(offset, offset + chunkSize);
+      const result = owner ? await ownedExchange(OWNED_DATA, [...owner, offset & 0xff, offset >> 8, ...chunk])
+        : await exchange(buildStandaloneUpdateData(next(), offset, chunk));
       if (result !== 0) throw new Error(`作品の保存中にエラーが起きました（${result}）。`);
       onProgress(Math.round((offset + chunk.length) / length * 100));
     }
 
     commitMayBeApplied = true;
-    const commit = await exchange(buildStandaloneUpdateCommit(next()), 10_000);
+    const commit = owner ? await ownedExchange(OWNED_COMMIT, owner, 10_000)
+      : await exchange(buildStandaloneUpdateCommit(next()), 10_000);
     commitMayBeApplied = false;
     if (commit !== 0) throw new Error(`保存した作品を検証できませんでした（${commit}）。`);
     beginMayBeActive = false;
+    if (owner) {
+      const completed = await readOwnedUpdateSnapshot(ownedExchange);
+      if (completed.kind !== "committed" || completed.offset !== length ||
+          !completed.token.every((value, i) => value === owner![i])) {
+        throw new Error("保存した作品の所有識別子を確認できません。再書き込みせず診断ログを保存してください。");
+      }
+      trace("OWNER_CONFIRMED", { committed: true, programLength: length });
+    }
     const after = await exchange(buildStandaloneUpdateStatus(next()));
     const expectedBank = before === 0x41 ? 0x42 : 0x41;
     if (after !== expectedBank) {
@@ -208,14 +230,17 @@ async function performStandaloneWrite(
     if (commitMayBeApplied) {
       resetReceiver();
       try {
+        const completed = owner ? await readOwnedUpdateSnapshot(ownedExchange) : null;
         const status = await exchange(buildStandaloneUpdateStatus(next()));
         const expected = before === 0x41 ? 0x42 : 0x41;
-        if (status === expected) {
+        const ownedCommitConfirmed = !owner || (completed?.kind === "committed" &&
+          completed.offset === length && completed.token.every((value, i) => value === owner![i]));
+        if (status === expected && ownedCommitConfirmed) {
           // Do not replay COMMIT or stop a program that was already committed.
           trace("COMMIT_CONFIRMED", { bank: status === 0x41 ? "A" : "B" });
           return status === 0x41 ? "A" : "B";
         }
-        if (status !== before) {
+        if (status !== before || (owner && !ownedCommitConfirmed)) {
           beginMayBeActive = false;
           recovery = "保存結果を確認できません。再書き込みせず接続状態を確認してください";
         }
@@ -227,12 +252,13 @@ async function performStandaloneWrite(
     if (beginMayBeActive) {
       resetReceiver();
       try {
-        const aborted = await exchange(buildStandaloneUpdateAbort(next()));
+        const aborted = owner ? await ownedExchange(OWNED_ABORT, owner)
+          : await exchange(buildStandaloneUpdateAbort(next()));
         recovery = aborted === 0 ? "更新状態の解除を確認しました" : `更新状態の解除に失敗しました（${aborted}）`;
       } catch { recovery = "更新状態の解除を確認できません。再書き込みせず接続状態を確認してください"; }
     }
     trace("RECOVERY", { failedPhase, result: recovery });
-    if (error instanceof StandaloneBeginRejectedError) throw error;
+    if (error instanceof StandaloneBeginRejectedError || error instanceof StandaloneRecoveryRequiredError || error instanceof StandaloneRecoveryCancelledError) throw error;
     throw new Error(`${failedPhase}: ${error instanceof Error ? error.message : String(error)}${recovery === "未実施" ? "" : ` ${recovery}`}`);
   } finally {
     transport.dispose();
