@@ -63,7 +63,7 @@ export function StandaloneProgramInstall({ program, getCurrentProgram, device, d
       appendLog("info", "STANDALONE_WRITE_START", "通常接続で作品の保存を開始しました。");
       const bank = await writeStandaloneProgram(connected, encoded, (percent) => {
         setMessage(`ボードにかきこんでいます… ${percent}%`);
-      });
+      }, (event, details) => appendLog(event === "FAILED" ? "error" : "info", `STANDALONE_${event}`, "作品保存の通信を記録しました。", details));
       setMessage("ボードにかきこみました。つぎに電源を入れたときも動きます。");
       appendLog("success", "STANDALONE_WRITE_SUCCESS", "作品を保存し、保存先を確認しました。", {
         bank,

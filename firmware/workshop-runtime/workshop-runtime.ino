@@ -63,6 +63,7 @@ constexpr uint8_t kNeoApply = 0x14;
 constexpr uint8_t kNeoClear = 0x15;
 constexpr uint8_t kProgramStatus = 0x24;
 constexpr uint8_t kProgramCapabilities = 0x25;
+constexpr uint8_t kProgramBeginDiagnostics = 0x26; // Read-only BEGIN snapshot.
 constexpr uint8_t kProgramBegin = 0x20;
 constexpr uint8_t kProgramData = 0x21;
 constexpr uint8_t kProgramCommit = 0x22;
@@ -101,6 +102,9 @@ uint32_t programUpdateGeneration = 0;
 uint16_t programUpdateLength = 0;
 uint16_t programUpdateCrc = 0;
 uint16_t programUpdateOffset = 0;
+uint8_t programBeginStage = 0;
+uint8_t programBeginResult = 0;
+bool programBeginResponseQueued = false;
 
 uint32_t bankGeneration(const volatile uint8_t *bank) {
   return static_cast<uint32_t>(bank[5]) |
@@ -255,6 +259,7 @@ void executeStandaloneRange(uint16_t start, uint16_t end) {
 }
 
 void sendResponse(uint8_t command, uint8_t sequence, uint8_t status) {
+  if (command == kProgramBegin) programBeginResult = status;
   // READ_BUTTON uses 1 for pressed, not an error. Other error responses
   // silence an active tone; capability replies are outside the status range.
   if (status > 0 && status <= kDeviceError && !(command == kReadButton && status == 1)) stopTone();
@@ -263,6 +268,14 @@ void sendResponse(uint8_t command, uint8_t sequence, uint8_t status) {
       kVersion, static_cast<uint8_t>(command | kResponse), sequence, status,
   };
   WebHID.send(response, sizeof(response));
+  if (command == kProgramBegin) programBeginResponseQueued = true;
+}
+
+uint8_t programBeginDiagnosticsSnapshot() {
+  // Read-only: inspect the previous report before the diagnostic is queued.
+  return (programUpdateActive ? 0x80 : 0) | (programBeginStage << 4) |
+      (programBeginResponseQueued ? 8 : 0) | (uiapwebhid_tx_busy() ? 4 : 0) |
+      (programBeginResult & 3);
 }
 
 bool programHalfword(uint32_t address, uint16_t value) {
@@ -285,6 +298,8 @@ uint8_t handleProgramUpdate(uint8_t command, const uint8_t *message, uint8_t len
     return kInvalidPayload;
   }
   if (command == kProgramBegin) {
+    programBeginStage = 1;
+    programBeginResponseQueued = false;
     if (payloadLength != 5 || programUpdateActive || message[8] < 1 || message[8] > kStandaloneMaxVersion) {
       return kInvalidPayload;
     }
@@ -298,23 +313,28 @@ uint8_t handleProgramUpdate(uint8_t command, const uint8_t *message, uint8_t len
         ? bankAt(kProgramBankA) : bankAt(kProgramBankB);
     programUpdateGeneration = activeProgramBank == 0 ? 1 : bankGeneration(active) + 1;
     stopStandaloneOutputs();
+    programBeginStage = 2;
     // WebHID exposes a received report before the EP0 status stage finishes.
     // Let that stage complete before flash stalls instruction fetches.
     delay(1);
     FLASH_Unlock();
+    programBeginStage = 3;
     const FLASH_Status eraseStatus = FLASH_ErasePage(inactive);
     FLASH_Lock();
+    programBeginStage = 4;
     if (eraseStatus != FLASH_COMPLETE) return kDeviceError;
     const volatile uint8_t *erased = bankAt(inactive);
     for (uint16_t index = 0; index < 1024; index++) {
       if (erased[index] != 0xff) return kDeviceError;
     }
     programUpdateAddress = inactive;
+    programBeginStage = 5;
     programUpdateLength = requestedLength;
     programUpdateCrc = static_cast<uint16_t>(message[11]) |
         (static_cast<uint16_t>(message[12]) << 8);
     programUpdateOffset = 0;
     programUpdateActive = true;
+    programBeginStage = 6;
     return kOk;
   }
   if (command == kProgramAbort) {
@@ -443,6 +463,13 @@ void handleMessage(const uint8_t *message, uint8_t length) {
     // implemented by both the validator and interpreter.
     sendResponse(command, sequence, message[7] == 0
         ? static_cast<uint8_t>(0x50 | kStandaloneMaxVersion) : kInvalidPayload);
+    return;
+  }
+  if (command == kProgramBeginDiagnostics) {
+    // Observe before sendResponse queues the diagnostic's own report.
+    // Queued and !busy mean handed to USB, not acknowledged by the host.
+    const uint8_t snapshot = programBeginDiagnosticsSnapshot();
+    sendResponse(command, sequence, message[7] == 0 ? snapshot : kInvalidPayload);
     return;
   }
   if (command == kProgramStatus) {
