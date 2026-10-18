@@ -14,6 +14,7 @@
 - `program`：Blocklyから共通命令への変換。
 - `execution`：共通命令の実行。実機通信は`executionSession`とボードアダプタに任せる。
 - `standaloneProgram`：ボード用バイト列の生成。USB送信は`writeStandaloneProgram`、パケット形式は`standaloneUpdateProtocol`が担当する。
+- `standaloneWriteLock`：同じページ／同じoriginの協調するページ間で作品保存を排他する。ボードの更新状態や所有者を判定するものではない。残留更新状態への対処と制約は[設計メモ](spec-standalone-update-recovery.md)を参照。
 - `blocks`：既存作品用も含むブロック定義と登録。
 - `toolbox`：分類と追加時の初期入力。
 - `samples/starterProgram`：最初の点滅作品。検証用の複雑な作品とは分ける。

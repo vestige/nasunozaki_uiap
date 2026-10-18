@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ProgramInstruction } from "../types/program";
 import { encodeStandaloneProgram } from "../utils/standaloneProgram";
-import { writeStandaloneProgram } from "../utils/writeStandaloneProgram";
+import { StandaloneBeginRejectedError, writeStandaloneProgram } from "../utils/writeStandaloneProgram";
 import type { RuntimeHidDevice } from "../../runtime/types/transport";
 import { requestUiapRuntimeDevice, watchRuntimeDisconnect } from "../../runtime/utils/runtimeDevice";
 import {
@@ -22,6 +22,7 @@ export function StandaloneProgramInstall({ program, getCurrentProgram, device, d
   const client = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [showReconnectHelp, setShowReconnectHelp] = useState(false);
 
   const appendLog = (
     level: "info" | "success" | "error",
@@ -48,6 +49,7 @@ export function StandaloneProgramInstall({ program, getCurrentProgram, device, d
     }
 
     setBusy(true);
+    setShowReconnectHelp(false);
     try {
       // Requesting a device stays directly in the button's user gesture.
       const connected = device?.opened ? device : await requestUiapRuntimeDevice();
@@ -69,6 +71,7 @@ export function StandaloneProgramInstall({ program, getCurrentProgram, device, d
         bank,
       });
     } catch (error) {
+      setShowReconnectHelp(error instanceof StandaloneBeginRejectedError && error.status === 2);
       setMessage(errorMessage(error));
       appendLog("error", "STANDALONE_WRITE_ERROR", "作品を書き込めませんでした。", {
         error: errorMessage(error),
@@ -92,6 +95,21 @@ export function StandaloneProgramInstall({ program, getCurrentProgram, device, d
         <span>{busy ? "かきこみ中…" : "ボードにかきこむ"}</span>
       </button>
       {message && <p role="status" className="text-sm font-bold text-base-content/70">{message}</p>}
+      {showReconnectHelp && (
+        <div className="max-w-md rounded-lg border border-base-content/20 bg-base-200 p-3 text-sm">
+          <p>前のかきこみが残っている可能性があります。ほかの画面でかきこみ中なら、終わるまで待ってください。</p>
+          <details className="mt-2">
+            <summary className="cursor-pointer font-bold">つなぎなおしかた</summary>
+            <ol className="mt-2 list-decimal space-y-1 pl-5">
+              <li>ほかの画面で、かきこみ中ではないことをたしかめる。</li>
+              <li>USBを抜き、ボタンを押さずにさしなおす。</li>
+              <li>このページを読みなおし、ボードにつなぐ。</li>
+              <li>もう一度「ボードにかきこむ」を押す。</li>
+            </ol>
+            <p className="mt-2">電源を入れなおすと、ボードに残っている作品が動き出すことがあります。直らないときは、診断ログを保存してください。</p>
+          </details>
+        </div>
+      )}
     </div>
   );
 }

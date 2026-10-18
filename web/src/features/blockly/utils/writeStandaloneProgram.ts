@@ -2,6 +2,7 @@ import type { RuntimeHidDevice } from "../../runtime/types/transport";
 import { WebHidRuntimeTransport } from "../../runtime/utils/webHidRuntimeTransport";
 import { withRuntimeResponseTimeout } from "../../runtime/utils/runtimeTiming";
 import { RuntimeDiagnosticError } from "../../runtime/utils/runtimeDiagnostic";
+import { withStandaloneWriteLock } from "./standaloneWriteLock";
 import {
   crc16Ccitt,
   STANDALONE_PROGRAM_HEADER_SIZE,
@@ -25,6 +26,12 @@ import {
 } from "./standaloneUpdateProtocol";
 
 const MAX_BANK_PROGRAM_SIZE = 1008;
+export class StandaloneBeginRejectedError extends Error {
+  constructor(readonly status: number) {
+    super(`BEGIN: 作品の保存を開始できませんでした（${status}）。`);
+    this.name = "StandaloneBeginRejectedError";
+  }
+}
 export type StandaloneWriteTrace = (event: string, details: Record<string, string | number | boolean>) => void;
 const commandNames: Record<number, string> = { 0x24: "STATUS", 0x25: "CAPABILITIES", 0x26: "BEGIN_DIAGNOSTICS", 0x20: "BEGIN", 0x21: "DATA", 0x22: "COMMIT", 0x23: "ABORT" };
 
@@ -50,6 +57,15 @@ export async function writeStandaloneProgram(
   encodedSlot: Uint8Array,
   onProgress: (percent: number) => void,
   trace: StandaloneWriteTrace = () => {},
+) {
+  return withStandaloneWriteLock(() => performStandaloneWrite(device, encodedSlot, onProgress, trace));
+}
+
+async function performStandaloneWrite(
+  device: RuntimeHidDevice,
+  encodedSlot: Uint8Array,
+  onProgress: (percent: number) => void,
+  trace: StandaloneWriteTrace,
 ) {
   if (device.vendorId !== 0x1209 || device.productId !== 0xd004 || !device.opened) {
     throw new Error("通常接続のUIAPduinoを接続してください。");
@@ -85,6 +101,7 @@ export async function writeStandaloneProgram(
     const started = Date.now();
     let sent = false;
     trace("SEND", { command: name, sequence: expectedSequence, bytes: message.length,
+      ...(command === 0x20 ? { formatVersion: message[8], programLength: message[9] | message[10] << 8 } : {}),
       ...(command === 0x21 ? { offset: message[8] | message[9] << 8 } : {}) });
     try {
       await transport.send(message);
@@ -154,7 +171,8 @@ export async function writeStandaloneProgram(
     ), 10_000);
     if (begin !== 0) {
       beginMayBeActive = false;
-      throw new Error(`作品の保存を開始できませんでした（${begin}）。`);
+      trace("BEGIN_REJECTED", { status: begin, updateState: "unknown" });
+      throw new StandaloneBeginRejectedError(begin);
     }
 
     for (let offset = 0; offset < length; offset += STANDALONE_UPDATE_DATA_SIZE) {
@@ -214,6 +232,7 @@ export async function writeStandaloneProgram(
       } catch { recovery = "更新状態の解除を確認できません。再書き込みせず接続状態を確認してください"; }
     }
     trace("RECOVERY", { failedPhase, result: recovery });
+    if (error instanceof StandaloneBeginRejectedError) throw error;
     throw new Error(`${failedPhase}: ${error instanceof Error ? error.message : String(error)}${recovery === "未実施" ? "" : ` ${recovery}`}`);
   } finally {
     transport.dispose();
