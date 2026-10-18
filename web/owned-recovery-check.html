@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>中断した保存からの復帰確認（開発用）</title>
+<style>
+  body { font: 16px/1.7 system-ui; max-width: 760px; margin: 32px auto; padding: 0 20px; color: #162638; background: #faf6e9; }
+  button, a { margin: 8px 12px 8px 0; } button { padding: 10px 16px; cursor: pointer; }
+  pre { background: white; padding: 16px; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid #ccc; }
+</style>
+<h1>中断した保存からの復帰確認</h1>
+<p>ローカル開発用です。保存済みの作品があるボードでのみ使ってください。</p>
+<p>別の画面で実行・かきこみをしていないことを確認してください。確認済みの作品を残し、反対側の保存先で、かきこみの開始だけを行います。途中データの確定・自動解除はしません。</p>
+<button id="connect">ボードへ接続</button>
+<button id="interrupt" disabled>中断状態を作る</button>
+<p>作成後はUSBを抜かずに30秒待って、<a href="./">ブロックの画面</a>で保存を試します。</p>
+<pre id="log" role="status" aria-live="polite"></pre>
+<script type="module">
+import { requestUiapRuntimeDevice } from './src/features/runtime/utils/runtimeDevice.ts';
+import { WebHidRuntimeTransport } from './src/features/runtime/utils/webHidRuntimeTransport.ts';
+import { withRuntimeResponseTimeout } from './src/features/runtime/utils/runtimeTiming.ts';
+import { buildOwnedUpdateMessage, buildStandaloneUpdateStatus, parseStandaloneUpdateResponse, OWNED_BEGIN } from './src/features/blockly/utils/standaloneUpdateProtocol.ts';
+import { withStandaloneWriteLock } from './src/features/blockly/utils/standaloneWriteLock.ts';
+import { beginInterruptedOwnedUpdate } from './src/dev/interruptedOwnedUpdate.ts';
+
+const connect = document.querySelector('#connect'), interrupt = document.querySelector('#interrupt'), log = document.querySelector('#log');
+const report = message => { log.textContent += new Date().toISOString() + ' ' + message + '\n'; };
+let device;
+if (!import.meta.env.DEV || !['localhost', '127.0.0.1'].includes(location.hostname)) {
+  connect.disabled = true; throw new Error('Local development only');
+}
+connect.onclick = async () => {
+  connect.disabled = true;
+  try { device = await requestUiapRuntimeDevice(); interrupt.disabled = false; report('接続しました。まだ変更していません。'); }
+  catch (error) { report(String(error)); connect.disabled = false; }
+};
+interrupt.onclick = async () => {
+  if (!window.confirm('別画面で実行・保存していないことを確認しましたか？\n保存済み作品は残しますが、途中データがある反対側の保存先を消去し、中断状態を作ります。')) return;
+  interrupt.disabled = true;
+  try {
+    await withStandaloneWriteLock(async () => {
+      let transport = new WebHidRuntimeTransport(device), sequence = 0;
+      const exchange = async (command, payload, timeout = 2000) => {
+        const seq = sequence++;
+        const message = command === 0x24 ? buildStandaloneUpdateStatus(seq) : buildOwnedUpdateMessage(seq, command, payload);
+        let sent = false;
+        try {
+          await transport.send(message); sent = true;
+          const deadline = Date.now() + timeout;
+          for (let ignored = 0; ignored < 8; ++ignored) {
+            const remaining = deadline - Date.now();
+            if (remaining <= 0) throw new Error('応答待ち時間超過');
+            const response = await withRuntimeResponseTimeout(transport.receive(), remaining);
+            if (response[5] !== (command | 0x80) || response[6] !== seq) continue;
+            return parseStandaloneUpdateResponse(response, command, seq);
+          }
+          throw new Error('対応する応答がありません');
+        } catch (error) {
+          if (sent && command === OWNED_BEGIN && error?.code === 'RESPONSE_TIMEOUT') {
+            transport.dispose(); transport = new WebHidRuntimeTransport(device);
+            const view = await withRuntimeResponseTimeout(device.receiveFeatureReport(0), 1000);
+            let cached = new Uint8Array(view.buffer, view.byteOffset, view.byteLength).slice();
+            if (cached.length === 9 && cached[0] === 0) cached = cached.slice(1);
+            return parseStandaloneUpdateResponse(cached, command, seq);
+          }
+          throw error;
+        }
+      };
+      try {
+        const bank = await beginInterruptedOwnedUpdate(exchange);
+        report(`中断状態を作りました。有効な作品は保存先${bank}に残っています。DATA・COMMIT・ABORTは送っていません。`);
+        report('USBは抜かずに、この画面を閉じて構いません。30秒後、ブロックの画面を再読み込み・接続して保存してください。');
+        setTimeout(() => report('30秒経過しました。ブロックの画面で保存を試せます。'), 30000);
+      } finally { transport.dispose(); }
+    });
+  } catch (error) { report(String(error) + '\n状態不明の場合も、自動再送や解除はしていません。ログを共有してください。'); }
+  finally { if (device?.opened) await device.close(); }
+};
+</script>
+</html>
