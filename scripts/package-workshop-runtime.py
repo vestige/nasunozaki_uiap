@@ -29,6 +29,11 @@ def main() -> None:
         actual = hashlib.sha256((SOURCE / name).read_bytes()).hexdigest()
         if actual != build_info.get("headers_sha256", {}).get(name):
             raise ValueError(f"{name} does not match build-info.json; rebuild the runtime")
+    binary_size = (SOURCE / "workshop-runtime.bin").stat().st_size
+    if binary_size != build_info.get("binary_size"):
+        raise ValueError("binary_size does not match the runtime bin length; rebuild the metadata")
+    if binary_size > 14336:
+        raise ValueError("runtime bin exceeds the reserved 14336-byte firmware region")
     if args.check:
         print("Workshop runtime release inputs verified")
         return

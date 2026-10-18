@@ -20,7 +20,7 @@
   ],
   "interactive_tone_version": 1,
   "owned_program_update_version": 1,
-  "binary_size": 13020,
+  "binary_size": 13184,
   "static_ram_bytes": 460,
   "linker_sha256": "6577263ff0f284fe8095099116799dae818a136cbb59379899169ed3e90517ce",
   "binary_sha256": "018b0ebfa0f788134ee3247e623cbc13ac588a411a296a821d527257537fe363"

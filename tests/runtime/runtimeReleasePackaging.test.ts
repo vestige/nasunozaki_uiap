@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, appendFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, appendFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -51,6 +51,18 @@ it("新しいヘッダーのメタデータ登録漏れも公開前に拒否す�
   try {
     appendFileSync(join(directory, "firmware/workshop-runtime/unrecorded.h"), "// missing metadata\n");
     expect(() => run(directory, false)).toThrow(/header set does not match/);
+    expect(existsSync(join(directory, "web/public/workshop-runtime.zip"))).toBe(false);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+it("ハッシュが一致していても記録したbinサイズが違えば公開を拒否する", () => {
+  const directory = fixture();
+  try {
+    const path = join(directory, "firmware/workshop-runtime/build-info.json");
+    const info = JSON.parse(readFileSync(path, "utf8"));
+    info.binary_size -= 1;
+    writeFileSync(path, JSON.stringify(info));
+    expect(() => run(directory, false)).toThrow(/binary_size does not match/);
     expect(existsSync(join(directory, "web/public/workshop-runtime.zip"))).toBe(false);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
