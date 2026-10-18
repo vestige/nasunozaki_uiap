@@ -4,10 +4,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 
-it("実ファームのBEGIN診断は状態を変更せず段階・応答・更新状態を符号化する", () => {
-  const source = readFileSync(new URL("../../firmware/workshop-runtime/workshop-runtime.ino", import.meta.url), "utf8");
+it("実験用パッチのBEGIN診断は状態を変更せず段階・応答・更新状態を符号化する", () => {
+  // The diagnostic firmware is intentionally not part of the release source.
+  const patch = readFileSync(new URL("../../firmware/experiments/begin-diagnostics.patch", import.meta.url), "utf8");
+  const source = patch.split("\n").filter(line => line.startsWith(" ") || (line.startsWith("+") && !line.startsWith("+++"))).map(line => line.slice(1)).join("\n");
   const start = source.indexOf("uint8_t programBeginDiagnosticsSnapshot() {");
-  const end = source.indexOf("\nbool programHalfword", start);
+  const end = source.indexOf("\n}", start) + 2;
   expect(start).toBeGreaterThan(0); expect(end).toBeGreaterThan(start);
   const harness = `
 #include <stdint.h>
