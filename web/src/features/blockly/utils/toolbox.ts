@@ -24,8 +24,8 @@ export function createUiapToolbox(options: { tactSwitch: boolean; neoPixel: bool
   return {
     kind: "categoryToolbox",
     contents: [
-      category("きほん", "#b09a58", ["uiap_led", "uiap_wait"]),
-      category("くりかえし", "#8557a4", ["uiap_repeat", "uiap_forever"]),
+      category("きほん", "#b09a58", ["uiap_on_start", "uiap_main_forever", "uiap_led", "uiap_wait"]),
+      category("くりかえし", "#8557a4", ["uiap_repeat"]),
       category("もし・くらべる", "#547ea2", ["uiap_if", "uiap_boolean", "uiap_number", "uiap_compare", "uiap_logic", "uiap_not"]),
       category("おぼえる", "#a25780", ["uiap_variable_set", "uiap_variable_get", "uiap_number", "uiap_arithmetic"]),
       ...(options.tactSwitch || options.neoPixel || options.piezo ? [{ kind: "sep" as const }] : []),

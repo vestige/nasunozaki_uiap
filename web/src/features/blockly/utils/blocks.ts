@@ -9,6 +9,22 @@ export function registerUiapBlocks() {
   Blockly.setLocale(Ja as unknown as Record<string, string>);
   registerColorBarField();
   Blockly.common.defineBlocksWithJsonArray([
+    {
+      type: "uiap_on_start",
+      message0: "はじめに",
+      message1: "%1",
+      args1: [{ type: "input_statement", name: "DO" }],
+      colour: 42,
+      tooltip: "プログラムを始めたときに、1回だけ実行します。",
+    },
+    {
+      type: "uiap_main_forever",
+      message0: "ずっと",
+      message1: "%1",
+      args1: [{ type: "input_statement", name: "DO" }],
+      colour: 275,
+      tooltip: "「はじめに」が終わったあと、止めるまで繰り返します。",
+    },
     { type: "uiap_color", message0: "色 %1", args0: [{ type: "field_uiap_color", name: "COLOR", color: "#ff0000" }], output: "Color", colour: 330, tooltip: "この色をおぼえたり、NeoPixelへ入れたりできます。" },
     { type: "uiap_neopixel_fill_color", message0: "NeoPixelを全部 %1 で 明るさ %2 % で光らせる",
       args0: [{ type: "input_value", name: "COLOR", check: "Color" }, { type: "input_value", name: "BRIGHTNESS", check: "Number" }],

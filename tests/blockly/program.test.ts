@@ -5,6 +5,7 @@ import {
   starterProgram,
 } from "../../web/src/features/blockly/utils/blocks";
 import { compileWorkspace } from "../../web/src/features/blockly/utils/program";
+import { programState } from "./programStructure";
 
 describe("compileWorkspace", () => {
   it("比較と論理の入力を横一列に並べる", () => {
@@ -21,10 +22,11 @@ describe("compileWorkspace", () => {
 
     const program = compileWorkspace(workspace);
 
-    expect(program).toHaveLength(1);
-    expect(program[0]).toMatchObject({ type: "repeat", times: 3 });
-    if (program[0].type === "repeat") {
-      expect(program[0].body.map((instruction) => instruction.type)).toEqual([
+    expect(program).toHaveLength(2);
+    expect(program[0]).toMatchObject({ type: "led", on: false });
+    expect(program[1]).toMatchObject({ type: "forever" });
+    if (program[1].type === "forever") {
+      expect(program[1].body.map((instruction) => instruction.type)).toEqual([
         "led",
         "wait",
         "led",
@@ -37,11 +39,7 @@ describe("compileWorkspace", () => {
     registerUiapBlocks();
     const workspace = new Blockly.Workspace();
     Blockly.serialization.workspaces.load(
-      {
-        blocks: {
-          languageVersion: 0,
-          blocks: [
-            {
+      programState({
               type: "uiap_if_button",
               inputs: {
                 DO: { block: { type: "uiap_led", fields: { STATE: "ON" } } },
@@ -49,10 +47,7 @@ describe("compileWorkspace", () => {
                   block: { type: "uiap_led", fields: { STATE: "OFF" } },
                 },
               },
-            },
-          ],
-        },
-      },
+            }),
       workspace,
     );
 
@@ -69,19 +64,7 @@ describe("compileWorkspace", () => {
     registerUiapBlocks();
     const workspace = new Blockly.Workspace();
     Blockly.serialization.workspaces.load(
-      {
-        blocks: {
-          languageVersion: 0,
-          blocks: [
-            {
-              type: "uiap_forever",
-              inputs: {
-                DO: { block: { type: "uiap_led", fields: { STATE: "ON" } } },
-              },
-            },
-          ],
-        },
-      },
+      programState({ type: "uiap_led", fields: { STATE: "ON" } }, "forever"),
       workspace,
     );
 
@@ -97,10 +80,7 @@ describe("compileWorkspace", () => {
     registerUiapBlocks();
     const workspace = new Blockly.Workspace();
     Blockly.serialization.workspaces.load(
-      {
-        blocks: {
-          languageVersion: 0,
-          blocks: [{
+      programState({
             type: "uiap_neopixel_fill",
             fields: { COLOR: "#00ff00", BRIGHTNESS: 20 },
             next: { block: {
@@ -108,9 +88,7 @@ describe("compileWorkspace", () => {
               fields: { PIXEL: 8, COLOR: "#ff0000", BRIGHTNESS: 100 },
               next: { block: { type: "uiap_neopixel_clear" } },
             } },
-          }],
-        },
-      },
+          }),
       workspace,
     );
 
@@ -125,14 +103,15 @@ describe("compileWorkspace", () => {
     registerUiapBlocks();
     const workspace = new Blockly.Workspace();
     const variable = workspace.getVariableMap().createVariable("じょうたい");
-    Blockly.serialization.workspaces.load({ variables: [{ name: "じょうたい", id: variable.getId() }], blocks: { languageVersion: 0, blocks: [{
+    const state = programState({
       type: "uiap_variable_set", fields: { VAR: { id: variable.getId() } },
       inputs: { VALUE: { block: { type: "uiap_boolean", fields: { VALUE: "FALSE" } } } },
       next: { block: { type: "uiap_if", inputs: {
         CONDITION: { block: { type: "uiap_not", inputs: { VALUE: { block: { type: "uiap_variable_get", fields: { VAR: { id: variable.getId() } } } } } } },
         DO: { block: { type: "uiap_led", fields: { STATE: "ON" } } },
       } } },
-    }] } }, workspace);
+    });
+    Blockly.serialization.workspaces.load({ ...state, variables: [{ name: "じょうたい", id: variable.getId() }] }, workspace);
 
     expect(compileWorkspace(workspace)).toMatchObject([
       { type: "setVariable", id: variable.getId(), value: { type: "boolean", value: false } },
@@ -148,7 +127,7 @@ describe("compileWorkspace", () => {
   it("押した瞬間のブロックを1回限りの条件として変換する", () => {
     registerUiapBlocks();
     const workspace = new Blockly.Workspace();
-    Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks: [{ type: "uiap_if_button_pressed", inputs: { DO: { block: { type: "uiap_neopixel_clear" } } } }] } }, workspace);
+    Blockly.serialization.workspaces.load(programState({ type: "uiap_if_button_pressed", inputs: { DO: { block: { type: "uiap_neopixel_clear" } } } }), workspace);
     expect(compileWorkspace(workspace)).toMatchObject([{ type: "ifButtonPressed", body: [{ type: "neoPixelClear" }] }]);
   });
 });

@@ -46,7 +46,7 @@ export function loadBlocklySavedState(storage: StorageLike): BlocklySavedState |
     if (!isSupportedProjectVersion(saved.version) || !saved.workspace) return null;
     const detected = detectWorkspaceExtensions(saved.workspace);
     return {
-      workspace: migrateWorkspace(saved.workspace),
+      workspace: migrateWorkspace(saved.workspace, saved.version),
       tactSwitchEnabled: saved.extensions?.tactSwitch === true || detected.tactSwitch,
       neoPixelEnabled: saved.extensions?.neoPixel === true || detected.neoPixel,
       piezoEnabled: saved.extensions?.piezo === true || detected.piezo,

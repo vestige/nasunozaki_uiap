@@ -1,6 +1,6 @@
 {
   "format": "uiapduino-blockly-project",
-  "version": 4,
+  "version": 8,
   "savedAt": "2026-10-07T00:00:00.000Z",
   "extensions": {
     "tactSwitch": false,
@@ -17,70 +17,79 @@
       "languageVersion": 0,
       "blocks": [
         {
-          "type": "uiap_variable_set",
-          "fields": {
-            "VAR": {
-              "id": "test-value"
-            }
-          },
+          "type": "uiap_on_start",
+          "x": 36,
+          "y": 36,
           "inputs": {
-            "VALUE": {
+            "DO": {
               "block": {
-                "type": "uiap_number",
+                "type": "uiap_variable_set",
                 "fields": {
-                  "VALUE": 9
-                }
-              }
-            }
-          },
-          "next": {
-            "block": {
-              "type": "uiap_neopixel_fill",
-              "fields": {
-                "COLOR": "#00ff00",
-                "BRIGHTNESS": 20
-              },
-              "next": {
-                "block": {
-                  "type": "uiap_wait",
-                  "fields": {
-                    "MILLISECONDS": 2000
-                  },
-                  "next": {
+                  "VAR": {
+                    "id": "test-value"
+                  }
+                },
+                "inputs": {
+                  "VALUE": {
                     "block": {
-                      "type": "uiap_neopixel_set_value",
+                      "type": "uiap_number",
                       "fields": {
-                        "COLOR": "#ff0000",
-                        "BRIGHTNESS": 20
-                      },
-                      "inputs": {
-                        "PIXEL": {
+                        "VALUE": 9
+                      }
+                    }
+                  }
+                },
+                "next": {
+                  "block": {
+                    "type": "uiap_neopixel_fill_brightness",
+                    "fields": {
+                      "COLOR": "#00ff00"
+                    },
+                    "next": {
+                      "block": {
+                        "type": "uiap_wait",
+                        "fields": {
+                          "MILLISECONDS": 2000
+                        },
+                        "next": {
                           "block": {
-                            "type": "uiap_variable_get",
+                            "type": "uiap_neopixel_set_brightness",
                             "fields": {
-                              "VAR": {
-                                "id": "test-value"
+                              "COLOR": "#ff0000"
+                            },
+                            "inputs": {
+                              "PIXEL": {
+                                "block": {
+                                  "type": "uiap_variable_get",
+                                  "fields": {
+                                    "VAR": {
+                                      "id": "test-value"
+                                    }
+                                  }
+                                }
+                              },
+                              "BRIGHTNESS": {
+                                "shadow": {
+                                  "type": "uiap_number",
+                                  "fields": {
+                                    "VALUE": 20
+                                  }
+                                }
                               }
-                            }
-                          }
-                        }
-                      },
-                      "next": {
-                        "block": {
-                          "type": "uiap_neopixel_fill",
-                          "fields": {
-                            "COLOR": "#ff0000",
-                            "BRIGHTNESS": 20
-                          },
-                          "next": {
-                            "block": {
-                              "type": "uiap_forever",
-                              "inputs": {
-                                "DO": {
-                                  "block": {
-                                    "type": "uiap_wait",
-                                    "fields": {
-                                      "MILLISECONDS": 1000
+                            },
+                            "next": {
+                              "block": {
+                                "type": "uiap_neopixel_fill_brightness",
+                                "fields": {
+                                  "COLOR": "#ff0000"
+                                },
+                                "inputs": {
+                                  "BRIGHTNESS": {
+                                    "shadow": {
+                                      "type": "uiap_number",
+                                      "fields": {
+                                        "VALUE": 20
+                                      }
                                     }
                                   }
                                 }
@@ -89,14 +98,37 @@
                           }
                         }
                       }
+                    },
+                    "inputs": {
+                      "BRIGHTNESS": {
+                        "shadow": {
+                          "type": "uiap_number",
+                          "fields": {
+                            "VALUE": 20
+                          }
+                        }
+                      }
                     }
                   }
                 }
               }
             }
-          },
-          "x": 36,
-          "y": 36
+          }
+        },
+        {
+          "type": "uiap_main_forever",
+          "x": 336,
+          "y": 36,
+          "inputs": {
+            "DO": {
+              "block": {
+                "type": "uiap_wait",
+                "fields": {
+                  "MILLISECONDS": 1000
+                }
+              }
+            }
+          }
         }
       ]
     }

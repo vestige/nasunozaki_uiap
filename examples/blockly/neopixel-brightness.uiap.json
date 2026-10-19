@@ -1,6 +1,6 @@
 {
   "format": "uiapduino-blockly-project",
-  "version": 5,
+  "version": 8,
   "savedAt": "2026-10-10T00:00:00.000Z",
   "extensions": {
     "tactSwitch": false,
@@ -17,86 +17,93 @@
       "languageVersion": 0,
       "blocks": [
         {
-          "type": "uiap_variable_set",
-          "fields": {
-            "VAR": {
-              "id": "brightness"
-            }
-          },
-          "inputs": {
-            "VALUE": {
-              "block": {
-                "type": "uiap_number",
-                "fields": {
-                  "VALUE": 15
-                }
-              }
-            }
-          },
+          "type": "uiap_on_start",
           "x": 36,
           "y": 36,
-          "next": {
-            "block": {
-              "type": "uiap_repeat",
-              "fields": {
-                "TIMES": 6
-              },
-              "inputs": {
-                "DO": {
+          "inputs": {
+            "DO": {
+              "block": {
+                "type": "uiap_variable_set",
+                "fields": {
+                  "VAR": {
+                    "id": "brightness"
+                  }
+                },
+                "inputs": {
+                  "VALUE": {
+                    "block": {
+                      "type": "uiap_number",
+                      "fields": {
+                        "VALUE": 15
+                      }
+                    }
+                  }
+                },
+                "next": {
                   "block": {
-                    "type": "uiap_neopixel_fill_brightness",
+                    "type": "uiap_repeat",
                     "fields": {
-                      "COLOR": "#00ff00"
+                      "TIMES": 6
                     },
                     "inputs": {
-                      "BRIGHTNESS": {
+                      "DO": {
                         "block": {
-                          "type": "uiap_variable_get",
+                          "type": "uiap_neopixel_fill_brightness",
                           "fields": {
-                            "VAR": {
-                              "id": "brightness"
-                            }
-                          }
-                        }
-                      }
-                    },
-                    "next": {
-                      "block": {
-                        "type": "uiap_wait",
-                        "fields": {
-                            "MILLISECONDS": 3000
-                        },
-                        "next": {
-                          "block": {
-                            "type": "uiap_variable_set",
-                            "fields": {
-                              "VAR": {
-                                "id": "brightness"
+                            "COLOR": "#00ff00"
+                          },
+                          "inputs": {
+                            "BRIGHTNESS": {
+                              "block": {
+                                "type": "uiap_variable_get",
+                                "fields": {
+                                  "VAR": {
+                                    "id": "brightness"
+                                  }
+                                }
                               }
-                            },
-                            "inputs": {
-                              "VALUE": {
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "uiap_wait",
+                              "fields": {
+                                "MILLISECONDS": 3000
+                              },
+                              "next": {
                                 "block": {
-                                  "type": "uiap_arithmetic",
+                                  "type": "uiap_variable_set",
                                   "fields": {
-                                    "OP": "ADD"
+                                    "VAR": {
+                                      "id": "brightness"
+                                    }
                                   },
                                   "inputs": {
-                                    "LEFT": {
+                                    "VALUE": {
                                       "block": {
-                                        "type": "uiap_variable_get",
+                                        "type": "uiap_arithmetic",
                                         "fields": {
-                                          "VAR": {
-                                            "id": "brightness"
+                                          "OP": "ADD"
+                                        },
+                                        "inputs": {
+                                          "LEFT": {
+                                            "block": {
+                                              "type": "uiap_variable_get",
+                                              "fields": {
+                                                "VAR": {
+                                                  "id": "brightness"
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "RIGHT": {
+                                            "block": {
+                                              "type": "uiap_number",
+                                              "fields": {
+                                                "VALUE": 1
+                                              }
+                                            }
                                           }
-                                        }
-                                      }
-                                    },
-                                    "RIGHT": {
-                                      "block": {
-                                        "type": "uiap_number",
-                                        "fields": {
-                                          "VALUE": 1
                                         }
                                       }
                                     }
@@ -107,17 +114,22 @@
                           }
                         }
                       }
+                    },
+                    "next": {
+                      "block": {
+                        "type": "uiap_neopixel_clear"
+                      }
                     }
                   }
-                }
-              },
-              "next": {
-                "block": {
-                  "type": "uiap_neopixel_clear"
                 }
               }
             }
           }
+        },
+        {
+          "type": "uiap_main_forever",
+          "x": 336,
+          "y": 36
         }
       ]
     }

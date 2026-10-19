@@ -45,7 +45,7 @@ export function parseBlocklyProjectFile(raw: string): BlocklyProjectFile {
     throw new Error("保存日時が正しくありません。");
   }
 
-  return { ...value, workspace: migrateWorkspace(value.workspace) } as BlocklyProjectFile;
+  return { ...value, workspace: migrateWorkspace(value.workspace, value.version) } as BlocklyProjectFile;
 }
 
 export function createBlocklyProjectFileName(savedAt = new Date()) {

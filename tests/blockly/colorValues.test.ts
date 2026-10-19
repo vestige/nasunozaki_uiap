@@ -5,6 +5,7 @@ import { compileWorkspace } from "../../web/src/features/blockly/utils/program";
 import { runProgram } from "../../web/src/features/blockly/utils/execution";
 import { encodeStandaloneProgram } from "../../web/src/features/blockly/utils/standaloneProgram";
 import type { ProgramInstruction, ProgramValue } from "../../web/src/features/blockly/types/program";
+import { attachToProgram } from "./programStructure";
 
 const color: ProgramValue = { type: "color", value: "#123456" };
 const light: ProgramInstruction = { type: "neoPixelColorValue", pixel: null, color: { type: "variable", id: "c" }, brightness: { type: "number", value: 15 }, blockId: "light" };
@@ -35,6 +36,7 @@ it("色は保存・復元後も色型としてコンパイルする", () => {
     c.setFieldValue("#123456", "COLOR"); n.setFieldValue(15, "VALUE");
     block.getInput("COLOR")!.connection!.connect(c.outputConnection!);
     block.getInput("BRIGHTNESS")!.connection!.connect(n.outputConnection!);
+    attachToProgram(workspace, block);
     Blockly.serialization.workspaces.load(Blockly.serialization.workspaces.save(workspace), restored);
     expect(compileWorkspace(restored)[0]).toMatchObject({ type: "neoPixelColorValue", color, brightness: { type: "number", value: 15 } });
   } finally { workspace.dispose(); restored.dispose(); }
