@@ -3,11 +3,12 @@
   "board": "HID ProMicro CH32V003",
   "usb": "WebHID Only",
   "optimize": "Smallest (-Os) with LTO",
-  "source_sha256": "1d207f53e8905a19017683f4bb17161adb50ced5d57ec5eb1cea311e08fb4b81",
+  "source_sha256": "2cfac547c6b73571a4bec628c4e4d56441917eefc81af8489cfccad5502a565b",
   "headers_sha256": {
     "standalone_vm.h": "bf7bec72447f5b5531f4517aff6e83dd2b7a87817e9afc53b44d8499f8679ccc",
     "standalone_button.h": "a40616ea459de4c4fa7b2421c68e10d5dfc63e4dfff3f1e075d7752002cbb29c",
-    "runtime_clock.h": "3c1bb2cb41830bb5cb9e841daed5de467b671a8aeb3d30d1e3db8e59199f876d"
+    "runtime_clock.h": "3c1bb2cb41830bb5cb9e841daed5de467b671a8aeb3d30d1e3db8e59199f876d",
+    "owned_program_update.h": "0e046a041812d08a0260ebb27c3ce0744702f5623f223470b4d36224bc00302f"
   },
   "standalone_formats": [
     1,
@@ -18,8 +19,9 @@
     6
   ],
   "interactive_tone_version": 1,
-  "binary_size": 12416,
-  "static_ram_bytes": 440,
+  "owned_program_update_version": 1,
+  "binary_size": 13184,
+  "static_ram_bytes": 460,
   "linker_sha256": "6577263ff0f284fe8095099116799dae818a136cbb59379899169ed3e90517ce",
-  "binary_sha256": "ba556b0722ed2eefd8265f27a996d16434a48c2ff8deaa64db50ee7101ed0acb"
+  "binary_sha256": "018b0ebfa0f788134ee3247e623cbc13ac588a411a296a821d527257537fe363"
 }

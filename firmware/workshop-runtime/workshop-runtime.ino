@@ -3,6 +3,7 @@
 #include "standalone_vm.h"
 #include "standalone_button.h"
 #include "runtime_clock.h"
+#include "owned_program_update.h"
 #include <ch32v00x_flash.h>
 #define NEOPIXELMIN_MAX_LEDS 8
 #define NEOPIXELMIN_ATOMIC
@@ -67,6 +68,12 @@ constexpr uint8_t kProgramBegin = 0x20;
 constexpr uint8_t kProgramData = 0x21;
 constexpr uint8_t kProgramCommit = 0x22;
 constexpr uint8_t kProgramAbort = 0x23;
+constexpr uint8_t kOwnedBegin = 0x40;
+constexpr uint8_t kOwnedData = 0x41;
+constexpr uint8_t kOwnedCommit = 0x42;
+constexpr uint8_t kOwnedAbort = 0x43;
+constexpr uint8_t kOwnedState = 0x44;
+constexpr uint8_t kOwnedRecover = 0x45;
 constexpr uint8_t kButtonPin = 5;  // D5 / PC3. Connect a switch between D5 and GND.
 constexpr uint8_t kNeoPixelCount = 8;
 constexpr uint8_t kResponse = 0x80;
@@ -101,6 +108,7 @@ uint32_t programUpdateGeneration = 0;
 uint16_t programUpdateLength = 0;
 uint16_t programUpdateCrc = 0;
 uint16_t programUpdateOffset = 0;
+uiap::OwnedProgramUpdate ownedUpdate;
 
 uint32_t bankGeneration(const volatile uint8_t *bank) {
   return static_cast<uint32_t>(bank[5]) |
@@ -257,7 +265,7 @@ void executeStandaloneRange(uint16_t start, uint16_t end) {
 void sendResponse(uint8_t command, uint8_t sequence, uint8_t status) {
   // READ_BUTTON uses 1 for pressed, not an error. Other error responses
   // silence an active tone; capability replies are outside the status range.
-  if (status > 0 && status <= kDeviceError && !(command == kReadButton && status == 1)) stopTone();
+  if (status > 0 && status <= kDeviceError && command != kOwnedState && !(command == kReadButton && status == 1)) stopTone();
   uint8_t response[kMessageSize] = {
       kMagic[0], kMagic[1], kMagic[2], kMagic[3],
       kVersion, static_cast<uint8_t>(command | kResponse), sequence, status,
@@ -396,6 +404,50 @@ uint8_t handleProgramUpdate(uint8_t command, const uint8_t *message, uint8_t len
   return kUnsupportedCommand;
 }
 
+uint8_t handleOwnedUpdate(uint8_t command, const uint8_t *message, uint8_t length) {
+  const uint8_t count = message[7];
+  if (count > 24 || length < static_cast<uint8_t>(8 + count)) return kInvalidPayload;
+  if (command == kOwnedState) {
+    if (count != 1 || message[8] > 10) return kInvalidPayload;
+    const uint8_t field = message[8];
+    if (field == 0) return ownedUpdate.state(programUpdateActive, runtimeMillis());
+    if (field <= 8) return ownedUpdate.token[field - 1];
+    return field == 9 ? programUpdateOffset & 0xff : programUpdateOffset >> 8;
+  }
+  if (command == kOwnedRecover) {
+    if (count != 10) return kInvalidPayload;
+    const uint16_t expected = static_cast<uint16_t>(message[16]) |
+        (static_cast<uint16_t>(message[17]) << 8);
+    if (!ownedUpdate.canRecover(programUpdateActive,
+        message + 8, expected, programUpdateOffset, runtimeMillis())) return kInvalidPayload;
+    const uint8_t abortMessage[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    const uint8_t result = handleProgramUpdate(kProgramAbort, abortMessage, 8);
+    ownedUpdate.finish(false);
+    return result;
+  }
+  if (count < 8) return kInvalidPayload;
+  const uint32_t now = runtimeMillis();
+  if (command == kOwnedBegin) {
+    if (count != 13 || programUpdateActive) return kInvalidPayload;
+    uint8_t nonzero = 0;
+    for (uint8_t i = 0; i < 8; ++i) nonzero |= message[8 + i];
+    if (!nonzero) return kInvalidPayload;
+  } else if (!programUpdateActive || !ownedUpdate.owns(message + 8) ||
+      (command != kOwnedAbort && ownedUpdate.expired(now))) return kInvalidPayload;
+
+  // Reuse the validated bank writer. Only the routing layer strips ownership;
+  // legacy packets from USB can never enter an owned transfer through it.
+  uint8_t legacy[24] = {};
+  legacy[7] = count - 8;
+  for (uint8_t i = 8; i < count; ++i) legacy[i] = message[i + 8];
+  const uint8_t result = handleProgramUpdate(kProgramBegin + command - kOwnedBegin,
+      legacy, count);
+  if (command == kOwnedBegin && result == kOk) ownedUpdate.begin(message + 8, runtimeMillis());
+  else if (command == kOwnedData && result == kOk) ownedUpdate.progress(runtimeMillis());
+  if (!programUpdateActive) ownedUpdate.finish(command == kOwnedCommit && result == kOk);
+  return result;
+}
+
 void handleMessage(const uint8_t *message, uint8_t length) {
   const uint8_t command = length > 5 ? message[5] : 0;
   const uint8_t sequence = length > 6 ? message[6] : 0;
@@ -454,7 +506,16 @@ void handleMessage(const uint8_t *message, uint8_t length) {
     sendResponse(command, sequence, static_cast<uint8_t>(0x40 | activeProgramBank));
     return;
   }
+  if (command >= kOwnedBegin && command <= kOwnedRecover) {
+    sendResponse(command, sequence, handleOwnedUpdate(command, message, length));
+    return;
+  }
   if (command >= kProgramBegin && command <= kProgramAbort) {
+    if (programUpdateActive && ownedUpdate.isOwned()) {
+      sendResponse(command, sequence, kInvalidPayload);
+      return;
+    }
+    if (command == kProgramBegin) ownedUpdate.legacy();
     sendResponse(command, sequence, handleProgramUpdate(command, message, length));
     return;
   }
@@ -529,6 +590,7 @@ void handleMessage(const uint8_t *message, uint8_t length) {
 
 void serviceWebHid() {
   serviceTone();
+  ownedUpdate.service(runtimeMillis());
   if (!WebHID.available()) return;
   uint8_t message[32] = {0};
   const uint8_t length = WebHID.recv(message, sizeof(message));

@@ -4,13 +4,13 @@ import type {
   RuntimeInputReportEvent,
 } from "../../web/src/features/runtime/types/transport";
 import { encodeStandaloneProgram } from "../../web/src/features/blockly/utils/standaloneProgram";
-import { readStandaloneStatus, writeStandaloneProgram } from "../../web/src/features/blockly/utils/writeStandaloneProgram";
+import { readStandaloneStatus, StandaloneBeginRejectedError, writeStandaloneProgram } from "../../web/src/features/blockly/utils/writeStandaloneProgram";
 
-function fakeRuntime(initialStatus: number, capability: number | null = 1, options: { drop?: number[]; lateBeginOnAbort?: boolean; dropRecoveryStatus?: boolean; beginSnapshot?: number; featureCache?: boolean; corruptCache?: boolean; reportIdPrefix?: boolean } = {}) {
+function fakeRuntime(initialStatus: number, capability: number | null = 1, options: { initiallyUpdating?: boolean; beginStatus?: number; drop?: number[]; lateBeginOnAbort?: boolean; dropRecoveryStatus?: boolean; beginSnapshot?: number; featureCache?: boolean; corruptCache?: boolean; reportIdPrefix?: boolean } = {}) {
   let listener: ((event: RuntimeInputReportEvent) => void) | undefined;
   let status = initialStatus;
   const commands: Uint8Array[] = [];
-  let updating = false;
+  let updating = options.initiallyUpdating ?? false;
   let listeners = 0;
   const drops = [...options.drop ?? []];
   let lastResponse = new Uint8Array(0);
@@ -35,12 +35,12 @@ function fakeRuntime(initialStatus: number, capability: number | null = 1, optio
       commands.push(bytes);
       if (bytes[5] === 0x25 && capability === null) return;
       let result = 0;
-      if (bytes[5] === 0x20) { result = updating ? 2 : 0; updating = true; }
+      if (bytes[5] === 0x20) { result = options.beginStatus ?? (updating ? 2 : 0); if (result === 0) updating = true; }
       if (bytes[5] === 0x23) updating = false;
       if (bytes[5] === 0x22) { status = status === 0x41 ? 0x42 : 0x41; updating = false; }
       const response = Uint8Array.from([
         0x55, 0x49, 0x41, 0x50, 1, bytes[5] | 0x80, bytes[6],
-        bytes[5] === 0x26 ? options.beginSnapshot ?? 1 : bytes[5] === 0x25 ? capability! : bytes[5] === 0x24 ? status : bytes[5] === 0x20 && initialStatus === 1 ? 1 : result,
+        bytes[5] === 0x44 ? 1 : bytes[5] === 0x26 ? options.beginSnapshot ?? 1 : bytes[5] === 0x25 ? capability! : bytes[5] === 0x24 ? status : bytes[5] === 0x20 && initialStatus === 1 ? 1 : result,
       ]);
       lastResponse = response.slice();
       const dropIndex = drops.indexOf(bytes[5]);
@@ -66,6 +66,37 @@ function fakeRuntime(initialStatus: number, capability: number | null = 1, optio
 }
 
 describe("writeStandaloneProgram", () => {
+  it("接続時から更新中なら開始拒否を区別し、他の保存をABORTせず、次回の通常接続では保存できる", async () => {
+    const fake = fakeRuntime(0x41, 0x56, { initiallyUpdating: true });
+    const slot = encodeStandaloneProgram([{ type: "led", on: true, blockId: "led" }]);
+    const error = await writeStandaloneProgram(fake.device, slot, () => {}).catch(error => error);
+    expect(error).toBeInstanceOf(StandaloneBeginRejectedError);
+    expect(error.status).toBe(2);
+    expect(fake.commands.map(command => command[5])).toEqual([0x24, 0x44, 0x20]);
+    expect(fake.updating).toBe(true);
+    expect(fake.listeners).toBe(0);
+    const reconnected = fakeRuntime(0x41, 0x56);
+    await expect(writeStandaloneProgram(reconnected.device, slot, () => {})).resolves.toBe("B");
+  });
+
+  it.each([2, 3])("開始拒否status%iを更新中と決めつけず、勝手に解除・再送しない", async status => {
+    const fake = fakeRuntime(0x41, 0x56, { beginStatus: status });
+    const slot = encodeStandaloneProgram([{ type: "led", on: true, blockId: "led" }]);
+    await expect(writeStandaloneProgram(fake.device, slot, () => {})).rejects.toMatchObject({ name: "StandaloneBeginRejectedError", status });
+    expect(fake.commands.map(command => command[5])).toEqual([0x24, 0x44, 0x20]);
+    expect(fake.updating).toBe(false);
+    expect(fake.listeners).toBe(0);
+  });
+
+  it("同じページの二重保存は2つ目のデバイスへ通信する前に拒否する", async () => {
+    const first = fakeRuntime(0x41), second = fakeRuntime(0x41);
+    const slot = encodeStandaloneProgram([{ type: "led", on: true, blockId: "led" }]);
+    const saving = writeStandaloneProgram(first.device, slot, () => {});
+    await expect(writeStandaloneProgram(second.device, slot, () => {})).rejects.toThrow("ほかの画面");
+    expect(second.commands).toHaveLength(0);
+    await saving;
+    await expect(writeStandaloneProgram(second.device, slot, () => {})).resolves.toBe("B");
+  });
   it.each([false, true])("Flash命令のInput応答だけ失われてもGET_REPORTで同じACKを確認し、書込み命令を再送しない: %s", async reportIdPrefix => {
     vi.useFakeTimers();
     try {
@@ -75,7 +106,7 @@ describe("writeStandaloneProgram", () => {
       const result = writeStandaloneProgram(fake.device, slot, () => {}, trace).then(bank => ({ bank }), error => ({ error }));
       await vi.runAllTimersAsync();
       expect(await result).toEqual({ bank: "B" });
-      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x20, 0x21, 0x22, 0x24]);
+      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x44, 0x20, 0x21, 0x22, 0x24]);
       expect(fake.featureReads).toBe(3);
       expect(trace.mock.calls.filter(([event]) => event === "FEATURE_RESPONSE")).toHaveLength(3);
       expect(fake.listeners).toBe(0);
@@ -104,7 +135,7 @@ describe("writeStandaloneProgram", () => {
       const trace = vi.fn();
       const failed = writeStandaloneProgram(fake.device, slot, () => {}, trace).then(() => "unexpected success", error => String(error));
       await vi.runAllTimersAsync();
-      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x20, 0x26, 0x23]);
+      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x44, 0x20, 0x26, 0x23]);
       expect(fake.updating).toBe(false);
       expect(await failed).toMatch(/BEGIN:.*更新状態の解除を確認/);
       expect(fake.listeners).toBe(0);
@@ -137,7 +168,7 @@ describe("writeStandaloneProgram", () => {
       const result = writeStandaloneProgram(fake.device, slot, () => {}).then(bank => ({ bank }), error => ({ error }));
       await vi.runAllTimersAsync();
       await expect(result).resolves.toEqual({ bank: "B" });
-      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x20, 0x21, 0x22, 0x24]);
+      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x44, 0x20, 0x21, 0x22, 0x24]);
       expect(fake.listeners).toBe(0);
     } finally { vi.useRealTimers(); }
   });
@@ -150,7 +181,7 @@ describe("writeStandaloneProgram", () => {
       const result = writeStandaloneProgram(fake.device, slot, () => {}).catch(error => String(error));
       await vi.runAllTimersAsync();
       expect(await result).toMatch(/COMMIT:.*保存結果を確認できません/);
-      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x20, 0x21, 0x22, 0x24]);
+      expect(fake.commands.map(c => c[5])).toEqual([0x24, 0x44, 0x20, 0x21, 0x22, 0x24]);
       expect(fake.listeners).toBe(0);
     } finally { vi.useRealTimers(); }
   });
@@ -220,8 +251,8 @@ describe("writeStandaloneProgram", () => {
     const slot = encodeStandaloneProgram([{ type: "led", on: true, blockId: "led" }]);
     slot[4] = 2;
     await expect(writeStandaloneProgram(fake.device, slot, () => undefined)).resolves.toBe("B");
-    expect(fake.commands.map((command) => command[5])).toEqual([0x24, 0x25, 0x20, 0x21, 0x22, 0x24]);
-    expect(fake.commands[2][8]).toBe(2);
+    expect(fake.commands.map((command) => command[5])).toEqual([0x24, 0x25, 0x44, 0x20, 0x21, 0x22, 0x24]);
+    expect(fake.commands.find(command => command[5] === 0x20)?.[8]).toBe(2);
   });
 
   it("未知の作品形式は通信前に拒否する", async () => {
@@ -247,9 +278,9 @@ describe("writeStandaloneProgram", () => {
 
     await expect(writeStandaloneProgram(fake.device, slot, progress)).resolves.toBe("A");
 
-    expect(fake.commands.map((command) => command[5])).toEqual([0x24, 0x20, 0x21, 0x22, 0x24]);
+    expect(fake.commands.map((command) => command[5])).toEqual([0x24, 0x44, 0x20, 0x21, 0x22, 0x24]);
     expect(fake.commands.every((command) => command.length === 32)).toBe(true);
-    expect(fake.commands.map((command) => command[6])).toEqual([0, 1, 2, 3, 4]);
+    expect(fake.commands.map((command) => command[6])).toEqual([0, 1, 2, 3, 4, 5]);
     expect(progress).toHaveBeenLastCalledWith(100);
   });
 

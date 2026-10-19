@@ -12,6 +12,19 @@ export const STANDALONE_UPDATE_COMMAND_STATUS = 0x24;
 export const STANDALONE_UPDATE_COMMAND_CAPABILITIES = 0x25;
 export const STANDALONE_UPDATE_COMMAND_BEGIN_DIAGNOSTICS = 0x26;
 export const STANDALONE_UPDATE_DATA_SIZE = 22;
+export const OWNED_UPDATE_DATA_SIZE = 14;
+export const OWNED_BEGIN = 0x40;
+export const OWNED_DATA = 0x41;
+export const OWNED_COMMIT = 0x42;
+export const OWNED_ABORT = 0x43;
+export const OWNED_STATE = 0x44;
+export const OWNED_RECOVER = 0x45;
+
+export function buildOwnedUpdateMessage(sequence: number, command: number, payload: number[]) {
+  if (command < OWNED_BEGIN || command > OWNED_RECOVER) throw new Error("所有権付き更新の命令が不正です。");
+  for (const value of payload) assertUint8(value, "payload");
+  return buildMessage(sequence, command, payload);
+}
 
 const MAGIC = [0x55, 0x49, 0x41, 0x50] as const; // "UIAP"
 const ENVELOPE_SIZE = 8;
