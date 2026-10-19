@@ -7,6 +7,7 @@ import { runProgram } from "../../web/src/features/blockly/utils/execution";
 import { encodeStandaloneProgram } from "../../web/src/features/blockly/utils/standaloneProgram";
 import { parseBlocklyProjectFile, createBlocklyProjectFile, stringifyBlocklyProjectFile } from "../../web/src/features/blockly/utils/projectFile";
 import { loadBlocklyWorkspace, BLOCKLY_STORAGE_KEY } from "../../web/src/features/blockly/utils/persistence";
+import { attachToProgram } from "./programStructure";
 
 const n = (value: number): ProgramValue => ({ type: "number", value });
 const calc = (op: "ADD" | "SUB", a: ProgramValue, b: ProgramValue): ProgramValue => ({ type: "arithmetic", op, left: a, right: b });
@@ -43,7 +44,7 @@ it("旧形式の固定番号をファイルと自動保存から移行し、形�
   const workspace = new Blockly.Workspace();
   try {
     Blockly.serialization.workspaces.load(migrated, workspace);
-    const block = workspace.getTopBlocks()[0];
+    const block = workspace.getBlocksByType("uiap_on_start", false)[0].getInputTargetBlock("DO")!;
     expect(block.type).toBe("uiap_neopixel_set_brightness");
     expect(block.getInputTargetBlock("PIXEL")?.getFieldValue("VALUE")).toBe(8);
     const program = compileWorkspace(workspace);
@@ -63,6 +64,7 @@ it("空入力や不正な固定番号をコンパイル時に拒否する", () =
   const workspace = new Blockly.Workspace();
   try {
     const block = workspace.newBlock("uiap_neopixel_set_value");
+    attachToProgram(workspace, block);
     expect(() => compileWorkspace(workspace)).toThrow("値を入れていない");
     const number = workspace.newBlock("uiap_number");
     block.getInput("PIXEL")!.connection!.connect(number.outputConnection!);

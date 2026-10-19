@@ -6,8 +6,35 @@ export type { ProgramInstruction, ProgramValue } from "../types/program";
 export function compileWorkspace(
   workspace: Blockly.Workspace,
 ): ProgramInstruction[] {
-  const first = workspace.getTopBlocks(true)[0];
-  return first ? compileChain(first) : [];
+  const starts = workspace.getBlocksByType("uiap_on_start", false);
+  const loops = workspace.getBlocksByType("uiap_main_forever", false);
+  if (starts.length > 1) throw new Error("「はじめに」は1つだけ置いてください。");
+  if (loops.length > 1) throw new Error("最上位の「ずっと」は1つだけ置いてください。");
+  const instructions = starts.length === 1
+    ? compileChain(starts[0].getInputTargetBlock("DO"))
+    : [];
+  if (loops.length === 1) {
+    const body = compileChain(loops[0].getInputTargetBlock("DO"));
+    if (body.length > 0) instructions.push({ type: "forever", body, blockId: loops[0].id });
+  }
+  return instructions;
+}
+
+export function updateProgramStructureWarnings(workspace: Blockly.Workspace) {
+  const starts = workspace.getBlocksByType("uiap_on_start", false);
+  const loops = workspace.getBlocksByType("uiap_main_forever", false);
+  for (const block of workspace.getTopBlocks(false)) {
+    const setWarningText = (block as Blockly.Block & { setWarningText?(text: string | null, id?: string): void }).setWarningText;
+    if (!setWarningText) continue;
+    const duplicate = (block.type === "uiap_on_start" && starts.length > 1)
+      || (block.type === "uiap_main_forever" && loops.length > 1);
+    const detached = block.type !== "uiap_on_start" && block.type !== "uiap_main_forever"
+      && block.outputConnection === null;
+    setWarningText.call(block, duplicate
+      ? `${block.type === "uiap_on_start" ? "「はじめに」" : "最上位の「ずっと」"}は1つだけ置いてください。`
+      : detached ? "このブロックは実行されません。「はじめに」か「ずっと」の中へつないでください。" : null,
+    "uiap-program-structure");
+  }
 }
 
 function compileChain(first: Blockly.Block | null): ProgramInstruction[] {

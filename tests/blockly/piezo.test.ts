@@ -8,6 +8,7 @@ import { encodeStandaloneProgram } from "../../web/src/features/blockly/utils/st
 import { createBrowserTone } from "../../web/src/features/blockly/utils/browserTone";
 import { createBlocklyProjectFile, parseBlocklyProjectFile, stringifyBlocklyProjectFile } from "../../web/src/features/blockly/utils/projectFile";
 import { loadBlocklySavedState, saveBlocklyWorkspace } from "../../web/src/features/blockly/utils/persistence";
+import { attachToProgram } from "./programStructure";
 
 afterEach(() => vi.unstubAllGlobals());
 const tone: ProgramInstruction = { type: "tone", frequency: 440, milliseconds: 500, wait: true, blockId: "tone" };
@@ -42,9 +43,10 @@ it("音ブロックを作品形式6で保存・復元し、拡張フラグがな
     block.setFieldValue("NEXT", "MODE");
     const stop = workspace.newBlock("uiap_stop_tone");
     block.nextConnection!.connect(stop.previousConnection!);
+    attachToProgram(workspace, block);
     const state = Blockly.serialization.workspaces.save(workspace);
     const project = parseBlocklyProjectFile(stringifyBlocklyProjectFile(createBlocklyProjectFile(state)));
-    expect(project.version).toBe(7);
+    expect(project.version).toBe(8);
     workspace.clear();
     Blockly.serialization.workspaces.load(project.workspace, workspace);
     expect(compileWorkspace(workspace)).toMatchObject([{ ...tone, blockId: expect.any(String), wait: false }, { type: "stopTone" }]);

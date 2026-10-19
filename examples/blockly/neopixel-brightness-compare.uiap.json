@@ -1,6 +1,6 @@
 {
   "format": "uiapduino-blockly-project",
-  "version": 5,
+  "version": 8,
   "savedAt": "2026-10-10T00:00:00.000Z",
   "extensions": {
     "neoPixel": true,
@@ -11,71 +11,83 @@
       "languageVersion": 0,
       "blocks": [
         {
-          "type": "uiap_repeat",
+          "type": "uiap_on_start",
           "x": 36,
           "y": 36,
-          "fields": {
-            "TIMES": 3
-          },
           "inputs": {
             "DO": {
               "block": {
-                "type": "uiap_neopixel_fill_brightness",
+                "type": "uiap_repeat",
                 "fields": {
-                  "COLOR": "#00ff00"
+                  "TIMES": 3
                 },
                 "inputs": {
-                  "BRIGHTNESS": {
-                    "shadow": {
-                      "type": "uiap_number",
+                  "DO": {
+                    "block": {
+                      "type": "uiap_neopixel_fill_brightness",
                       "fields": {
-                        "VALUE": 15
-                      }
-                    }
-                  }
-                },
-                "next": {
-                  "block": {
-                    "type": "uiap_wait",
-                    "fields": {
-                      "MILLISECONDS": 3000
-                    },
-                    "next": {
-                      "block": {
-                        "type": "uiap_neopixel_fill_brightness",
-                        "fields": {
-                          "COLOR": "#00ff00"
-                        },
-                        "inputs": {
-                          "BRIGHTNESS": {
-                            "shadow": {
-                              "type": "uiap_number",
-                              "fields": {
-                                "VALUE": 20
-                              }
+                        "COLOR": "#00ff00"
+                      },
+                      "inputs": {
+                        "BRIGHTNESS": {
+                          "shadow": {
+                            "type": "uiap_number",
+                            "fields": {
+                              "VALUE": 15
                             }
                           }
-                        },
-                        "next": {
-                          "block": {
-                            "type": "uiap_wait",
-                            "fields": {
-                              "MILLISECONDS": 3000
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "uiap_wait",
+                          "fields": {
+                            "MILLISECONDS": 3000
+                          },
+                          "next": {
+                            "block": {
+                              "type": "uiap_neopixel_fill_brightness",
+                              "fields": {
+                                "COLOR": "#00ff00"
+                              },
+                              "inputs": {
+                                "BRIGHTNESS": {
+                                  "shadow": {
+                                    "type": "uiap_number",
+                                    "fields": {
+                                      "VALUE": 20
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "uiap_wait",
+                                  "fields": {
+                                    "MILLISECONDS": 3000
+                                  }
+                                }
+                              }
                             }
                           }
                         }
                       }
                     }
                   }
+                },
+                "next": {
+                  "block": {
+                    "type": "uiap_neopixel_clear"
+                  }
                 }
               }
             }
-          },
-          "next": {
-            "block": {
-              "type": "uiap_neopixel_clear"
-            }
           }
+        },
+        {
+          "type": "uiap_main_forever",
+          "x": 336,
+          "y": 36
         }
       ]
     }

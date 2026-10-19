@@ -14,6 +14,7 @@ export function useBlocklyWorkspace(
     registerUiapBlocks();
     const workspace = Blockly.inject(node, {
       toolbox: uiapToolbox, renderer: "zelos", trashcan: true,
+      maxInstances: { uiap_on_start: 1, uiap_main_forever: 1 },
       zoom: { controls: true, wheel: true, startScale: 0.9 },
       move: { scrollbars: true, drag: true, wheel: true },
     });

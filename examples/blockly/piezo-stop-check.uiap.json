@@ -1,26 +1,66 @@
 {
   "format": "uiapduino-blockly-project",
-  "version": 6,
+  "version": 8,
   "savedAt": "2026-10-11T00:00:00.000Z",
-  "extensions": { "piezo": true, "neoPixel": true },
+  "extensions": {
+    "piezo": true,
+    "neoPixel": true
+  },
   "workspace": {
     "blocks": {
       "languageVersion": 0,
-      "blocks": [{
-        "type": "uiap_led", "x": 35, "y": 35,
-        "fields": { "STATE": "ON" },
-        "next": { "block": {
-          "type": "uiap_neopixel_fill_brightness", "fields": { "COLOR": "#00ff00" },
-          "inputs": { "BRIGHTNESS": { "shadow": { "type": "uiap_number", "fields": { "VALUE": 15 } } } },
-          "next": { "block": {
-            "type": "uiap_forever",
-            "inputs": { "DO": { "block": {
-              "type": "uiap_tone",
-              "fields": { "NOTE": "440", "MILLISECONDS": 5000, "MODE": "WAIT" }
-            } } }
-          } }
-        } }
-      }]
+      "blocks": [
+        {
+          "type": "uiap_on_start",
+          "x": 35,
+          "y": 35,
+          "inputs": {
+            "DO": {
+              "block": {
+                "type": "uiap_led",
+                "fields": {
+                  "STATE": "ON"
+                },
+                "next": {
+                  "block": {
+                    "type": "uiap_neopixel_fill_brightness",
+                    "fields": {
+                      "COLOR": "#00ff00"
+                    },
+                    "inputs": {
+                      "BRIGHTNESS": {
+                        "shadow": {
+                          "type": "uiap_number",
+                          "fields": {
+                            "VALUE": 15
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "uiap_main_forever",
+          "x": 335,
+          "y": 35,
+          "inputs": {
+            "DO": {
+              "block": {
+                "type": "uiap_tone",
+                "fields": {
+                  "NOTE": "440",
+                  "MILLISECONDS": 5000,
+                  "MODE": "WAIT"
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

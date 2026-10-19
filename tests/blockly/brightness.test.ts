@@ -12,12 +12,12 @@ it("旧個別点灯の明るさと番号を移行し、0%でも対象LEDだけ�
   try {
     const saved = { blocks: { languageVersion: 0, blocks: [{ type: "uiap_neopixel_set_value", fields: { COLOR: "#00ff00", BRIGHTNESS: 15 },
       inputs: { PIXEL: { shadow: { type: "uiap_number", fields: { VALUE: 8 } } } } }] } };
-    const migrated = migrateWorkspace(saved);
+    const migrated = migrateWorkspace(saved, 7);
     expect(migrateWorkspace(migrated)).toEqual(migrated);
     expect(saved.blocks.blocks[0].fields.BRIGHTNESS).toBe(15);
     Blockly.serialization.workspaces.load(migrated, workspace);
     expect(compileWorkspace(workspace)[0]).toMatchObject({ type: "neoPixelSet", index: 7, brightness: 15 });
-    workspace.getTopBlocks()[0].getInputTargetBlock("BRIGHTNESS")!.setFieldValue(0, "VALUE");
+    workspace.getBlocksByType("uiap_on_start", false)[0].getInputTargetBlock("DO")!.getInputTargetBlock("BRIGHTNESS")!.setFieldValue(0, "VALUE");
     const program = compileWorkspace(workspace);
     expect(program[0]).toMatchObject({ type: "neoPixelSet", index: 7, color: "#000000", brightness: 1 });
     expect(encodeStandaloneProgram(program)[4]).toBe(2);

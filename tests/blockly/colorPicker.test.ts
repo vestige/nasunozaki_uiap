@@ -5,6 +5,7 @@ import { registerUiapBlocks } from "../../web/src/features/blockly/utils/blocks"
 import { compileWorkspace } from "../../web/src/features/blockly/utils/program";
 import { encodeStandaloneProgram } from "../../web/src/features/blockly/utils/standaloneProgram";
 import { runProgram } from "../../web/src/features/blockly/utils/execution";
+import { attachToProgram } from "./programStructure";
 
 it("既存8色と任意のRGBはHSV変換しても色が変わらない", () => {
   for (const color of [...colorPresets.map(([, color]) => color), "#123456", "#abcdef", "#000000", "#fedcba"]) {
@@ -32,6 +33,7 @@ it.each(["#ff0000", "#ffffff", "#123456", "#80ff80"])("色欄の保存復元・�
     const number = workspace.newBlock("uiap_number");
     number.setFieldValue(15, "VALUE");
     block.getInput("BRIGHTNESS")!.connection!.connect(number.outputConnection!);
+    attachToProgram(workspace, block);
     Blockly.serialization.workspaces.load(Blockly.serialization.workspaces.save(workspace), restored);
     const program = compileWorkspace(restored);
     expect(program[0]).toMatchObject({ color });

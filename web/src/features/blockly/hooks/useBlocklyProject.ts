@@ -4,6 +4,7 @@ import * as Blockly from "blockly/core";
 import { starterProgram } from "../samples/starterProgram";
 import type { ProgramInstruction } from "../types/program";
 import { inspectEditingProgram } from "../utils/editingProgram";
+import { updateProgramStructureWarnings } from "../utils/program";
 import { clearBlocklyWorkspace, loadBlocklySavedState, saveBlocklyWorkspace } from "../utils/persistence";
 import { detectWorkspaceExtensions } from "../utils/workspaceExtensions";
 import { createBlocklyProjectFile, createBlocklyProjectFileName, parseBlocklyProjectFile, stringifyBlocklyProjectFile } from "../utils/projectFile";
@@ -59,6 +60,7 @@ export function useBlocklyProject(
     const neoPixelEnabled = saved?.neoPixelEnabled ?? false;
     const piezoEnabled = saved?.piezoEnabled ?? false;
     Blockly.serialization.workspaces.load(saved?.workspace ?? starterProgram, workspace);
+    updateProgramStructureWarnings(workspace);
     client.setQueryData(queryKeys.tactSwitchExtension, tactSwitchEnabled);
     client.setQueryData(queryKeys.neoPixelExtension, neoPixelEnabled);
     client.setQueryData(queryKeys.piezoExtension, saved?.piezoEnabled ?? false);
@@ -73,6 +75,7 @@ export function useBlocklyProject(
 
   }, [client, toolboxVisibleRef]);
   const onChange = useCallback((workspace: Blockly.WorkspaceSvg) => {
+    updateProgramStructureWarnings(workspace);
     const editedProgram = inspectEditingProgram(workspace);
     client.setQueryData(queryKeys.blocklyProgram, editedProgram.instructions);
     setEditingError(editedProgram.error);
@@ -128,6 +131,7 @@ export function useBlocklyProject(
       stop();
       workspace.clear();
       Blockly.serialization.workspaces.load(project.workspace, workspace);
+      updateProgramStructureWarnings(workspace);
       const detected = detectWorkspaceExtensions(project.workspace);
       const tactSwitchEnabled = project.extensions?.tactSwitch === true || detected.tactSwitch;
       const neoPixelEnabled = project.extensions?.neoPixel === true || detected.neoPixel;
@@ -153,6 +157,7 @@ export function useBlocklyProject(
     clearBlocklyWorkspace(window.localStorage);
     workspace.clear();
     Blockly.serialization.workspaces.load(starterProgram, workspace);
+    updateProgramStructureWarnings(workspace);
   };
 
   const saveMessage =

@@ -4,6 +4,7 @@ import { registerUiapBlocks, starterProgram } from "../../web/src/features/block
 import { inspectEditingProgram } from "../../web/src/features/blockly/utils/editingProgram";
 import { loadBlocklyWorkspace, saveBlocklyWorkspace } from "../../web/src/features/blockly/utils/persistence";
 import { createBlocklyProjectFile, parseBlocklyProjectFile, stringifyBlocklyProjectFile } from "../../web/src/features/blockly/utils/projectFile";
+import { attachToProgram, programState } from "./programStructure";
 
 registerUiapBlocks();
 const workspaces: Blockly.Workspace[] = [];
@@ -18,9 +19,10 @@ describe("editing program state", () => {
   it("未入力になると前の命令を残さず、修正すれば実行可能な状態へ戻る", () => {
     const workspace = createWorkspace();
     Blockly.serialization.workspaces.load(starterProgram, workspace);
-    expect(inspectEditingProgram(workspace)).toMatchObject({ error: null, instructions: [{ type: "repeat" }] });
+    expect(inspectEditingProgram(workspace)).toMatchObject({ error: null, instructions: [{ type: "led" }, { type: "forever" }] });
     workspace.clear();
     const block = workspace.newBlock("uiap_if");
+    attachToProgram(workspace, block);
     expect(inspectEditingProgram(workspace)).toEqual({ instructions: [], error: "値を入れていないブロックがあります。" });
     const condition = workspace.newBlock("uiap_boolean");
     block.getInput("CONDITION")!.connection!.connect(condition.outputConnection!);
@@ -29,16 +31,16 @@ describe("editing program state", () => {
 
   it("範囲外の固定値では実行用の命令を生成しない", () => {
     const workspace = createWorkspace();
-    Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks: [{
+    Blockly.serialization.workspaces.load(programState({
       type: "uiap_neopixel_fill_brightness", fields: { COLOR: "#00ff00" },
       inputs: { BRIGHTNESS: { block: { type: "uiap_number", fields: { VALUE: 101 } } } },
-    }] } }, workspace);
+    }), workspace);
     expect(inspectEditingProgram(workspace)).toEqual({ instructions: [], error: "明るさには0から100の整数を入れてください。" });
   });
 
   it("組み立て途中でも自動保存と作品ファイルで復元できる", () => {
     const workspace = createWorkspace();
-    workspace.newBlock("uiap_if");
+    attachToProgram(workspace, workspace.newBlock("uiap_if"));
     const snapshot = Blockly.serialization.workspaces.save(workspace);
     const values = new Map<string, string>();
     const storage = {
@@ -52,7 +54,7 @@ describe("editing program state", () => {
     for (const saved of [loadBlocklyWorkspace(storage), project.workspace]) {
       const restored = createWorkspace();
       Blockly.serialization.workspaces.load(saved as Record<string, unknown>, restored);
-      expect(restored.getAllBlocks(false).map((block) => block.type)).toEqual(["uiap_if"]);
+      expect(restored.getAllBlocks(false).map((block) => block.type).sort()).toEqual(["uiap_if", "uiap_on_start"]);
       expect(inspectEditingProgram(restored)).toEqual(inspectEditingProgram(workspace));
     }
   });

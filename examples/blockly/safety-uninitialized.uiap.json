@@ -1,6 +1,6 @@
 {
   "format": "uiapduino-blockly-project",
-  "version": 3,
+  "version": 8,
   "savedAt": "2026-10-06T00:00:00.000Z",
   "extensions": {
     "tactSwitch": false,
@@ -17,48 +17,50 @@
       "languageVersion": 0,
       "blocks": [
         {
-          "type": "uiap_neopixel_fill",
-          "fields": {
-            "COLOR": "#00ff00",
-            "BRIGHTNESS": 20
-          },
-          "next": {
-            "block": {
-              "type": "uiap_wait",
-              "fields": {
-                "MILLISECONDS": 2000
-              },
-              "next": {
-                "block": {
-                  "type": "uiap_if",
-                  "inputs": {
-                    "CONDITION": {
+          "type": "uiap_on_start",
+          "x": 36,
+          "y": 36,
+          "inputs": {
+            "DO": {
+              "block": {
+                "type": "uiap_neopixel_fill_brightness",
+                "fields": {
+                  "COLOR": "#00ff00"
+                },
+                "next": {
+                  "block": {
+                    "type": "uiap_wait",
+                    "fields": {
+                      "MILLISECONDS": 2000
+                    },
+                    "next": {
                       "block": {
-                        "type": "uiap_variable_get",
-                        "fields": {
-                          "VAR": {
-                            "id": "test-value"
+                        "type": "uiap_if",
+                        "inputs": {
+                          "CONDITION": {
+                            "block": {
+                              "type": "uiap_variable_get",
+                              "fields": {
+                                "VAR": {
+                                  "id": "test-value"
+                                }
+                              }
+                            }
                           }
-                        }
-                      }
-                    }
-                  },
-                  "next": {
-                    "block": {
-                      "type": "uiap_neopixel_fill",
-                      "fields": {
-                        "COLOR": "#ff0000",
-                        "BRIGHTNESS": 20
-                      },
-                      "next": {
-                        "block": {
-                          "type": "uiap_forever",
-                          "inputs": {
-                            "DO": {
-                              "block": {
-                                "type": "uiap_wait",
-                                "fields": {
-                                  "MILLISECONDS": 1000
+                        },
+                        "next": {
+                          "block": {
+                            "type": "uiap_neopixel_fill_brightness",
+                            "fields": {
+                              "COLOR": "#ff0000"
+                            },
+                            "inputs": {
+                              "BRIGHTNESS": {
+                                "shadow": {
+                                  "type": "uiap_number",
+                                  "fields": {
+                                    "VALUE": 20
+                                  }
                                 }
                               }
                             }
@@ -67,12 +69,35 @@
                       }
                     }
                   }
+                },
+                "inputs": {
+                  "BRIGHTNESS": {
+                    "shadow": {
+                      "type": "uiap_number",
+                      "fields": {
+                        "VALUE": 20
+                      }
+                    }
+                  }
                 }
               }
             }
-          },
-          "x": 36,
-          "y": 36
+          }
+        },
+        {
+          "type": "uiap_main_forever",
+          "x": 336,
+          "y": 36,
+          "inputs": {
+            "DO": {
+              "block": {
+                "type": "uiap_wait",
+                "fields": {
+                  "MILLISECONDS": 1000
+                }
+              }
+            }
+          }
         }
       ]
     }
