@@ -35,7 +35,9 @@ ${handler}
 void legacy(uint8_t command,const uint8_t *message,uint8_t length){uint8_t sequence=0;${legacyRouting}}
 int main(){
   uint8_t a[8]={1,2,3,4,5,6,7,8}, b[8]={9,2,3,4,5,6,7,8};
-  uint8_t m[32]={};m[7]=13;for(int i=0;i<8;++i)m[8+i]=a[i];m[16]=1;
+  uint8_t m[32]={};m[7]=13;
+  for(int i=0;i<8;++i) { m[8+i]=a[i]; }
+  m[16]=1;
   assert(handleOwnedUpdate(kOwnedBegin,m,32)==0 && writes==1);
   uint8_t old[8]={};legacy(kProgramAbort,old,8);assert(last==2 && aborts==0 && programUpdateActive);
   legacy(kProgramData,old,8);assert(last==2 && writes==1);
@@ -47,14 +49,18 @@ int main(){
   m[8]=9;assert(handleOwnedUpdate(kOwnedRecover,m,32)==2);m[8]=1;
   assert(handleOwnedUpdate(kOwnedRecover,m,32)==0 && aborts==1 && !programUpdateActive);
   // New owner starts; delayed DATA/ABORT/recovery from the old owner is blocked.
-  m[7]=13;for(int i=0;i<8;++i)m[8+i]=b[i];m[16]=1;
+  m[7]=13;
+  for(int i=0;i<8;++i) { m[8+i]=b[i]; }
+  m[16]=1;
   assert(handleOwnedUpdate(kOwnedBegin,m,32)==0);int count=writes;
-  for(int i=0;i<8;++i)m[8+i]=a[i];m[7]=24;
+  for(int i=0;i<8;++i) { m[8+i]=a[i]; }
+  m[7]=24;
   assert(handleOwnedUpdate(kOwnedData,m,32)==2 && writes==count);
   m[7]=8;assert(handleOwnedUpdate(kOwnedAbort,m,32)==2 && writes==count);
   m[7]=10;now=70000;assert(handleOwnedUpdate(kOwnedRecover,m,32)==2 && writes==count);
   // Expiry cannot be renewed with late DATA, but the actual owner can abort.
-  for(int i=0;i<8;++i)m[8+i]=b[i];m[7]=24;
+  for(int i=0;i<8;++i) { m[8+i]=b[i]; }
+  m[7]=24;
   assert(handleOwnedUpdate(kOwnedData,m,32)==2);
   m[7]=8;assert(handleOwnedUpdate(kOwnedAbort,m,32)==0 && !programUpdateActive);
   // Progress resets the lease; reads do not. Wrap-safe subtraction.
