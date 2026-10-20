@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import * as Blockly from "blockly/core";
 import { registerUiapBlocks } from "../../web/src/features/blockly/utils/blocks";
-import { compileWorkspace } from "../../web/src/features/blockly/utils/program";
+import { compileWorkspace, updateProgramStructureWarnings } from "../../web/src/features/blockly/utils/program";
 import { migrateWorkspace } from "../../web/src/features/blockly/utils/migrateWorkspace";
 
 registerUiapBlocks();
@@ -39,6 +39,24 @@ describe("はじめにと最上位のずっと", () => {
       { type: "uiap_on_start" }, { type: "uiap_on_start" },
     ] } });
     expect(() => compileWorkspace(workspace)).toThrow("1つだけ");
+  });
+
+  it("実行ブロックをはじめにへ接続したら未接続の警告を消す", () => {
+    const workspace = new Blockly.Workspace();
+    workspaces.push(workspace);
+    const start = workspace.newBlock("uiap_on_start");
+    const led = workspace.newBlock("uiap_led");
+    let warning: string | null = null;
+    (led as Blockly.Block & { setWarningText(text: string | null, id?: string): void }).setWarningText = (text) => {
+      warning = text;
+    };
+
+    updateProgramStructureWarnings(workspace);
+    expect(warning).toContain("実行されません");
+
+    start.getInput("DO")!.connection!.connect(led.previousConnection!);
+    updateProgramStructureWarnings(workspace);
+    expect(warning).toBeNull();
   });
 
   it("旧作品の末尾のずっとを分離し、他のtop-level列を残す", () => {
