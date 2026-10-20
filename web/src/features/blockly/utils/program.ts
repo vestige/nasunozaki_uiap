@@ -23,12 +23,13 @@ export function compileWorkspace(
 export function updateProgramStructureWarnings(workspace: Blockly.Workspace) {
   const starts = workspace.getBlocksByType("uiap_on_start", false);
   const loops = workspace.getBlocksByType("uiap_main_forever", false);
-  for (const block of workspace.getTopBlocks(false)) {
+  for (const block of workspace.getAllBlocks(false)) {
     const setWarningText = (block as Blockly.Block & { setWarningText?(text: string | null, id?: string): void }).setWarningText;
     if (!setWarningText) continue;
     const duplicate = (block.type === "uiap_on_start" && starts.length > 1)
       || (block.type === "uiap_main_forever" && loops.length > 1);
-    const detached = block.type !== "uiap_on_start" && block.type !== "uiap_main_forever"
+    const detached = block.getParent() === null
+      && block.type !== "uiap_on_start" && block.type !== "uiap_main_forever"
       && block.outputConnection === null;
     setWarningText.call(block, duplicate
       ? `${block.type === "uiap_on_start" ? "「はじめに」" : "最上位の「ずっと」"}は1つだけ置いてください。`
