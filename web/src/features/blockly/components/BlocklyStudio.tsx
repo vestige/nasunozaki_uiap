@@ -16,6 +16,7 @@ import { PiezoSetupGuide } from "./PiezoSetupGuide";
 import { ProjectFileActions } from "./ProjectFileActions";
 import { ExecutionTargetSelector } from "./ExecutionTargetSelector";
 import { StandaloneProgramInstall } from "./StandaloneProgramInstall";
+import { LearningSamplePicker } from "./LearningSamplePicker";
 
 export function BlocklyStudio() {
   const client = useQueryClient();
@@ -24,9 +25,10 @@ export function BlocklyStudio() {
   const [activeEditorTab, setActiveEditorTab] = useState<"blocks" | "tactSwitch" | "neoPixel" | "piezo">("blocks");
   const [stepDisplay, setStepDisplay] = useState(false);
   const [toolboxVisible, setToolboxVisible] = useState(true);
+  const [samplePickerOpen, setSamplePickerOpen] = useState(false);
   const { run, stop, led, button, neoPixels, executionTarget, runtimeDevice, soundEnabled, setSoundEnabled } = useBlocklyExecution(workspaceRef, stepDisplay);
   const { program, editingError, tactSwitchExtension, neoPixelExtension, piezoExtension, initialize, onChange,
-    exportProject, importProject, resetWorkspace, saveMessage, setExtension } = useBlocklyProject(workspaceRef, toolboxVisibleRef, stop);
+    exportProject, importProject, loadSample, resetWorkspace, saveMessage, setExtension } = useBlocklyProject(workspaceRef, toolboxVisibleRef, stop);
   const mountWorkspace = useBlocklyWorkspace(workspaceRef, initialize, onChange, stop);
   return (
     <section
@@ -85,7 +87,6 @@ export function BlocklyStudio() {
             }}
             onRun={() => run.mutate()}
             onStop={stop}
-            onReset={resetWorkspace}
           />
           {(piezoExtension.data || hasToneInstructions(program.data)) && <label className="flex items-center gap-2 text-sm font-bold">
             <input type="checkbox" className="checkbox checkbox-sm" checked={soundEnabled} disabled={run.isPending} onChange={(event) => setSoundEnabled(event.target.checked)} />画面の音をオンにする
@@ -155,13 +156,23 @@ export function BlocklyStudio() {
           {tactSwitchExtension.data && activeEditorTab === "tactSwitch" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><TactSwitchWiringGuide /></div>}
           {neoPixelExtension.data && activeEditorTab === "neoPixel" && <div className="rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem]" role="tabpanel"><NeoPixelWiringGuide /></div>}
           <div className={`rounded-b-box rounded-tr-box border-x-2 border-b-2 border-base-300 bg-base-100 p-4 lg:min-h-[48rem] ${activeEditorTab !== "blocks" ? "hidden" : ""}`}>
-            <div className="mb-3 flex justify-start">
+            <div className="mb-3 flex flex-wrap justify-start gap-2">
+              <button type="button" className="btn btn-primary btn-sm" disabled={run.isPending} onClick={() => setSamplePickerOpen(true)}>サンプルからはじめる</button>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={run.isPending} onClick={resetWorkspace}>まっさらから作る</button>
               <button type="button" className="btn btn-outline btn-sm" aria-pressed={!toolboxVisible} onClick={() => { const visible = !toolboxVisibleRef.current; toolboxVisibleRef.current = visible; setToolboxVisible(visible); const workspace = workspaceRef.current; if (workspace) setWorkspaceToolboxVisible(workspace, visible); }}>{toolboxVisible ? "ブロック一覧をかくす 😶‍🌫️" : "ブロック一覧をみせる 👀"}</button>
             </div>
             <div className={`grid min-w-0 gap-5 ${neoPixelExtension.data ? "lg:grid-cols-[minmax(0,1fr)_24rem]" : "lg:grid-cols-[minmax(0,1fr)_18rem]"}`}><div ref={mountWorkspace} className={`blockly-workspace h-[38rem] w-full min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl lg:h-[44rem] ${toolboxVisible ? "" : "blockly-workspace--toolbox-hidden"}`} aria-label="ブロックプログラミング編集エリア" /><LedSimulator ledOn={led.data} buttonPressed={button.data} extensionEnabled={tactSwitchExtension.data} neoPixelEnabled={neoPixelExtension.data} neoPixels={neoPixels.data} onButtonChange={(pressed) => client.setQueryData(queryKeys.simulatorButton, pressed)} /></div>
           </div>
         </div>
       </div>
+      <LearningSamplePicker
+        open={samplePickerOpen}
+        disabled={run.isPending}
+        onClose={() => setSamplePickerOpen(false)}
+        onSelect={(sample) => {
+          if (loadSample(sample)) setSamplePickerOpen(false);
+        }}
+      />
     </section>
   );
 }
