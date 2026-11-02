@@ -30,7 +30,7 @@ describe("learning samples", () => {
     expect(html.match(/サンプルを準備中です。/g)).toHaveLength(3);
   });
 
-  it("provides basic, repetition, condition, and variable samples with the common program structure", () => {
+  it("provides basic, repetition, condition, and variable samples without unused program sections", () => {
     expect(learningSamples.map((sample) => sample.category)).toEqual([
       "きほん", "くりかえし", "くりかえし", "もし・くらべる", "おぼえる",
     ]);
@@ -38,7 +38,12 @@ describe("learning samples", () => {
       const workspace = new Blockly.Workspace();
       workspaces.push(workspace);
       Blockly.serialization.workspaces.load(sample.workspace, workspace);
-      expect(workspace.getTopBlocks(false).map((block) => block.type)).toEqual(["uiap_on_start", "uiap_main_forever"]);
+      const sections = workspace.getTopBlocks(false);
+      expect(sections.length).toBeGreaterThan(0);
+      expect(sections.every((block) =>
+        ["uiap_on_start", "uiap_main_forever"].includes(block.type)
+        && block.getInputTargetBlock("DO") !== null,
+      )).toBe(true);
       expect(compileWorkspace(workspace).length).toBeGreaterThan(0);
     }
   });
