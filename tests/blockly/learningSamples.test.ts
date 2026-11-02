@@ -23,13 +23,17 @@ describe("learning samples", () => {
     expect(html).toContain("LEDをつけて、まって、けす");
     expect(html).toContain("LEDを3回点滅");
     expect(html).toContain("LEDをずっと点滅");
+    expect(html).toContain("数をくらべてLEDをつける");
+    expect(html).toContain("覚えた合図でLEDをつける");
     expect(html).toContain("ためせる場所:");
     expect(html).toContain("画面・ボード");
-    expect(html.match(/サンプルを準備中です。/g)).toHaveLength(5);
+    expect(html.match(/サンプルを準備中です。/g)).toHaveLength(3);
   });
 
-  it("provides one basic and two repetition samples with the common program structure", () => {
-    expect(learningSamples.map((sample) => sample.category)).toEqual(["きほん", "くりかえし", "くりかえし"]);
+  it("provides basic, repetition, condition, and variable samples with the common program structure", () => {
+    expect(learningSamples.map((sample) => sample.category)).toEqual([
+      "きほん", "くりかえし", "くりかえし", "もし・くらべる", "おぼえる",
+    ]);
     for (const sample of learningSamples) {
       const workspace = new Blockly.Workspace();
       workspaces.push(workspace);
