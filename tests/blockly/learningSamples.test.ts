@@ -24,7 +24,7 @@ describe("learning samples", () => {
     expect(html).toContain("LEDを3回点滅");
     expect(html).toContain("LEDをずっと点滅");
     expect(html).toContain("数をくらべてLEDをつける");
-    expect(html).toContain("覚えた合図でLEDをつける");
+    expect(html).toContain("覚えながら3秒ごとに点灯・消灯");
     expect(html).toContain("ためせる場所:");
     expect(html).toContain("画面・ボード");
     expect(html.match(/サンプルを準備中です。/g)).toHaveLength(3);
@@ -46,5 +46,30 @@ describe("learning samples", () => {
       )).toBe(true);
       expect(compileWorkspace(workspace).length).toBeGreaterThan(0);
     }
+  });
+
+  it("remembers the LED state while toggling it every three seconds", () => {
+    const sample = learningSamples.find(({ id }) => id === "variable-timed-light-toggle");
+    expect(sample).toBeDefined();
+    const workspace = new Blockly.Workspace();
+    workspaces.push(workspace);
+    Blockly.serialization.workspaces.load(sample!.workspace, workspace);
+    expect(compileWorkspace(workspace)).toMatchObject([
+      { type: "repeat", times: 2 },
+      { type: "setVariable", id: "sample-light-state", value: { type: "boolean", value: false } },
+      { type: "forever", body: [
+        { type: "wait", milliseconds: 3000 },
+        { type: "if", condition: { type: "variable", id: "sample-light-state" },
+          body: [
+            { type: "led", on: false },
+            { type: "setVariable", id: "sample-light-state", value: { type: "boolean", value: false } },
+          ],
+          elseBody: [
+            { type: "led", on: true },
+            { type: "setVariable", id: "sample-light-state", value: { type: "boolean", value: true } },
+          ],
+        },
+      ] },
+    ]);
   });
 });
