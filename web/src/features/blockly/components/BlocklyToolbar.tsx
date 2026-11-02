@@ -7,7 +7,6 @@ type Props = {
   onStepDisplayChange: (enabled: boolean) => void;
   onRun: () => void;
   onStop: () => void;
-  onReset: () => void;
 };
 
 export function BlocklyToolbar({
@@ -19,7 +18,6 @@ export function BlocklyToolbar({
   onStepDisplayChange,
   onRun,
   onStop,
-  onReset,
 }: Props) {
   return (
     <div className="min-w-0 flex flex-col gap-3 lg:items-end">
@@ -41,9 +39,6 @@ export function BlocklyToolbar({
           disabled={!isRunning}
         >
           ■ とめる
-        </button>
-        <button className="btn btn-ghost" onClick={onReset}>
-          最初のブロックに戻す
         </button>
         <label
           className="label cursor-pointer gap-2 rounded-box px-3"

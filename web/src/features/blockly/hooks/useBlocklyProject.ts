@@ -2,6 +2,7 @@ import { useCallback, useState, type RefObject } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Blockly from "blockly/core";
 import { starterProgram } from "../samples/starterProgram";
+import { blankProgram, type LearningSample } from "../samples/learningSamples";
 import type { ProgramInstruction } from "../types/program";
 import { inspectEditingProgram } from "../utils/editingProgram";
 import { updateProgramStructureWarnings } from "../utils/program";
@@ -148,16 +149,41 @@ export function useBlocklyProject(
     },
   });
 
-  const resetWorkspace = () => {
+  const replaceWorkspace = useCallback((workspaceState: Record<string, unknown>, extensions: { tactSwitch?: boolean; neoPixel?: boolean; piezo?: boolean }) => {
     const workspace = workspaceRef.current;
     if (!workspace) return;
-    if (!window.confirm("今のブロックを消して、最初の点滅例に戻しますか？"))
-      return;
     stop();
-    clearBlocklyWorkspace(window.localStorage);
     workspace.clear();
-    Blockly.serialization.workspaces.load(starterProgram, workspace);
+    Blockly.serialization.workspaces.load(workspaceState, workspace);
     updateProgramStructureWarnings(workspace);
+    const detected = detectWorkspaceExtensions(workspaceState);
+    const tactSwitchEnabled = extensions.tactSwitch === true || detected.tactSwitch;
+    const neoPixelEnabled = extensions.neoPixel === true || detected.neoPixel;
+    const piezoEnabled = extensions.piezo === true || detected.piezo;
+    client.setQueryData(queryKeys.tactSwitchExtension, tactSwitchEnabled);
+    client.setQueryData(queryKeys.neoPixelExtension, neoPixelEnabled);
+    client.setQueryData(queryKeys.piezoExtension, piezoEnabled);
+    updateWorkspaceToolbox(workspace, { tactSwitch: tactSwitchEnabled, neoPixel: neoPixelEnabled, piezo: piezoEnabled }, toolboxVisibleRef.current);
+    saveBlocklyWorkspace(window.localStorage, workspaceState, tactSwitchEnabled, neoPixelEnabled, piezoEnabled);
+    client.setQueryData<SaveStatus>(queryKeys.blocklySaveStatus, {
+      kind: "saved",
+      savedAt: new Date().toLocaleTimeString("ja-JP"),
+    });
+    const replacedProgram = inspectEditingProgram(workspace);
+    client.setQueryData(queryKeys.blocklyProgram, replacedProgram.instructions);
+    setEditingError(replacedProgram.error);
+  }, [client, stop, toolboxVisibleRef, workspaceRef]);
+
+  const loadSample = (sample: LearningSample) => {
+    if (!window.confirm(`今のブロックを置き換えて、「${sample.name}」を開きますか？`)) return false;
+    replaceWorkspace(sample.workspace, sample.extensions);
+    return true;
+  };
+
+  const resetWorkspace = () => {
+    if (!window.confirm("今のブロックを消して、まっさらからはじめますか？")) return;
+    clearBlocklyWorkspace(window.localStorage);
+    replaceWorkspace(blankProgram, {});
   };
 
   const saveMessage =
@@ -182,7 +208,7 @@ export function useBlocklyProject(
     }
   };
   return { program, editingError, tactSwitchExtension, neoPixelExtension, piezoExtension, initialize, onChange,
-    exportProject, importProject, resetWorkspace, saveMessage, setExtension };
+    exportProject, importProject, loadSample, resetWorkspace, saveMessage, setExtension };
 }
 function downloadTextFile(fileName: string, contents: string) {
   const url = URL.createObjectURL(
