@@ -25,14 +25,16 @@ describe("learning samples", () => {
     expect(html).toContain("LEDをずっと点滅");
     expect(html).toContain("数をくらべてLEDをつける");
     expect(html).toContain("覚えながら3秒ごとに点灯・消灯");
+    expect(html).toContain("押している間だけLEDをつける");
+    expect(html).toContain("押すたびにLEDを切り替える");
     expect(html).toContain("ためせる場所:");
     expect(html).toContain("画面・ボード");
-    expect(html.match(/サンプルを準備中です。/g)).toHaveLength(3);
+    expect(html.match(/サンプルを準備中です。/g)).toHaveLength(2);
   });
 
   it("provides basic, repetition, condition, and variable samples without unused program sections", () => {
     expect(learningSamples.map((sample) => sample.category)).toEqual([
-      "きほん", "くりかえし", "くりかえし", "もし・くらべる", "おぼえる",
+      "きほん", "くりかえし", "くりかえし", "もし・くらべる", "おぼえる", "タクトスイッチ", "タクトスイッチ",
     ]);
     for (const sample of learningSamples) {
       const workspace = new Blockly.Workspace();
@@ -69,6 +71,33 @@ describe("learning samples", () => {
             { type: "setVariable", id: "sample-light-state", value: { type: "boolean", value: true } },
           ],
         },
+      ] },
+    ]);
+  });
+
+  it("distinguishes the held and newly pressed tact switch states", () => {
+    const holdSample = learningSamples.find(({ id }) => id === "tact-switch-hold-led");
+    const toggleSample = learningSamples.find(({ id }) => id === "tact-switch-press-toggle-led");
+    expect(holdSample?.extensions).toEqual({ tactSwitch: true });
+    expect(toggleSample?.extensions).toEqual({ tactSwitch: true });
+
+    const holdWorkspace = new Blockly.Workspace();
+    const toggleWorkspace = new Blockly.Workspace();
+    workspaces.push(holdWorkspace, toggleWorkspace);
+    Blockly.serialization.workspaces.load(holdSample!.workspace, holdWorkspace);
+    Blockly.serialization.workspaces.load(toggleSample!.workspace, toggleWorkspace);
+
+    expect(compileWorkspace(holdWorkspace)).toMatchObject([
+      { type: "forever", body: [
+        { type: "ifButton", body: [{ type: "led", on: true }], elseBody: [{ type: "led", on: false }] },
+      ] },
+    ]);
+    expect(compileWorkspace(toggleWorkspace)).toMatchObject([
+      { type: "setVariable", id: "sample-button-light-state", value: { type: "boolean", value: false } },
+      { type: "forever", body: [
+        { type: "ifButtonPressed", body: [
+          { type: "if", condition: { type: "variable", id: "sample-button-light-state" } },
+        ] },
       ] },
     ]);
   });

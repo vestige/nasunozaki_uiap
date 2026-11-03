@@ -232,5 +232,76 @@ export const learningSamples: LearningSample[] = [
       },
     },
   },
+  {
+    id: "tact-switch-hold-led",
+    category: "タクトスイッチ",
+    name: "押している間だけLEDをつける",
+    description: "タクトスイッチを押している間はLEDがつき、離すと消えます。押している状態を使ってみよう。",
+    parts: "UIAPduino・タクトスイッチ",
+    worksOn: "画面・ボード",
+    extensions: { tactSwitch: true },
+    workspace: {
+      blocks: {
+        languageVersion: 0,
+        blocks: [
+          {
+            type: "uiap_main_forever", x: 36, y: 36, inputs: { DO: { block: {
+              type: "uiap_if_button", inputs: {
+                DO: { block: { type: "uiap_led", fields: { STATE: "ON" } } },
+                ELSE: { block: { type: "uiap_led", fields: { STATE: "OFF" } } },
+              },
+            } } },
+          },
+        ],
+      },
+    },
+  },
+  {
+    id: "tact-switch-press-toggle-led",
+    category: "タクトスイッチ",
+    name: "押すたびにLEDを切り替える",
+    description: "タクトスイッチを1回押すたびに、LEDの点灯と消灯を切り替えます。押した瞬間を使ってみよう。",
+    parts: "UIAPduino・タクトスイッチ",
+    worksOn: "画面・ボード",
+    extensions: { tactSwitch: true },
+    workspace: {
+      variables: [{ name: "ひかる", id: "sample-button-light-state" }],
+      blocks: {
+        languageVersion: 0,
+        blocks: [
+          {
+            type: "uiap_on_start", x: 36, y: 36, inputs: { DO: { block: {
+              type: "uiap_variable_set", fields: { VAR: { id: "sample-button-light-state" } }, inputs: {
+                VALUE: { block: { type: "uiap_boolean", fields: { VALUE: "FALSE" } } },
+              },
+            } } },
+          },
+          {
+            type: "uiap_main_forever", x: 300, y: 36, inputs: { DO: { block: {
+              type: "uiap_if_button_pressed", inputs: { DO: { block: {
+                type: "uiap_if", inputs: {
+                  CONDITION: { block: { type: "uiap_variable_get", fields: { VAR: { id: "sample-button-light-state" } } } },
+                  DO: { block: {
+                    type: "uiap_led", fields: { STATE: "OFF" }, next: { block: {
+                      type: "uiap_variable_set", fields: { VAR: { id: "sample-button-light-state" } }, inputs: {
+                        VALUE: { block: { type: "uiap_boolean", fields: { VALUE: "FALSE" } } },
+                      },
+                    } },
+                  } },
+                  ELSE: { block: {
+                    type: "uiap_led", fields: { STATE: "ON" }, next: { block: {
+                      type: "uiap_variable_set", fields: { VAR: { id: "sample-button-light-state" } }, inputs: {
+                        VALUE: { block: { type: "uiap_boolean", fields: { VALUE: "TRUE" } } },
+                      },
+                    } },
+                  } },
+                },
+              } } },
+            } } },
+          },
+        ],
+      },
+    },
+  },
 ];
 
