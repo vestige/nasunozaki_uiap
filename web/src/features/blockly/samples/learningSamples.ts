@@ -378,5 +378,59 @@ export const learningSamples: LearningSample[] = [
       },
     },
   },
+  {
+    id: "sound-do-re-mi",
+    category: "音",
+    name: "ドレミを順番に鳴らす",
+    description: "ド、レ、ミを300ミリ秒ずつ順番に鳴らします。画面では「画面の音をオン」にして試そう。",
+    parts: "UIAPduino・圧電スピーカー",
+    worksOn: "画面・ボード",
+    extensions: { piezo: true },
+    workspace: {
+      blocks: {
+        languageVersion: 0,
+        blocks: [
+          {
+            type: "uiap_on_start", x: 36, y: 36, inputs: { DO: { block: {
+              type: "uiap_tone", fields: { NOTE: "262", MILLISECONDS: 300, MODE: "WAIT" }, next: { block: {
+                type: "uiap_tone", fields: { NOTE: "294", MILLISECONDS: 300, MODE: "WAIT" }, next: { block: {
+                  type: "uiap_tone", fields: { NOTE: "330", MILLISECONDS: 300, MODE: "WAIT" },
+                } },
+              } },
+            } } },
+          },
+        ],
+      },
+    },
+  },
+  {
+    id: "sound-with-led",
+    category: "音",
+    name: "光と音をいっしょに動かす",
+    description: "高いドを鳴らしながらLEDを500ミリ秒つけ、LEDと音を止めます。画面では音をオンにしよう。",
+    parts: "UIAPduino・圧電スピーカー",
+    worksOn: "画面・ボード",
+    extensions: { piezo: true },
+    workspace: {
+      blocks: {
+        languageVersion: 0,
+        blocks: [
+          {
+            type: "uiap_on_start", x: 36, y: 36, inputs: { DO: { block: {
+              type: "uiap_tone", fields: { NOTE: "523", MILLISECONDS: 1000, MODE: "NEXT" }, next: { block: {
+                type: "uiap_led", fields: { STATE: "ON" }, next: { block: {
+                  type: "uiap_wait", fields: { MILLISECONDS: 500 }, next: { block: {
+                    type: "uiap_led", fields: { STATE: "OFF" }, next: { block: {
+                      type: "uiap_stop_tone",
+                    } },
+                  } },
+                } },
+              } },
+            } } },
+          },
+        ],
+      },
+    },
+  },
 ];
 

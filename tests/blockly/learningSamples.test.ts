@@ -29,14 +29,16 @@ describe("learning samples", () => {
     expect(html).toContain("押すたびにLEDを切り替える");
     expect(html).toContain("全部を同じ色で光らせる");
     expect(html).toContain("1番から8番へ光を動かす");
+    expect(html).toContain("ドレミを順番に鳴らす");
+    expect(html).toContain("光と音をいっしょに動かす");
     expect(html).toContain("ためせる場所:");
     expect(html).toContain("画面・ボード");
-    expect(html.match(/サンプルを準備中です。/g)).toHaveLength(1);
+    expect(html).not.toContain("サンプルを準備中です。");
   });
 
   it("provides basic, repetition, condition, and variable samples without unused program sections", () => {
     expect(learningSamples.map((sample) => sample.category)).toEqual([
-      "きほん", "くりかえし", "くりかえし", "もし・くらべる", "おぼえる", "タクトスイッチ", "タクトスイッチ", "NeoPixel", "NeoPixel",
+      "きほん", "くりかえし", "くりかえし", "もし・くらべる", "おぼえる", "タクトスイッチ", "タクトスイッチ", "NeoPixel", "NeoPixel", "音", "音",
     ]);
     for (const sample of learningSamples) {
       const workspace = new Blockly.Workspace();
@@ -132,6 +134,32 @@ describe("learning samples", () => {
         { type: "setVariable", id: "sample-neopixel-index", value: { type: "arithmetic", op: "ADD" } },
       ] },
       { type: "neoPixelClear" },
+    ]);
+  });
+
+  it("provides sequential and concurrent sound examples", () => {
+    const melodySample = learningSamples.find(({ id }) => id === "sound-do-re-mi");
+    const lightSample = learningSamples.find(({ id }) => id === "sound-with-led");
+    expect(melodySample?.extensions).toEqual({ piezo: true });
+    expect(lightSample?.extensions).toEqual({ piezo: true });
+
+    const melodyWorkspace = new Blockly.Workspace();
+    const lightWorkspace = new Blockly.Workspace();
+    workspaces.push(melodyWorkspace, lightWorkspace);
+    Blockly.serialization.workspaces.load(melodySample!.workspace, melodyWorkspace);
+    Blockly.serialization.workspaces.load(lightSample!.workspace, lightWorkspace);
+
+    expect(compileWorkspace(melodyWorkspace)).toMatchObject([
+      { type: "tone", frequency: 262, milliseconds: 300, wait: true },
+      { type: "tone", frequency: 294, milliseconds: 300, wait: true },
+      { type: "tone", frequency: 330, milliseconds: 300, wait: true },
+    ]);
+    expect(compileWorkspace(lightWorkspace)).toMatchObject([
+      { type: "tone", frequency: 523, milliseconds: 1000, wait: false },
+      { type: "led", on: true },
+      { type: "wait", milliseconds: 500 },
+      { type: "led", on: false },
+      { type: "stopTone" },
     ]);
   });
 });
