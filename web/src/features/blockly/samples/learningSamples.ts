@@ -303,5 +303,80 @@ export const learningSamples: LearningSample[] = [
       },
     },
   },
+  {
+    id: "neopixel-fill-then-clear",
+    category: "NeoPixel",
+    name: "全部を同じ色で光らせる",
+    description: "8個のNeoPixelを水色で光らせ、1秒待ってから全部消します。色と明るさを変えてみよう。",
+    parts: "UIAPduino・NeoPixel",
+    worksOn: "画面・ボード",
+    extensions: { neoPixel: true },
+    workspace: {
+      blocks: {
+        languageVersion: 0,
+        blocks: [
+          {
+            type: "uiap_on_start", x: 36, y: 36, inputs: { DO: { block: {
+              type: "uiap_neopixel_fill_color", inputs: {
+                COLOR: { block: { type: "uiap_color", fields: { COLOR: "#00aaff" } } },
+                BRIGHTNESS: { block: { type: "uiap_number", fields: { VALUE: 20 } } },
+              }, next: { block: {
+                type: "uiap_wait", fields: { MILLISECONDS: 1000 }, next: { block: {
+                  type: "uiap_neopixel_clear",
+                } },
+              } },
+            } } },
+          },
+        ],
+      },
+    },
+  },
+  {
+    id: "neopixel-moving-light",
+    category: "NeoPixel",
+    name: "1番から8番へ光を動かす",
+    description: "光らせる番号を1つずつ増やして、紫の光を1番から8番まで動かします。",
+    parts: "UIAPduino・NeoPixel",
+    worksOn: "画面・ボード",
+    extensions: { neoPixel: true },
+    workspace: {
+      variables: [{ name: "ばんごう", id: "sample-neopixel-index" }],
+      blocks: {
+        languageVersion: 0,
+        blocks: [
+          {
+            type: "uiap_on_start", x: 36, y: 36, inputs: { DO: { block: {
+              type: "uiap_variable_set", fields: { VAR: { id: "sample-neopixel-index" } }, inputs: {
+                VALUE: { block: { type: "uiap_number", fields: { VALUE: 1 } } },
+              }, next: { block: {
+                type: "uiap_repeat", fields: { TIMES: 8 }, inputs: { DO: { block: {
+                  type: "uiap_neopixel_clear", next: { block: {
+                    type: "uiap_neopixel_set_color", inputs: {
+                      PIXEL: { block: { type: "uiap_variable_get", fields: { VAR: { id: "sample-neopixel-index" } } } },
+                      COLOR: { block: { type: "uiap_color", fields: { COLOR: "#aa00ff" } } },
+                      BRIGHTNESS: { block: { type: "uiap_number", fields: { VALUE: 20 } } },
+                    }, next: { block: {
+                      type: "uiap_wait", fields: { MILLISECONDS: 300 }, next: { block: {
+                        type: "uiap_variable_set", fields: { VAR: { id: "sample-neopixel-index" } }, inputs: {
+                          VALUE: { block: {
+                            type: "uiap_arithmetic", fields: { OP: "ADD" }, inputs: {
+                              LEFT: { block: { type: "uiap_variable_get", fields: { VAR: { id: "sample-neopixel-index" } } } },
+                              RIGHT: { block: { type: "uiap_number", fields: { VALUE: 1 } } },
+                            },
+                          } },
+                        },
+                      } },
+                    } },
+                  } },
+                } } }, next: { block: {
+                  type: "uiap_neopixel_clear",
+                } },
+              } },
+            } } },
+          },
+        ],
+      },
+    },
+  },
 ];
 
