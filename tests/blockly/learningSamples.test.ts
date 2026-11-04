@@ -27,14 +27,16 @@ describe("learning samples", () => {
     expect(html).toContain("覚えながら3秒ごとに点灯・消灯");
     expect(html).toContain("押している間だけLEDをつける");
     expect(html).toContain("押すたびにLEDを切り替える");
+    expect(html).toContain("全部を同じ色で光らせる");
+    expect(html).toContain("1番から8番へ光を動かす");
     expect(html).toContain("ためせる場所:");
     expect(html).toContain("画面・ボード");
-    expect(html.match(/サンプルを準備中です。/g)).toHaveLength(2);
+    expect(html.match(/サンプルを準備中です。/g)).toHaveLength(1);
   });
 
   it("provides basic, repetition, condition, and variable samples without unused program sections", () => {
     expect(learningSamples.map((sample) => sample.category)).toEqual([
-      "きほん", "くりかえし", "くりかえし", "もし・くらべる", "おぼえる", "タクトスイッチ", "タクトスイッチ",
+      "きほん", "くりかえし", "くりかえし", "もし・くらべる", "おぼえる", "タクトスイッチ", "タクトスイッチ", "NeoPixel", "NeoPixel",
     ]);
     for (const sample of learningSamples) {
       const workspace = new Blockly.Workspace();
@@ -99,6 +101,37 @@ describe("learning samples", () => {
           { type: "if", condition: { type: "variable", id: "sample-button-light-state" } },
         ] },
       ] },
+    ]);
+  });
+
+  it("provides whole-strip and moving-light NeoPixel examples", () => {
+    const fillSample = learningSamples.find(({ id }) => id === "neopixel-fill-then-clear");
+    const movingSample = learningSamples.find(({ id }) => id === "neopixel-moving-light");
+    expect(fillSample?.extensions).toEqual({ neoPixel: true });
+    expect(movingSample?.extensions).toEqual({ neoPixel: true });
+
+    const fillWorkspace = new Blockly.Workspace();
+    const movingWorkspace = new Blockly.Workspace();
+    workspaces.push(fillWorkspace, movingWorkspace);
+    Blockly.serialization.workspaces.load(fillSample!.workspace, fillWorkspace);
+    Blockly.serialization.workspaces.load(movingSample!.workspace, movingWorkspace);
+
+    expect(compileWorkspace(fillWorkspace)).toMatchObject([
+      { type: "neoPixelColorValue", pixel: null,
+        color: { type: "color", value: "#00aaff" }, brightness: { type: "number", value: 20 } },
+      { type: "wait", milliseconds: 1000 },
+      { type: "neoPixelClear" },
+    ]);
+    expect(compileWorkspace(movingWorkspace)).toMatchObject([
+      { type: "setVariable", id: "sample-neopixel-index", value: { type: "number", value: 1 } },
+      { type: "repeat", times: 8, body: [
+        { type: "neoPixelClear" },
+        { type: "neoPixelColorValue", pixel: { type: "variable", id: "sample-neopixel-index" },
+          color: { type: "color", value: "#aa00ff" }, brightness: { type: "number", value: 20 } },
+        { type: "wait", milliseconds: 300 },
+        { type: "setVariable", id: "sample-neopixel-index", value: { type: "arithmetic", op: "ADD" } },
+      ] },
+      { type: "neoPixelClear" },
     ]);
   });
 });
