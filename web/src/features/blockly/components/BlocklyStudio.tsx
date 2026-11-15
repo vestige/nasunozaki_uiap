@@ -53,44 +53,6 @@ export function BlocklyStudio() {
           </ol>
         </div>
         <div className="min-w-0 flex flex-col gap-3 lg:items-end">
-          <ExecutionTargetSelector
-            target={executionTarget.data}
-            runtimeConnected={Boolean(runtimeDevice.data?.opened)}
-            disabled={run.isPending}
-            message={run.error?.message}
-            onChange={(target) => {
-              run.reset();
-              client.setQueryData(queryKeys.blocklyExecutionTarget, target);
-            }}
-          />
-          <BlocklyToolbar
-            isRunning={run.isPending}
-            stepDisplay={stepDisplay}
-            canRun={
-              !editingError &&
-              program.data.length > 0 &&
-              (executionTarget.data === "simulator" ||
-                Boolean(runtimeDevice.data?.opened))
-            }
-            saveMessage={saveMessage}
-            runLabel={
-              executionTarget.data === "uiapduino"
-                ? "ボードでためす"
-                : "画面でためす"
-            }
-            onStepDisplayChange={(enabled) => {
-              setStepDisplay(enabled);
-              if (!enabled) {
-                client.setQueryData(queryKeys.simulatorBlock, null);
-                workspaceRef.current?.highlightBlock(null);
-              }
-            }}
-            onRun={() => run.mutate()}
-            onStop={stop}
-          />
-          {(piezoExtension.data || hasToneInstructions(program.data)) && <label className="flex items-center gap-2 text-sm font-bold">
-            <input type="checkbox" className="checkbox checkbox-sm" checked={soundEnabled} disabled={run.isPending} onChange={(event) => setSoundEnabled(event.target.checked)} />画面の音をオンにする
-          </label>}
           <div className="flex min-w-0 flex-wrap items-start justify-end gap-2">
             <ProjectFileActions
               disabled={
@@ -124,6 +86,48 @@ export function BlocklyStudio() {
       <p className="mb-5 max-w-3xl text-sm leading-6 text-base-content/70">
         画面やボードでためしたあと、作品を残すときは「ボードにかきこむ」を選びます。
       </p>
+      <div className="mb-5 flex min-w-0 flex-wrap items-center justify-start gap-3 rounded-box border border-base-300 bg-base-100 px-4 py-3 shadow-sm" aria-label="プログラムをためす操作">
+        <span className="text-sm font-black">ためす場所</span>
+        <div className="min-w-0">
+          <ExecutionTargetSelector
+            target={executionTarget.data}
+            runtimeConnected={Boolean(runtimeDevice.data?.opened)}
+            disabled={run.isPending}
+            message={run.error?.message}
+            onChange={(target) => {
+              run.reset();
+              client.setQueryData(queryKeys.blocklyExecutionTarget, target);
+            }}
+          />
+        </div>
+        <span className="hidden h-8 w-px bg-base-300 sm:block" aria-hidden="true" />
+        <BlocklyToolbar
+          isRunning={run.isPending}
+          stepDisplay={stepDisplay}
+          canRun={
+            !editingError &&
+            program.data.length > 0 &&
+            (executionTarget.data === "simulator" ||
+              Boolean(runtimeDevice.data?.opened))
+          }
+          runLabel="ためす"
+          onStepDisplayChange={(enabled) => {
+            setStepDisplay(enabled);
+            if (!enabled) {
+              client.setQueryData(queryKeys.simulatorBlock, null);
+              workspaceRef.current?.highlightBlock(null);
+            }
+          }}
+          onRun={() => run.mutate()}
+          onStop={stop}
+        />
+        {(piezoExtension.data || hasToneInstructions(program.data)) && <label className="flex h-11 items-center gap-2 text-sm font-bold">
+          <input type="checkbox" className="checkbox checkbox-sm" checked={soundEnabled} disabled={run.isPending} onChange={(event) => setSoundEnabled(event.target.checked)} />画面の音
+        </label>}
+        <p className="ml-auto self-end text-right text-xs font-bold text-base-content/60" role="status">
+          {saveMessage}
+        </p>
+      </div>
       {editingError && <p role="status" className="mb-5 text-sm font-bold text-error">{editingError} 組み立て途中でも、作品は保存できます。</p>}
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="lg:col-span-2">
@@ -161,7 +165,10 @@ export function BlocklyStudio() {
               <button type="button" className="btn btn-ghost btn-sm" disabled={run.isPending} onClick={resetWorkspace}>まっさらから作る</button>
               <button type="button" className="btn btn-outline btn-sm" aria-pressed={!toolboxVisible} onClick={() => { const visible = !toolboxVisibleRef.current; toolboxVisibleRef.current = visible; setToolboxVisible(visible); const workspace = workspaceRef.current; if (workspace) setWorkspaceToolboxVisible(workspace, visible); }}>{toolboxVisible ? "ブロック一覧をかくす 😶‍🌫️" : "ブロック一覧をみせる 👀"}</button>
             </div>
-            <div className={`grid min-w-0 gap-5 ${neoPixelExtension.data ? "lg:grid-cols-[minmax(0,1fr)_24rem]" : "lg:grid-cols-[minmax(0,1fr)_18rem]"}`}><div ref={mountWorkspace} className={`blockly-workspace h-[38rem] w-full min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl lg:h-[44rem] ${toolboxVisible ? "" : "blockly-workspace--toolbox-hidden"}`} aria-label="ブロックプログラミング編集エリア" /><LedSimulator ledOn={led.data} buttonPressed={button.data} extensionEnabled={tactSwitchExtension.data} neoPixelEnabled={neoPixelExtension.data} neoPixels={neoPixels.data} onButtonChange={(pressed) => client.setQueryData(queryKeys.simulatorButton, pressed)} /></div>
+            <div className={`grid min-w-0 items-start gap-5 ${neoPixelExtension.data ? "lg:grid-cols-[minmax(0,1fr)_24rem]" : "lg:grid-cols-[minmax(0,1fr)_18rem]"}`}>
+              <div ref={mountWorkspace} className={`blockly-workspace h-[38rem] w-full min-w-0 max-w-full overflow-hidden rounded-box border-2 border-neutral bg-white shadow-xl lg:h-[44rem] ${toolboxVisible ? "" : "blockly-workspace--toolbox-hidden"}`} aria-label="ブロックプログラミング編集エリア" />
+              <LedSimulator ledOn={led.data} buttonPressed={button.data} extensionEnabled={tactSwitchExtension.data} neoPixelEnabled={neoPixelExtension.data} neoPixels={neoPixels.data} onButtonChange={(pressed) => client.setQueryData(queryKeys.simulatorButton, pressed)} />
+            </div>
           </div>
         </div>
       </div>
