@@ -75,7 +75,7 @@ export const learningSamples: LearningSample[] = [
         blocks: [
           {
             type: "uiap_on_start", x: 36, y: 36, inputs: { DO: { block: {
-              type: "uiap_repeat", fields: { TIMES: 3 }, inputs: { DO: { block: {
+              type: "uiap_repeat", inputs: { TIMES: { shadow: { type: "uiap_number", fields: { VALUE: 3 } } }, DO: { block: {
                 type: "uiap_led", fields: { STATE: "ON" }, next: { block: {
                   type: "uiap_wait", fields: { MILLISECONDS: 500 }, next: { block: {
                     type: "uiap_led", fields: { STATE: "OFF" }, next: { block: {
@@ -156,7 +156,7 @@ export const learningSamples: LearningSample[] = [
     worksOn: "画面・ボード",
     extensions: {},
     workspace: {
-      variables: [{ name: "ひかる", id: "sample-light-state" }],
+      variables: [{ name: "ひかる", id: "sample-light-state", type: "Number" }],
       blocks: {
         languageVersion: 0,
         blocks: [
@@ -168,8 +168,8 @@ export const learningSamples: LearningSample[] = [
               DO: {
                 block: {
                   type: "uiap_repeat",
-                  fields: { TIMES: 2 },
                   inputs: {
+                    TIMES: { shadow: { type: "uiap_number", fields: { VALUE: 2 } } },
                     DO: {
                       block: {
                         type: "uiap_led", fields: { STATE: "ON" }, next: { block: {
@@ -186,7 +186,7 @@ export const learningSamples: LearningSample[] = [
                     block: {
                       type: "uiap_variable_set",
                       fields: { VAR: { id: "sample-light-state" } },
-                      inputs: { VALUE: { block: { type: "uiap_boolean", fields: { VALUE: "FALSE" } } } },
+                      inputs: { VALUE: { shadow: { type: "uiap_number", fields: { VALUE: 0 } } } },
                     },
                   },
                 },
@@ -206,18 +206,21 @@ export const learningSamples: LearningSample[] = [
                     block: {
                       type: "uiap_if",
                       inputs: {
-                        CONDITION: { block: { type: "uiap_variable_get", fields: { VAR: { id: "sample-light-state" } } } },
+                        CONDITION: { block: { type: "uiap_compare", fields: { OP: "EQ" }, inputs: {
+                          LEFT: { block: { type: "uiap_variable_get", fields: { VAR: { id: "sample-light-state" } } } },
+                          RIGHT: { shadow: { type: "uiap_number", fields: { VALUE: 1 } } },
+                        } } },
                         DO: { block: {
                           type: "uiap_led", fields: { STATE: "OFF" }, next: { block: {
                             type: "uiap_variable_set", fields: { VAR: { id: "sample-light-state" } }, inputs: {
-                              VALUE: { block: { type: "uiap_boolean", fields: { VALUE: "FALSE" } } },
+                              VALUE: { shadow: { type: "uiap_number", fields: { VALUE: 0 } } },
                             },
                           } },
                         } },
                         ELSE: { block: {
                           type: "uiap_led", fields: { STATE: "ON" }, next: { block: {
                             type: "uiap_variable_set", fields: { VAR: { id: "sample-light-state" } }, inputs: {
-                              VALUE: { block: { type: "uiap_boolean", fields: { VALUE: "TRUE" } } },
+                              VALUE: { shadow: { type: "uiap_number", fields: { VALUE: 1 } } },
                             },
                           } },
                         } },
@@ -265,14 +268,14 @@ export const learningSamples: LearningSample[] = [
     worksOn: "画面・ボード",
     extensions: { tactSwitch: true },
     workspace: {
-      variables: [{ name: "ひかる", id: "sample-button-light-state" }],
+      variables: [{ name: "ひかる", id: "sample-button-light-state", type: "Number" }],
       blocks: {
         languageVersion: 0,
         blocks: [
           {
             type: "uiap_on_start", x: 36, y: 36, inputs: { DO: { block: {
               type: "uiap_variable_set", fields: { VAR: { id: "sample-button-light-state" } }, inputs: {
-                VALUE: { block: { type: "uiap_boolean", fields: { VALUE: "FALSE" } } },
+                VALUE: { shadow: { type: "uiap_number", fields: { VALUE: 0 } } },
               },
             } } },
           },
@@ -280,18 +283,21 @@ export const learningSamples: LearningSample[] = [
             type: "uiap_main_forever", x: 300, y: 36, inputs: { DO: { block: {
               type: "uiap_if_button_pressed", inputs: { DO: { block: {
                 type: "uiap_if", inputs: {
-                  CONDITION: { block: { type: "uiap_variable_get", fields: { VAR: { id: "sample-button-light-state" } } } },
+                  CONDITION: { block: { type: "uiap_compare", fields: { OP: "EQ" }, inputs: {
+                    LEFT: { block: { type: "uiap_variable_get", fields: { VAR: { id: "sample-button-light-state" } } } },
+                    RIGHT: { shadow: { type: "uiap_number", fields: { VALUE: 1 } } },
+                  } } },
                   DO: { block: {
                     type: "uiap_led", fields: { STATE: "OFF" }, next: { block: {
                       type: "uiap_variable_set", fields: { VAR: { id: "sample-button-light-state" } }, inputs: {
-                        VALUE: { block: { type: "uiap_boolean", fields: { VALUE: "FALSE" } } },
+                        VALUE: { shadow: { type: "uiap_number", fields: { VALUE: 0 } } },
                       },
                     } },
                   } },
                   ELSE: { block: {
                     type: "uiap_led", fields: { STATE: "ON" }, next: { block: {
                       type: "uiap_variable_set", fields: { VAR: { id: "sample-button-light-state" } }, inputs: {
-                        VALUE: { block: { type: "uiap_boolean", fields: { VALUE: "TRUE" } } },
+                        VALUE: { shadow: { type: "uiap_number", fields: { VALUE: 1 } } },
                       },
                     } },
                   } },
@@ -340,7 +346,7 @@ export const learningSamples: LearningSample[] = [
     worksOn: "画面・ボード",
     extensions: { neoPixel: true },
     workspace: {
-      variables: [{ name: "ばんごう", id: "sample-neopixel-index" }],
+      variables: [{ name: "ばんごう", id: "sample-neopixel-index", type: "Number" }],
       blocks: {
         languageVersion: 0,
         blocks: [
@@ -349,7 +355,7 @@ export const learningSamples: LearningSample[] = [
               type: "uiap_variable_set", fields: { VAR: { id: "sample-neopixel-index" } }, inputs: {
                 VALUE: { block: { type: "uiap_number", fields: { VALUE: 1 } } },
               }, next: { block: {
-                type: "uiap_repeat", fields: { TIMES: 8 }, inputs: { DO: { block: {
+                type: "uiap_repeat", inputs: { TIMES: { shadow: { type: "uiap_number", fields: { VALUE: 8 } } }, DO: { block: {
                   type: "uiap_neopixel_clear", next: { block: {
                     type: "uiap_neopixel_set_color", inputs: {
                       PIXEL: { block: { type: "uiap_variable_get", fields: { VAR: { id: "sample-neopixel-index" } } } },

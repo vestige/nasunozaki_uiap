@@ -97,6 +97,9 @@ function encodeInstructions(
         instruction.milliseconds >> 8,
       );
     } else if (instruction.type === "repeat") {
+      if (typeof instruction.times !== "number") {
+        throw new Error("変数や計算を使った繰り返し回数は、まだボードへの保存に対応していません。画面でためしてください。");
+      }
       assertIntegerInRange(
         instruction.times,
         1,

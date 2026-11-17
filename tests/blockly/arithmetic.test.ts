@@ -8,6 +8,7 @@ import { encodeStandaloneProgram } from "../../web/src/features/blockly/utils/st
 import { parseBlocklyProjectFile, createBlocklyProjectFile, stringifyBlocklyProjectFile } from "../../web/src/features/blockly/utils/projectFile";
 import { loadBlocklyWorkspace, BLOCKLY_STORAGE_KEY } from "../../web/src/features/blockly/utils/persistence";
 import { attachToProgram } from "./programStructure";
+import { createUiapVariableFlyout } from "../../web/src/features/blockly/utils/variableToolbox";
 
 const n = (value: number): ProgramValue => ({ type: "number", value });
 const calc = (op: "ADD" | "SUB", a: ProgramValue, b: ProgramValue): ProgramValue => ({ type: "arithmetic", op, left: a, right: b });
@@ -56,7 +57,14 @@ it("旧形式の固定番号をファイルと自動保存から移行し、形�
 it("新規ブロックの入力には編集できる初期値を用意する", () => {
   const toolbox = JSON.stringify(createUiapToolbox({ tactSwitch: false, neoPixel: true }));
   expect(toolbox).toContain('"PIXEL":{"shadow":{"type":"uiap_number","fields":{"VALUE":1}}}');
-  expect(toolbox).toContain('"type":"uiap_arithmetic"');
+  expect(toolbox).toContain('"TIMES":{"shadow":{"type":"uiap_number","fields":{"VALUE":3}}}');
+  expect(toolbox).toContain('"LEFT":{"shadow":{"type":"uiap_number","fields":{"VALUE":0}}}');
+  expect(toolbox).not.toContain('"name":"もし・くらべる","colour":"#547ea2","contents":[{"kind":"block","type":"uiap_number"');
+  const workspace = new Blockly.Workspace();
+  workspace.getVariableMap().createVariable("かいすう");
+  const variableToolbox = JSON.stringify(createUiapVariableFlyout(workspace as Blockly.WorkspaceSvg));
+  expect(variableToolbox).toContain('"VALUE":{"shadow":{"type":"uiap_number","fields":{"VALUE":0}}}');
+  expect(variableToolbox).toContain('"type":"uiap_arithmetic"');
 });
 
 it("空入力や不正な固定番号をコンパイル時に拒否する", () => {

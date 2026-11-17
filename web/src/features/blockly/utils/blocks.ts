@@ -8,6 +8,32 @@ export function registerUiapBlocks() {
   if (registered) return;
   Blockly.setLocale(Ja as unknown as Record<string, string>);
   registerColorBarField();
+  Blockly.Extensions.register("uiap_variable_context_menu", function(this: Blockly.BlockSvg) {
+    const field = this.getField("VAR") as Blockly.FieldVariable | null;
+    const updateType = (id: string | null) => {
+      if (!id) return;
+      const check = this.workspace.getVariableMap().getVariableById(id)?.getType() || null;
+      this.outputConnection?.setCheck(check);
+      this.getInput("VALUE")?.connection?.setCheck(check);
+    };
+    if (field) {
+      updateType(field.getValue());
+      field.setValidator((id) => {
+        updateType(id);
+        return id;
+      });
+    }
+    this.customContextMenu = (options) => {
+      if (this.isInFlyout) return;
+      const variable = (this.getField("VAR") as Blockly.FieldVariable | null)?.getVariable();
+      if (!variable) return;
+      options.unshift({
+        text: `変数「${variable.getName()}」を削除`,
+        enabled: true,
+        callback: () => Blockly.Variables.deleteVariable(this.workspace, variable, this),
+      });
+    };
+  });
   Blockly.common.defineBlocksWithJsonArray([
     {
       type: "uiap_on_start",
@@ -118,12 +144,9 @@ export function registerUiapBlocks() {
       message0: "%1 回くりかえす",
       args0: [
         {
-          type: "field_number",
+          type: "input_value",
           name: "TIMES",
-          value: 3,
-          min: 1,
-          max: 20,
-          precision: 1,
+          check: "Number",
         },
       ],
       message1: "%1",
@@ -131,7 +154,7 @@ export function registerUiapBlocks() {
       previousStatement: null,
       nextStatement: null,
       colour: 275,
-      tooltip: "中に入れたブロックをくり返します。",
+      tooltip: "1から20回まで。長丸の数字を直接書きかえたり、数値の変数を入れたりできます。",
     },
     {
       type: "uiap_forever",
@@ -179,9 +202,9 @@ export function registerUiapBlocks() {
       colour: 210,
     },
     { type: "uiap_boolean", message0: "%1", args0: [{ type: "field_dropdown", name: "VALUE", options: [["はい", "TRUE"], ["いいえ", "FALSE"]] }], output: "Boolean", colour: 210, tooltip: "条件があっているときは『はい』、そうでないときは『いいえ』です。" },
-    { type: "uiap_number", message0: "すうじ %1", args0: [{ type: "field_number", name: "VALUE", value: 0 }], output: "Number", colour: 230, tooltip: "数字を書きかえて、くらべるブロックや、めもに入れます。" },
-    { type: "uiap_variable_get", message0: "%1 のなかみ", args0: [{ type: "field_variable", name: "VAR", variable: "めも" }], output: null, colour: 330, tooltip: "おぼえた値を取り出します。▼から名前を変えられます。" },
-    { type: "uiap_variable_set", message0: "%1 に %2 をおぼえる", args0: [{ type: "field_variable", name: "VAR", variable: "めも" }, { type: "input_value", name: "VALUE" }], inputsInline: true, previousStatement: null, nextStatement: null, colour: 330, tooltip: "数字や『はい・いいえ』をおぼえます。▼から名前を変えられます。" },
+    { type: "uiap_number", message0: "%1", args0: [{ type: "field_number", name: "VALUE", value: 0 }], output: "Number", colour: 230, tooltip: "長丸の中へ数字を直接書けます。" },
+    { type: "uiap_variable_get", message0: "%1 のなかみ", args0: [{ type: "field_variable", name: "VAR", variable: "めも" }], output: null, colour: 330, tooltip: "おぼえた数字を取り出します。▼から名前の変更や削除ができます。", extensions: ["uiap_variable_context_menu"] },
+    { type: "uiap_variable_set", message0: "%1 に %2 をおぼえる", args0: [{ type: "field_variable", name: "VAR", variable: "めも" }, { type: "input_value", name: "VALUE" }], inputsInline: true, previousStatement: null, nextStatement: null, colour: 330, tooltip: "数字をおぼえます。▼または右クリックで変数を管理できます。", extensions: ["uiap_variable_context_menu"] },
     { type: "uiap_not", message0: "%1 ではない", args0: [{ type: "input_value", name: "VALUE", check: "Boolean" }], output: "Boolean", colour: 210 },
     { type: "uiap_compare", message0: "%1 %2 %3", args0: [{ type: "input_value", name: "LEFT" }, { type: "field_dropdown", name: "OP", options: [["＝", "EQ"], ["≠", "NEQ"], ["＜", "LT"], ["≤", "LTE"], ["＞", "GT"], ["≥", "GTE"]] }, { type: "input_value", name: "RIGHT" }], inputsInline: true, output: "Boolean", colour: 210 },
     { type: "uiap_logic", message0: "%1 %2 %3", args0: [{ type: "input_value", name: "LEFT", check: "Boolean" }, { type: "field_dropdown", name: "OP", options: [["かつ", "AND"], ["または", "OR"]] }, { type: "input_value", name: "RIGHT", check: "Boolean" }], inputsInline: true, output: "Boolean", colour: 210 },

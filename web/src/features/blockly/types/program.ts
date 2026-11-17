@@ -24,7 +24,7 @@ export type ProgramInstruction =
   | { type: "wait"; milliseconds: number; blockId: string }
   | {
       type: "repeat";
-      times: number;
+      times: number | ProgramValue;
       body: ProgramInstruction[];
       blockId: string;
     }

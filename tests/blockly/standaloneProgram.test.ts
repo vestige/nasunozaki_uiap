@@ -62,6 +62,15 @@ describe("encodeStandaloneProgram", () => {
     ]);
   });
 
+  it("変数を使う繰り返し回数は未対応ファームへ保存しない", () => {
+    expect(() => encodeStandaloneProgram([{
+      type: "repeat",
+      times: { type: "variable", id: "times" },
+      blockId,
+      body: [{ type: "led", on: true, blockId }],
+    }])).toThrow("まだボードへの保存に対応していません");
+  });
+
   it("NeoPixelを含む作品はversion 2で変換する", () => {
     const slot = encodeStandaloneProgram([{
       type: "neoPixelClear",

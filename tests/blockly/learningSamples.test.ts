@@ -62,17 +62,18 @@ describe("learning samples", () => {
     Blockly.serialization.workspaces.load(sample!.workspace, workspace);
     expect(compileWorkspace(workspace)).toMatchObject([
       { type: "repeat", times: 2 },
-      { type: "setVariable", id: "sample-light-state", value: { type: "boolean", value: false } },
+      { type: "setVariable", id: "sample-light-state", value: { type: "number", value: 0 } },
       { type: "forever", body: [
         { type: "wait", milliseconds: 3000 },
-        { type: "if", condition: { type: "variable", id: "sample-light-state" },
+        { type: "if", condition: { type: "compare", op: "EQ",
+          left: { type: "variable", id: "sample-light-state" }, right: { type: "number", value: 1 } },
           body: [
             { type: "led", on: false },
-            { type: "setVariable", id: "sample-light-state", value: { type: "boolean", value: false } },
+            { type: "setVariable", id: "sample-light-state", value: { type: "number", value: 0 } },
           ],
           elseBody: [
             { type: "led", on: true },
-            { type: "setVariable", id: "sample-light-state", value: { type: "boolean", value: true } },
+            { type: "setVariable", id: "sample-light-state", value: { type: "number", value: 1 } },
           ],
         },
       ] },
@@ -97,10 +98,12 @@ describe("learning samples", () => {
       ] },
     ]);
     expect(compileWorkspace(toggleWorkspace)).toMatchObject([
-      { type: "setVariable", id: "sample-button-light-state", value: { type: "boolean", value: false } },
+      { type: "setVariable", id: "sample-button-light-state", value: { type: "number", value: 0 } },
       { type: "forever", body: [
         { type: "ifButtonPressed", body: [
-          { type: "if", condition: { type: "variable", id: "sample-button-light-state" } },
+          { type: "if", condition: { type: "compare", op: "EQ",
+            left: { type: "variable", id: "sample-button-light-state" }, right: { type: "number", value: 1 } },
+          },
         ] },
       ] },
     ]);

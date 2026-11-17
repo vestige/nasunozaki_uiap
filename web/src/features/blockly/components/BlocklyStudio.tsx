@@ -1,6 +1,6 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type * as Blockly from "blockly/core";
+import * as Blockly from "blockly/core";
 import { compileWorkspace } from "../utils/program";
 import { hasToneInstructions } from "../utils/execution";
 import { queryKeys } from "../../../query";
@@ -17,6 +17,7 @@ import { ProjectFileActions } from "./ProjectFileActions";
 import { ExecutionTargetSelector } from "./ExecutionTargetSelector";
 import { StandaloneProgramInstall } from "./StandaloneProgramInstall";
 import { LearningSamplePicker } from "./LearningSamplePicker";
+import { VariableCreatePopover, type VariableCreateAnchor } from "./VariableCreatePopover";
 
 export function BlocklyStudio() {
   const client = useQueryClient();
@@ -26,10 +27,14 @@ export function BlocklyStudio() {
   const [stepDisplay, setStepDisplay] = useState(false);
   const [toolboxVisible, setToolboxVisible] = useState(true);
   const [samplePickerOpen, setSamplePickerOpen] = useState(false);
+  const [variableCreateAnchor, setVariableCreateAnchor] = useState<VariableCreateAnchor | null>(null);
   const { run, stop, led, button, neoPixels, executionTarget, runtimeDevice, soundEnabled, setSoundEnabled } = useBlocklyExecution(workspaceRef, stepDisplay);
   const { program, editingError, tactSwitchExtension, neoPixelExtension, piezoExtension, initialize, onChange,
     exportProject, importProject, loadSample, resetWorkspace, saveMessage, setExtension } = useBlocklyProject(workspaceRef, toolboxVisibleRef, stop);
-  const mountWorkspace = useBlocklyWorkspace(workspaceRef, initialize, onChange, stop);
+  const openVariableCreator = useCallback((anchor: VariableCreateAnchor) => {
+    setVariableCreateAnchor(anchor);
+  }, []);
+  const mountWorkspace = useBlocklyWorkspace(workspaceRef, initialize, onChange, stop, openVariableCreator);
   return (
     <section
       className="mx-auto w-full max-w-[90rem] overflow-x-clip px-5 py-12 sm:px-8"
@@ -180,6 +185,20 @@ export function BlocklyStudio() {
           if (loadSample(sample)) setSamplePickerOpen(false);
         }}
       />
+      {variableCreateAnchor && <VariableCreatePopover
+        anchor={variableCreateAnchor}
+        onClose={() => setVariableCreateAnchor(null)}
+        onCreate={(rawName) => {
+          const workspace = workspaceRef.current;
+          if (!workspace) return "ブロック画面を準備中です。";
+          const name = rawName.trim();
+          if (!name) return "名前を入力してください。";
+          if (Blockly.Variables.nameUsedWithAnyType(name, workspace)) return "同じ名前の変数があります。";
+          workspace.getVariableMap().createVariable(name, "Number");
+          workspace.getToolbox()?.refreshSelection();
+          return null;
+        }}
+      />}
     </section>
   );
 }
