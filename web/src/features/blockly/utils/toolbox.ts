@@ -1,4 +1,5 @@
 import type * as Blockly from "blockly/core";
+import { UIAP_VARIABLE_CATEGORY } from "./variableToolbox";
 
 const category = (name: string, colour: string, types: string[]) => ({
   kind: "category" as const,
@@ -25,9 +26,20 @@ export function createUiapToolbox(options: { tactSwitch: boolean; neoPixel: bool
     kind: "categoryToolbox",
     contents: [
       category("きほん", "#b09a58", ["uiap_on_start", "uiap_main_forever", "uiap_led", "uiap_wait"]),
-      category("くりかえし", "#8557a4", ["uiap_repeat"]),
-      category("もし・くらべる", "#547ea2", ["uiap_if", "uiap_boolean", "uiap_number", "uiap_compare", "uiap_logic", "uiap_not"]),
-      category("おぼえる", "#a25780", ["uiap_variable_set", "uiap_variable_get", "uiap_number", "uiap_arithmetic"]),
+      { ...category("くりかえし", "#8557a4", []), contents: [{ kind: "block", type: "uiap_repeat", inputs: {
+        TIMES: { shadow: { type: "uiap_number", fields: { VALUE: 3 } } },
+      } }] },
+      { ...category("もし・くらべる", "#547ea2", ["uiap_if", "uiap_boolean", "uiap_logic", "uiap_not"]), contents: [
+        { kind: "block", type: "uiap_if" },
+        { kind: "block", type: "uiap_boolean" },
+        { kind: "block", type: "uiap_compare", inputs: {
+          LEFT: { shadow: { type: "uiap_number", fields: { VALUE: 0 } } },
+          RIGHT: { shadow: { type: "uiap_number", fields: { VALUE: 0 } } },
+        } },
+        { kind: "block", type: "uiap_logic" },
+        { kind: "block", type: "uiap_not" },
+      ] },
+      { kind: "category", name: "おぼえる", colour: "#a25780", custom: UIAP_VARIABLE_CATEGORY },
       ...(options.tactSwitch || options.neoPixel || options.piezo ? [{ kind: "sep" as const }] : []),
       ...(options.tactSwitch ? [category("タクトスイッチ", "#65885d", ["uiap_if_button", "uiap_if_button_pressed"])] : []),
       ...(options.neoPixel ? [category("NeoPixel", "#a25780", ["uiap_neopixel_fill_color", "uiap_neopixel_set_color", "uiap_color", "uiap_neopixel_clear"])] : []),

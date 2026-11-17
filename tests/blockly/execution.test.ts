@@ -75,6 +75,16 @@ describe("runProgram", () => {
     const { board } = createExecution();
     await expect(runProgram([{ type: "if", condition: { type: "variable", id: "missing" }, body: [], elseBody: [], blockId: "if" }], board, new AbortController().signal)).rejects.toThrow("値を入れていない変数");
   });
+  it("変数の数字を繰り返し回数に使う", async () => {
+    const { board, events } = createExecution();
+    await runProgram([
+      { type: "setVariable", id: "times", value: { type: "number", value: 3 }, blockId: "set" },
+      { type: "repeat", times: { type: "variable", id: "times" }, body: [
+        { type: "led", on: true, blockId: "on" },
+      ], blockId: "repeat" },
+    ], board, new AbortController().signal);
+    expect(events.filter((event) => event === "led:true")).toHaveLength(3);
+  });
   it("繰り返し内も実行順にブロックをハイライトする", async () => {
     const { board, observer, events } = createExecution();
 

@@ -2,12 +2,15 @@ import { useCallback, type RefObject } from "react";
 import * as Blockly from "blockly/core";
 import { registerUiapBlocks } from "../utils/blocks";
 import { uiapToolbox, createUiapToolbox } from "../utils/toolbox";
+import { registerUiapVariableToolbox } from "../utils/variableToolbox";
+import type { VariableCreateAnchor } from "../components/VariableCreatePopover";
 
 export function useBlocklyWorkspace(
   workspaceRef: RefObject<Blockly.WorkspaceSvg | null>,
   initialize: (workspace: Blockly.WorkspaceSvg) => void,
   onChange: (workspace: Blockly.WorkspaceSvg) => void,
   onDispose: () => void,
+  onCreateVariable: (anchor: VariableCreateAnchor) => void,
 ) {
   return useCallback((node: HTMLDivElement | null) => {
     if (!node) return;
@@ -18,6 +21,7 @@ export function useBlocklyWorkspace(
       zoom: { controls: true, wheel: true, startScale: 0.9 },
       move: { scrollbars: true, drag: true, wheel: true },
     });
+    registerUiapVariableToolbox(workspace, onCreateVariable);
     workspaceRef.current = workspace;
     let resizeFrame = 0;
     const observer = new ResizeObserver(() => {
@@ -34,7 +38,7 @@ export function useBlocklyWorkspace(
       workspaceRef.current = null;
       workspace.dispose();
     };
-  }, [workspaceRef, initialize, onChange, onDispose]);
+  }, [workspaceRef, initialize, onChange, onDispose, onCreateVariable]);
 }
 
 export function updateWorkspaceToolbox(

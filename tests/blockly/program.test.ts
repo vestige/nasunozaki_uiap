@@ -124,6 +124,42 @@ describe("compileWorkspace", () => {
     expect(compileWorkspace(restored)).toEqual(compileWorkspace(workspace));
   });
 
+  it("数字の代わりに別の変数のなかみを代入できる", () => {
+    registerUiapBlocks();
+    const workspace = new Blockly.Workspace();
+    const source = workspace.getVariableMap().createVariable("もとの数");
+    const destination = workspace.getVariableMap().createVariable("コピー");
+    Blockly.serialization.workspaces.load({
+      ...programState({
+        type: "uiap_variable_set",
+        fields: { VAR: { id: source.getId() } },
+        inputs: { VALUE: { block: { type: "uiap_number", fields: { VALUE: 3 } } } },
+        next: { block: {
+          type: "uiap_variable_set",
+          fields: { VAR: { id: destination.getId() } },
+          inputs: { VALUE: { block: { type: "uiap_variable_get", fields: { VAR: { id: source.getId() } } } } },
+          next: { block: {
+            type: "uiap_repeat",
+            inputs: {
+              TIMES: { block: { type: "uiap_variable_get", fields: { VAR: { id: destination.getId() } } } },
+              DO: { block: { type: "uiap_led", fields: { STATE: "ON" } } },
+            },
+          } },
+        } },
+      }),
+      variables: [
+        { name: source.getName(), id: source.getId() },
+        { name: destination.getName(), id: destination.getId() },
+      ],
+    }, workspace);
+
+    expect(compileWorkspace(workspace)).toMatchObject([
+      { type: "setVariable", id: source.getId(), value: { type: "number", value: 3 } },
+      { type: "setVariable", id: destination.getId(), value: { type: "variable", id: source.getId() } },
+      { type: "repeat", times: { type: "variable", id: destination.getId() }, body: [{ type: "led", on: true }] },
+    ]);
+  });
+
   it("押した瞬間のブロックを1回限りの条件として変換する", () => {
     registerUiapBlocks();
     const workspace = new Blockly.Workspace();

@@ -106,7 +106,13 @@ async function runInstructions(
       await board.wait(instruction.milliseconds, signal);
     } else if (instruction.type === "repeat") {
       await board.wait(180, signal);
-      for (let index = 0; index < instruction.times; index += 1) {
+      const times = typeof instruction.times === "number"
+        ? instruction.times
+        : evaluateValue(instruction.times, variables);
+      if (typeof times !== "number" || !Number.isInteger(times) || times < 1 || times > 20) {
+        throw new Error("繰り返し回数には1から20の整数を入れてください。");
+      }
+      for (let index = 0; index < times; index += 1) {
         await runInstructions(instruction.body, board, signal, observer, variables);
       }
     } else if (instruction.type === "forever") {

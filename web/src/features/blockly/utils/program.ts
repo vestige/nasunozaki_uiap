@@ -107,9 +107,13 @@ function compileChain(first: Blockly.Block | null): ProgramInstruction[] {
         blockId: block.id,
       });
     } else if (block.type === "uiap_repeat") {
+      const timesValue = compileValue(block.getInputTargetBlock("TIMES"));
+      if (timesValue.type === "number" && (!Number.isInteger(timesValue.value) || timesValue.value < 1 || timesValue.value > 20)) {
+        throw new Error("繰り返し回数には1から20の整数を入れてください。");
+      }
       instructions.push({
         type: "repeat",
-        times: clampNumber(block.getFieldValue("TIMES"), 1, 20),
+        times: timesValue.type === "number" ? timesValue.value : timesValue,
         body: compileChain(block.getInputTargetBlock("DO")),
         blockId: block.id,
       });

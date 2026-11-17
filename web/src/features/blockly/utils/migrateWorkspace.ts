@@ -25,6 +25,17 @@ function migrateBlockShapes(value: unknown): unknown {
       PIXEL: { shadow: { type: "uiap_number", fields: { VALUE: pixel } } },
     };
   }
+  if (result.type === "uiap_repeat") {
+    const fields = { ...(result.fields as Record<string, unknown> | undefined) };
+    if (fields.TIMES !== undefined) {
+      const times = fields.TIMES;
+      delete fields.TIMES;
+      result.fields = fields;
+      result.inputs = { ...(result.inputs as object | undefined),
+        TIMES: { shadow: { type: "uiap_number", fields: { VALUE: times } } },
+      };
+    }
+  }
   if (result.type === "uiap_neopixel_fill" || result.type === "uiap_neopixel_set_value") {
     const fields = { ...(result.fields as Record<string, unknown> | undefined) };
     const brightness = fields.BRIGHTNESS ?? 20;
